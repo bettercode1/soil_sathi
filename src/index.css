@@ -1,0 +1,131 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 38% 97%;
+    --foreground: 20 10% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 20 10% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 10% 10%;
+
+    --primary: 142 76% 36%;
+    --primary-foreground: 355 100% 100%;
+
+    --secondary: 30 54% 44%;
+    --secondary-foreground: 355 100% 100%;
+
+    --muted: 30 10% 92%;
+    --muted-foreground: 25 5% 45%;
+
+    --accent: 142 30% 90%;
+    --accent-foreground: 142 76% 29%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 20 5% 84%;
+    --input: 20 5% 84%;
+    --ring: 142 76% 36%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 140 30% 96%;
+    --sidebar-foreground: 20 10% 10%;
+    --sidebar-primary: 142 76% 36%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 54% 44%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 30 10% 90%;
+    --sidebar-ring: 142 76% 36%;
+  }
+
+  .dark {
+    --background: 20 10% 8%;
+    --foreground: 60 9% 98%;
+
+    --card: 20 10% 12%;
+    --card-foreground: 60 9% 98%;
+
+    --popover: 20 10% 12%;
+    --popover-foreground: 60 9% 98%;
+
+    --primary: 142 76% 36%;
+    --primary-foreground: 355 100% 100%;
+
+    --secondary: 30 54% 44%;
+    --secondary-foreground: 60 9% 98%;
+
+    --muted: 12 6% 15%;
+    --muted-foreground: 24 5% 64%;
+
+    --accent: 12 6% 15%;
+    --accent-foreground: 60 9% 98%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 60 9% 98%;
+
+    --border: 12 6% 20%;
+    --input: 12 6% 20%;
+    --ring: 142 76% 36%;
+
+    --sidebar-background: 20 10% 12%;
+    --sidebar-foreground: 60 9% 98%;
+    --sidebar-primary: 142 76% 36%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 30 40% 50%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 12 6% 20%;
+    --sidebar-ring: 142 76% 36%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-hindi;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-hindi font-semibold;
+  }
+}
+
+@layer components {
+  .feature-card {
+    @apply p-5 rounded-lg border border-border bg-card shadow-sm hover:shadow-md transition-all duration-300;
+  }
+
+  .hindi-text {
+    font-family: 'Poppins', sans-serif;
+  }
+}
+
+.soil-gradient {
+  background-image: linear-gradient(to bottom right, #e4d4c2, #9b7653);
+}
+
+.plant-gradient {
+  background-image: linear-gradient(to bottom right, #c1e1c1, #4CAF50);
+}
+
+.loading-dots:after {
+  content: '';
+  animation: dots 1.5s infinite;
+}
+
+@keyframes dots {
+  0%, 20% { content: '.'; }
+  40% { content: '..'; }
+  60%, 100% { content: '...'; }
+}
