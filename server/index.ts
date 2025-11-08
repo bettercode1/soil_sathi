@@ -1,26 +1,147 @@
 import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
+import type { Response } from "express";
+import cors, { type CorsOptions } from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import { z } from "zod";
 import { GoogleGenAI, Part, Schema, Type } from "@google/genai";
-
-dotenv.config();
+import { env } from "./config";
 
 const app = express();
-const port = process.env.PORT || 3001;
+const port = env.port;
 
-app.use(cors());
+app.disable("x-powered-by");
+
+const corsOptions: CorsOptions = {
+  origin: env.allowedOrigins.length ? env.allowedOrigins : undefined,
+};
+
+app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use(cors(corsOptions));
 app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ extended: false, limit: "20mb" }));
 
-const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-const API_KEY = process.env.GEMINI_API_KEY;
+const apiRateLimiter = rateLimit({
+  windowMs: env.rateLimitWindowMs,
+  max: env.rateLimitMaxRequests,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-if (!API_KEY) {
-  console.warn(
-    "[SoilSathi] GEMINI_API_KEY not found. Add it to your environment before starting the analysis server."
-  );
-}
+app.use("/api/", apiRateLimiter);
+
+const MODEL_NAME = env.geminiModel;
+const API_KEY = env.geminiApiKey;
 
 const genAI = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
+
+const MAX_REPORT_TEXT_LENGTH = 10_000;
+const MAX_IMAGE_CHAR_LENGTH = 8_000_000; // ~6 MB base64
+const MAX_MANUAL_ENTRIES = 50;
+const MAX_MANUAL_KEY_LENGTH = 50;
+const MAX_MANUAL_VALUE_LENGTH = 120;
+const BASE64_REGEX = /^[a-zA-Z0-9+/=\s]+$/;
+
+const languageSchema = z
+  .string()
+  .trim()
+  .regex(/^[a-z-]{2,10}$/i, "Language code must contain 2-10 alphabetic characters or hyphen.")
+  .transform((value) => value.toLowerCase());
+
+const analyzeRequestSchema = z.object({
+  language: languageSchema.optional(),
+  manualValues: z.record(z.union([z.string(), z.number()])).optional(),
+  reportImage: z
+    .object({
+      data: z.string().min(1).max(MAX_IMAGE_CHAR_LENGTH),
+      mimeType: z
+        .string()
+        .regex(/^image\/[a-zA-Z0-9.+-]+$/, "Invalid MIME type for report image.")
+        .optional(),
+    })
+    .optional(),
+  reportText: z.string().trim().max(MAX_REPORT_TEXT_LENGTH).optional(),
+});
+
+const structuredOptionSchema = z.object({
+  id: z.string().min(1, "Option id is required."),
+  label: z.string().min(1, "Option label is required.").max(100),
+});
+
+const recommendationsRequestSchema = z.object({
+  language: languageSchema.optional(),
+  soilType: structuredOptionSchema,
+  region: structuredOptionSchema,
+  crop: structuredOptionSchema,
+  growthStage: structuredOptionSchema,
+});
+
+const sanitizeManualValues = (manualValues: Record<string, string | number>) => {
+  return Object.fromEntries(
+    Object.entries(manualValues)
+      .slice(0, MAX_MANUAL_ENTRIES)
+      .map(([key, value]) => {
+        const sanitizedKey = key.trim().slice(0, MAX_MANUAL_KEY_LENGTH) || "unknown";
+        const rawValue = typeof value === "number" ? value.toString() : value.trim();
+        const sanitizedValue =
+          rawValue.length > 0 ? rawValue.slice(0, MAX_MANUAL_VALUE_LENGTH) : "not provided";
+        return [sanitizedKey, sanitizedValue];
+      })
+  );
+};
+
+const validateImageData = (data: string) => {
+  const [, encodedPayload = data] = data.split(",");
+  if (!BASE64_REGEX.test(encodedPayload)) {
+    throw new Error("reportImage.data must be base64 encoded.");
+  }
+  return encodedPayload;
+};
+
+const buildGenerationConfig = (schema: Schema) =>
+  ({
+    temperature: 0.5,
+    topP: 0.8,
+    topK: 40,
+    responseMimeType: "application/json",
+    responseSchema: schema,
+  }) satisfies Record<string, unknown>;
+
+const generateJsonResponse = async <T>({
+  model,
+  parts,
+  schema,
+}: {
+  model: string;
+  parts: Part[];
+  schema: Schema;
+}): Promise<T> => {
+  if (!genAI) {
+    throw new Error("Gemini client is not configured.");
+  }
+
+  const result = await genAI.models.generateContent({
+    model,
+    contents: [{ role: "user" as const, parts }],
+    config: buildGenerationConfig(schema),
+  });
+
+  const rawText = result.text as unknown;
+  const textValue =
+    typeof rawText === "function"
+      ? (rawText as () => string)()
+      : (rawText as string | undefined);
+
+  if (!textValue) {
+    throw new Error("Empty response from Gemini");
+  }
+
+  try {
+    return JSON.parse(textValue) as T;
+  } catch (error) {
+    throw new Error("Received invalid JSON from Gemini");
+  }
+};
 
 const analysisSchema: Schema = {
   type: Type.OBJECT,
@@ -184,43 +305,25 @@ const recommendationsSchema: Schema = {
   },
 };
 
-type AnalyzeRequestBody = {
-  language?: string;
-  manualValues?: Record<string, string | number>;
-  reportImage?: { data: string; mimeType?: string };
-  reportText?: string;
-};
-
 type StructuredOption = {
   id: string;
   label: string;
 };
 
-type RecommendationsRequestBody = {
-  language?: string;
-  soilType?: StructuredOption;
-  region?: StructuredOption;
-  crop?: StructuredOption;
-  growthStage?: StructuredOption;
-};
-
-const buildPrompt = ({
-  language,
-  manualValues,
-  reportText,
-}: {
-  language: string;
-  manualValues?: Record<string, string | number>;
-  reportText?: string;
-}): Part[] => {
-  const formattedManual = manualValues
-    ? Object.entries(manualValues)
-        .map(([key, value]) => `${key}: ${value || "not provided"}`)
+const buildPrompt = (
+  language: string,
+  manualValues?: Record<string, string>,
+  reportText?: string
+): Part[] => {
+  const formattedManual =
+    manualValues && Object.keys(manualValues).length > 0
+      ? Object.entries(manualValues)
+        .map(([key, value]) => `${key}: ${value}`)
         .join("\n")
-    : "No manual values provided.";
+      : "No manual values provided.";
 
-  const reportSection = reportText
-    ? `Lab report transcription:\n${reportText}`
+  const reportSection = reportText?.trim()
+    ? `Lab report transcription:\n${reportText.trim()}`
     : "No lab report text provided.";
 
   return [
@@ -248,19 +351,13 @@ const buildPrompt = ({
   ];
 };
 
-const buildRecommendationsPrompt = ({
-  language,
-  soilType,
-  region,
-  crop,
-  growthStage,
-}: {
-  language: string;
-  soilType: StructuredOption;
-  region: StructuredOption;
-  crop: StructuredOption;
-  growthStage: StructuredOption;
-}): Part[] => {
+const buildRecommendationsPrompt = (
+  language: string,
+  soilType: StructuredOption,
+  region: StructuredOption,
+  crop: StructuredOption,
+  growthStage: StructuredOption
+): Part[] => {
   const bullet = (title: string, value: StructuredOption) => `${title}: ${value.label} (id: ${value.id})`;
 
   return [
@@ -293,8 +390,24 @@ const buildRecommendationsPrompt = ({
   ];
 };
 
+const handleValidationFailure = (res: Response, error: z.ZodError) => {
+  res.status(400).json({
+    error: "Invalid request payload.",
+    details: error.flatten(),
+  });
+};
+
 app.get("/api/health", (_req, res) => {
-  res.json({ status: "ok", model: MODEL_NAME, hasKey: Boolean(API_KEY) });
+  res.json({
+    status: "ok",
+    model: MODEL_NAME,
+    hasKey: Boolean(API_KEY),
+    rateLimit: {
+      windowMs: env.rateLimitWindowMs,
+      maxRequests: env.rateLimitMaxRequests,
+    },
+    allowedOrigins: env.allowedOrigins,
+  });
 });
 
 app.post("/api/analyze-soil", async (req, res) => {
@@ -305,17 +418,38 @@ app.post("/api/analyze-soil", async (req, res) => {
     return;
   }
 
-  const body = req.body as AnalyzeRequestBody;
-  const language = (body.language || "en").toLowerCase();
-  const manualValues = body.manualValues || {};
-  const reportText = body.reportText;
-  const reportImage = body.reportImage;
+  const parsed = analyzeRequestSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    handleValidationFailure(res, parsed.error);
+    return;
+  }
+
+  const {
+    language = "en",
+    manualValues = {},
+    reportText,
+    reportImage,
+  } = parsed.data;
 
   try {
-    const parts = buildPrompt({ language, manualValues, reportText });
+    const sanitizedManualValues = sanitizeManualValues(manualValues);
+    const trimmedReportText = reportText?.trim() || undefined;
+    const parts = buildPrompt(language, sanitizedManualValues, trimmedReportText);
 
     if (reportImage?.data) {
-      const base64Data = reportImage.data.replace(/^data:image\/[a-zA-Z]+;base64,/, "");
+      let base64Data: string;
+      try {
+        base64Data = validateImageData(reportImage.data);
+      } catch (validationError) {
+        res.status(400).json({
+          error:
+            validationError instanceof Error
+              ? validationError.message
+              : "Invalid report image data.",
+        });
+        return;
+      }
       const mimeType =
         reportImage.mimeType ||
         (reportImage.data.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,/)?.[1] ?? "image/png");
@@ -330,30 +464,13 @@ app.post("/api/analyze-soil", async (req, res) => {
       parts.push(imagePart);
     }
 
-    const generationConfig = {
-      temperature: 0.5,
-      topP: 0.8,
-      topK: 40,
-      responseMimeType: "application/json",
-      responseSchema: analysisSchema,
-    } satisfies Record<string, unknown>;
-
-    const result = await genAI.models.generateContent({
+    const payload = await generateJsonResponse<Record<string, unknown>>({
       model: MODEL_NAME,
-      contents: [{ role: "user" as const, parts }],
-      config: generationConfig,
+      parts,
+      schema: analysisSchema,
     });
 
-    const rawText = result.text as unknown;
-    const textValue =
-      typeof rawText === "function" ? (rawText as () => string)() : (rawText as string | undefined);
-    if (!textValue) {
-      throw new Error("Empty response from Gemini");
-    }
-
-    const parsed = JSON.parse(textValue);
-
-    res.json(parsed);
+    res.json(payload);
   } catch (error) {
     console.error("[SoilSathi] Analysis failed:", error);
     res.status(500).json({
@@ -374,50 +491,31 @@ app.post("/api/recommendations", async (req, res) => {
     return;
   }
 
-  const body = req.body as RecommendationsRequestBody;
-  const language = (body.language || "en").toLowerCase();
-  const { soilType, region, crop, growthStage } = body;
+  const parsed = recommendationsRequestSchema.safeParse(req.body);
 
-  if (!soilType || !region || !crop || !growthStage) {
-    res.status(400).json({
-      error: "Missing selections. Soil type, region, crop, and growth stage are required.",
-    });
+  if (!parsed.success) {
+    handleValidationFailure(res, parsed.error);
     return;
   }
 
+  const { language = "en", soilType, region, crop, growthStage } = parsed.data;
+
   try {
-    const parts = buildRecommendationsPrompt({
+    const parts = buildRecommendationsPrompt(
       language,
       soilType,
       region,
       crop,
-      growthStage,
-    });
+      growthStage
+    );
 
-    const generationConfig = {
-      temperature: 0.5,
-      topP: 0.8,
-      topK: 40,
-      responseMimeType: "application/json",
-      responseSchema: recommendationsSchema,
-    } satisfies Record<string, unknown>;
-
-    const result = await genAI.models.generateContent({
+    const payload = await generateJsonResponse<Record<string, unknown>>({
       model: MODEL_NAME,
-      contents: [{ role: "user" as const, parts }],
-      config: generationConfig,
+      parts,
+      schema: recommendationsSchema,
     });
 
-    const rawText = result.text as unknown;
-    const textValue =
-      typeof rawText === "function" ? (rawText as () => string)() : (rawText as string | undefined);
-    if (!textValue) {
-      throw new Error("Empty response from Gemini");
-    }
-
-    const parsed = JSON.parse(textValue);
-
-    res.json(parsed);
+    res.json(payload);
   } catch (error) {
     console.error("[SoilSathi] Recommendations failed:", error);
     res.status(500).json({
