@@ -13,6 +13,7 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { Leaf } from "lucide-react";
 import BettercodeLogo from "@/assets/bettercode-logo.png";
+import { buildApiUrl, parseJsonResponse } from "@/lib/api";
 
 type SoilAnalysis = {
   language: string;
@@ -112,7 +113,7 @@ const SoilAnalyzer = () => {
     setIsAnalyzing(true);
     setAnalysis(null);
     try {
-      const response = await fetch("/api/analyze-soil", {
+      const response = await fetch(buildApiUrl("/api/analyze-soil"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -124,11 +125,22 @@ const SoilAnalyzer = () => {
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => null);
-        throw new Error(error?.details || error?.error || "Unknown server error");
+        let errorMessage = `Server responded with ${response.status}`;
+        try {
+          const errorPayload = await parseJsonResponse<{
+            error?: string;
+            details?: string;
+          }>(response.clone());
+          errorMessage = errorPayload.details || errorPayload.error || errorMessage;
+        } catch (parseError) {
+          if (parseError instanceof Error && parseError.message) {
+            errorMessage = parseError.message;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
-      const result = (await response.json()) as SoilAnalysis;
+      const result = await parseJsonResponse<SoilAnalysis>(response);
       setAnalysis(result);
       toast({
         title: t(soilAnalyzerTranslations.analysisReadyTitle),

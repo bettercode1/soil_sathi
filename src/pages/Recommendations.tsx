@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Leaf, Info } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { recommendationsTranslations, soilAnalyzerTranslations } from "@/constants/allTranslations";
+import { buildApiUrl, parseJsonResponse } from "@/lib/api";
 
 type LanguageCode = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
 type LocalizedString = Record<LanguageCode, string>;
@@ -149,7 +150,7 @@ const Recommendations = () => {
     setRecommendations(null);
 
     try {
-      const response = await fetch("/api/recommendations", {
+      const response = await fetch(buildApiUrl("/api/recommendations"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -164,11 +165,22 @@ const Recommendations = () => {
       });
 
       if (!response.ok) {
-        const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.details || errorBody?.error || "Unknown server error");
+        let errorMessage = `Server responded with ${response.status}`;
+        try {
+          const errorPayload = await parseJsonResponse<{
+            error?: string;
+            details?: string;
+          }>(response.clone());
+          errorMessage = errorPayload.details || errorPayload.error || errorMessage;
+        } catch (parseError) {
+          if (parseError instanceof Error && parseError.message) {
+            errorMessage = parseError.message;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
-      const data = (await response.json()) as AiRecommendations;
+      const data = await parseJsonResponse<AiRecommendations>(response);
       setRecommendations(data);
     } catch (error) {
       const message =
