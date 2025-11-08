@@ -3,9 +3,28 @@ import { z } from "zod";
 
 loadEnv();
 
+const coerceOptionalNumber = (max?: number) =>
+  z
+    .preprocess(
+      (value) => {
+        if (typeof value === "number") {
+          return Number.isNaN(value) ? undefined : value;
+        }
+        if (typeof value === "string") {
+          const trimmed = value.trim();
+          return trimmed ? Number(trimmed) : undefined;
+        }
+        return undefined;
+      },
+      max
+        ? z.number().int().positive().max(max).optional()
+        : z.number().int().positive().optional()
+    )
+    .optional();
+
 const rawEnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).optional(),
-  PORT: z.coerce.number().int().positive().max(65535).optional(),
+  PORT: coerceOptionalNumber(65535),
   GEMINI_MODEL: z
     .string()
     .trim()
@@ -25,8 +44,8 @@ const rawEnvSchema = z.object({
         .filter(Boolean)
     )
     .optional(),
-  RATE_LIMIT_WINDOW_MS: z.coerce.number().int().positive().optional(),
-  RATE_LIMIT_MAX_REQUESTS: z.coerce.number().int().positive().optional(),
+  RATE_LIMIT_WINDOW_MS: coerceOptionalNumber(),
+  RATE_LIMIT_MAX_REQUESTS: coerceOptionalNumber(),
 });
 
 const parseResult = rawEnvSchema.safeParse(process.env);
