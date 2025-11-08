@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,10 +19,22 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Menu, Leaf, Globe } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { cn } from "@/lib/utils";
 
 const Header = () => {
   const isMobile = useIsMobile();
   const { language, setLanguage, t, getLanguageName } = useLanguage();
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 16);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Simple translations for the header
   const translations = {
@@ -145,22 +157,29 @@ const Header = () => {
   );
 
   return (
-    <header className="border-b border-border bg-background sticky top-0 z-10">
-      <div className="container mx-auto py-4 px-4 flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <img 
-            src="/lovable-uploads/b7bbcec3-ea93-4139-9de1-934572a3cd1f.png" 
-            alt="Bettercode" 
-            className="h-8 w-auto"
-          />
-          <Link to="/" className="flex items-center gap-2">
-            <Leaf className="h-8 w-8 text-plant-dark" />
+    <header
+      className={cn(
+        "sticky top-0 z-20 border-b transition-all duration-300",
+        "supports-[backdrop-filter]:backdrop-blur-xl bg-background/40 border-border/20",
+        "shadow-none",
+        isScrolled && "bg-background/70 border-border/40 shadow-sm"
+      )}
+    >
+      <div className="container mx-auto flex items-center justify-between px-4 py-3 lg:py-4">
+        <div className="flex items-center gap-5">
+          <Link to="/" className="flex items-center gap-3">
+            <Leaf className="h-10 w-10 text-plant-dark" />
             <div>
-              <h1 className="text-xl font-bold text-primary flex items-center gap-1">
-                SoilSathi <span className="text-sm font-normal text-secondary">(सॉइल साथी)</span>
+              <h1 className="text-2xl font-bold text-primary flex items-center gap-1">
+                SoilSathi <span className="text-base font-normal text-secondary">(सॉइल साथी)</span>
               </h1>
             </div>
           </Link>
+          <img
+            src="/lovable-uploads/b7bbcec3-ea93-4139-9de1-934572a3cd1f.png"
+            alt="Bettercode"
+            className="h-7 w-auto"
+          />
         </div>
 
         {isMobile ? (

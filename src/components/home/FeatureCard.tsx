@@ -10,6 +10,7 @@ interface FeatureCardProps {
   description: string;
   icon: LucideIcon;
   linkTo: string;
+  buttonLabel: string;
   className?: string;
 }
 
@@ -18,6 +19,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
   description,
   icon: Icon,
   linkTo,
+  buttonLabel,
   className,
 }) => {
   return (
@@ -28,7 +30,7 @@ const FeatureCard: React.FC<FeatureCardProps> = ({
       <h3 className="text-xl font-semibold mb-2">{title}</h3>
       <p className="text-muted-foreground mb-4 flex-grow">{description}</p>
       <Button asChild className="mt-auto w-full" variant="outline">
-        <Link to={linkTo}>Explore</Link>
+        <Link to={linkTo}>{buttonLabel}</Link>
       </Button>
     </div>
   );

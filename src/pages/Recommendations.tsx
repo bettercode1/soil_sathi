@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,113 +8,196 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Leaf, Info } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { recommendationsTranslations } from "@/constants/allTranslations";
+import { recommendationsTranslations, soilAnalyzerTranslations } from "@/constants/allTranslations";
 
-const soilTypes = [
-  { id: "black", name: "Black Soil (Regur)" },
-  { id: "red", name: "Red Soil" },
-  { id: "alluvial", name: "Alluvial Soil" },
-  { id: "laterite", name: "Laterite Soil" },
-  { id: "sandy", name: "Sandy Soil" },
-  { id: "clayloam", name: "Clay Loam" },
+type LanguageCode = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
+type LocalizedString = Record<LanguageCode, string>;
+
+type SelectOption = {
+  id: string;
+  label: LocalizedString;
+  aiLabel: string;
+};
+
+type AiRecommendationEntry = {
+  name: string;
+  quantity: string;
+  frequency: string;
+  details: string;
+  notes?: string;
+};
+
+type AiRecommendationPlan = {
+  primary: AiRecommendationEntry[];
+  secondary: AiRecommendationEntry[];
+};
+
+type AiRecommendations = {
+  language: string;
+  summary?: string;
+  chemical: AiRecommendationPlan;
+  organic: AiRecommendationPlan;
+  tips: string[];
+};
+
+const localized = (
+  en: string,
+  hi: string,
+  pa: string,
+  ta: string,
+  te: string,
+  bn: string,
+  mr: string
+): LocalizedString => ({
+  en,
+  hi,
+  pa,
+  ta,
+  te,
+  bn,
+  mr,
+});
+
+const soilTypes: SelectOption[] = [
+  { id: "black", label: localized("Black Soil (Regur)", "काली मिट्टी (रेगर)", "ਕਾਲੀ ਮਿੱਟੀ (ਰੇਗਰ)", "கருப்பு மண் (ரேகூர்)", "నల్ల మట్టి (రేగూర్)", "কালো মাটি (রেগুর)", "काळी माती (रेगर)"), aiLabel: "Black clay soil (Regur)" },
+  { id: "red", label: localized("Red Soil", "लाल मिट्टी", "ਲਾਲ ਮਿੱਟੀ", "சிகப்பு மண்", "ఎర్ర మట్టి", "লাল মাটি", "लाल माती"), aiLabel: "Red loamy soil" },
+  { id: "alluvial", label: localized("Alluvial Soil", "जलोढ़ मिट्टी", "ਗਾਦ ਵਾਲੀ ਮਿੱਟੀ", "அல்லுவியல் மண்", "అల్లూవియల్ మట్టి", "পলিমাটি", "जलोढ माती"), aiLabel: "Alluvial soil" },
+  { id: "laterite", label: localized("Laterite Soil", "लेटराइट मिट्टी", "ਲੇਟਰਾਈਟ ਮਿੱਟੀ", "லேடரைட் மண்", "లేటరైట్ మట్టి", "ল্যাটেরাইট মাটি", "लेटराइट माती"), aiLabel: "Laterite soil" },
+  { id: "sandy", label: localized("Sandy Soil", "रेतीली मिट्टी", "ਰੇਤਲੀ ਮਿੱਟੀ", "மணற்பான மண்", "ఇసుక మట్టి", "বালুকামাটি", "वालुकामय माती"), aiLabel: "Sandy soil" },
+  { id: "clayloam", label: localized("Clay Loam", "दोमट मिट्टी", "ਦੋਮਟ ਮਿੱਟੀ", "களிமண் லோம்", "క్లే లోమ్ మట్టి", "দোঁআশ মাটি", "दोमट माती"), aiLabel: "Clay loam" },
 ];
 
-const regions = [
-  { id: "north", name: "North India" },
-  { id: "south", name: "South India" },
-  { id: "east", name: "East India" },
-  { id: "west", name: "West India" },
-  { id: "central", name: "Central India" },
-  { id: "northeast", name: "North East India" },
+const regions: SelectOption[] = [
+  { id: "north", label: localized("North India", "उत्तरी भारत", "ਉੱਤਰੀ ਭਾਰਤ", "வட இந்தியா", "ఉత్తర భారతదేశం", "উত্তর ভারত", "उत्तर भारत"), aiLabel: "North India" },
+  { id: "south", label: localized("South India", "दक्षिण भारत", "ਦੱਖਣੀ ਭਾਰਤ", "தென் இந்தியா", "దక్షిణ భారతదేశం", "দক্ষিণ ভারত", "दक्षिण भारत"), aiLabel: "South India" },
+  { id: "east", label: localized("East India", "पूर्वी भारत", "ਪੂਰਬੀ ਭਾਰਤ", "கிழக்கு இந்தியா", "తూర్పు భారతదేశం", "পূর্ব ভারত", "पूर्व भारत"), aiLabel: "East India" },
+  { id: "west", label: localized("West India", "पश्चिमी भारत", "ਪੱਛਮੀ ਭਾਰਤ", "மேற்கு இந்தியா", "పడమర భారతదేశం", "পশ্চিম ভারত", "पश्चिम भारत"), aiLabel: "West India" },
+  { id: "central", label: localized("Central India", "मध्य भारत", "ਮੱਧ ਭਾਰਤ", "மத்திய இந்தியா", "మధ్య భారతదేశం", "মধ্য ভারত", "मध्य भारत"), aiLabel: "Central India" },
+  { id: "northeast", label: localized("North East India", "उत्तर पूर्व भारत", "ਉੱਤਰੀ-ਪੂਰਬੀ ਭਾਰਤ", "வடகிழக்கு இந்தியா", "ఈశాన్య భారతదేశం", "উত্তর-পূর্ব ভারত", "ईशान्य भारत"), aiLabel: "North East India" },
 ];
 
-const cropOptions = [
-  { id: "wheat", name: "Wheat (गेहूं)" },
-  { id: "rice", name: "Rice (चावल)" },
-  { id: "cotton", name: "Cotton (कपास)" },
-  { id: "maize", name: "Maize (मक्का)" },
-  { id: "sugarcane", name: "Sugarcane (गन्ना)" },
-  { id: "potato", name: "Potato (आलू)" },
-  { id: "tomato", name: "Tomato (टमाटर)" },
-  { id: "onion", name: "Onion (प्याज)" },
-  { id: "mustard", name: "Mustard (सरसों)" },
-  { id: "soybean", name: "Soybean (सोयाबीन)" },
+const cropOptions: SelectOption[] = [
+  { id: "wheat", label: localized("Wheat", "गेहूं", "ਗੰਦਮ", "கோதுமை", "గోధుమ", "গম", "गहू"), aiLabel: "Wheat" },
+  { id: "rice", label: localized("Rice", "चावल", "ਚਾਵਲ", "அரிசி", "బియ్యం", "চাল", "तांदूळ"), aiLabel: "Rice" },
+  { id: "cotton", label: localized("Cotton", "कपास", "ਕਪਾਹ", "பருத்தி", "పత్తి", "কাপাস", "कापूस"), aiLabel: "Cotton" },
+  { id: "maize", label: localized("Maize", "मक्का", "ਮੱਕੀ", "மக்காச்சோளம்", "మొక్కజొన్న", "ভুট্টা", "मका"), aiLabel: "Maize (corn)" },
+  { id: "sugarcane", label: localized("Sugarcane", "गन्ना", "ਗੰਨਾ", "கரும்பு", "చెరకు", "আখ", "ऊस"), aiLabel: "Sugarcane" },
+  { id: "potato", label: localized("Potato", "आलू", "ਆਲੂ", "உருளைக்கிழங்கு", "ఆలుగడ్డ", "আলু", "बटाटा"), aiLabel: "Potato" },
+  { id: "tomato", label: localized("Tomato", "टमाटर", "ਟਮਾਟਰ", "தக்காளி", "టమాట", "টমেটো", "टोमॅटो"), aiLabel: "Tomato" },
+  { id: "onion", label: localized("Onion", "प्याज", "ਪਿਆਜ਼", "வெங்காயம்", "ఉల్లిపాయ", "পিঁয়াজ", "कांदा"), aiLabel: "Onion" },
+  { id: "mustard", label: localized("Mustard", "सरसों", "ਸਰੋਂ", "கடுகு", "ఆవాలు", "সরিষা", "मोहरी"), aiLabel: "Mustard" },
+  { id: "soybean", label: localized("Soybean", "सोयाबीन", "ਸੋਯਾਬੀਨ", "சோயா பீன்", "సోయాబీన్", "সয়াবিন", "सोयाबीन"), aiLabel: "Soybean" },
 ];
 
-const cropStages = [
-  { id: "pre-sowing", name: "Pre-sowing / Land Preparation" },
-  { id: "sowing", name: "Sowing / Planting" },
-  { id: "vegetative", name: "Vegetative Growth" },
-  { id: "flowering", name: "Flowering Stage" },
-  { id: "fruiting", name: "Fruiting Stage" },
-  { id: "maturity", name: "Maturity Stage" },
+const cropStages: SelectOption[] = [
+  { id: "pre-sowing", label: localized("Pre-sowing / Land Preparation", "बुवाई से पहले / भूमि तैयारी", "ਬੀਜ ਬੋਣ ਤੋਂ ਪਹਿਲਾਂ / ਜ਼ਮੀਨ ਤਿਆਰੀ", "விதைப்பு முன் / நிலத் தயாரிப்பு", "విత్తనానికి ముందు / నేల సిద్ధం", "বপনের আগে / জমি প্রস্তুতি", "पेरणीपूर्व / जमीन तयारी"), aiLabel: "Pre-sowing and land preparation" },
+  { id: "sowing", label: localized("Sowing / Planting", "बुवाई / रोपाई", "ਬੀਜ ਬੋਣਾ / ਰੋਪਾਈ", "விதைப்பு / நடவு", "విత్తకం / నాటుడు", "বপন / রোপণ", "पेरणी / लागवड"), aiLabel: "Sowing or planting stage" },
+  { id: "vegetative", label: localized("Vegetative Growth", "वनस्पतिक वृद्धि", "ਵਨਸਪਤੀ ਵਾਧਾ", "தாவர வளர்ச்சி", "వృక్ష వికాసం", "সবুজ বৃদ্ধি", "वनस्पती वाढ"), aiLabel: "Vegetative growth stage" },
+  { id: "flowering", label: localized("Flowering Stage", "फूल आने का चरण", "ਫੁੱਲ ਆਉਣ ਦਾ ਪੜਾਅ", "மலர்ச்சி நிலை", "పుష్పించే దశ", "ফুল ফোটার পর্যায়", "फुलोऱ्याचा टप्पा"), aiLabel: "Flowering stage" },
+  { id: "fruiting", label: localized("Fruiting Stage", "फल बनने का चरण", "ਫਲ ਬਣਨ ਦਾ ਪੜਾਅ", "கனி அமைக்கும் நிலை", "ఫల దశ", "ফল ধরার পর্যায়", "फळधारणा टप्पा"), aiLabel: "Fruiting or pod-filling stage" },
+  { id: "maturity", label: localized("Maturity Stage", "परिपक्वता चरण", "ਪਕਕਣ ਦਾ ਪੜਾਅ", "முழு வளர்ச்சி நிலை", "పక్వ దశ", "পরিপক্বতা পর্যায়", "परिपक्वतेचा टप्पा"), aiLabel: "Maturity or pre-harvest stage" },
 ];
+
+type AiRequestOption = {
+  id: string;
+  label: string;
+};
+
+const convertOptionForRequest = (option: SelectOption | undefined): AiRequestOption | undefined =>
+  option ? { id: option.id, label: option.aiLabel } : undefined;
 
 const Recommendations = () => {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [selectedSoil, setSelectedSoil] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedCrop, setSelectedCrop] = useState("");
   const [selectedStage, setSelectedStage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [recommendations, setRecommendations] = useState<null | any>(null);
+  const [recommendations, setRecommendations] = useState<AiRecommendations | null>(null);
 
-  const handleGetRecommendations = () => {
+  const selectedSoilOption = useMemo(() => soilTypes.find((soil) => soil.id === selectedSoil), [selectedSoil]);
+  const selectedRegionOption = useMemo(() => regions.find((region) => region.id === selectedRegion), [selectedRegion]);
+  const selectedCropOption = useMemo(() => cropOptions.find((crop) => crop.id === selectedCrop), [selectedCrop]);
+  const selectedStageOption = useMemo(() => cropStages.find((stage) => stage.id === selectedStage), [selectedStage]);
+
+  const handleGetRecommendations = async () => {
     if (!selectedSoil || !selectedRegion || !selectedCrop || !selectedStage) {
       toast({
-        title: "Missing information",
-        description: "Please select all required fields to get recommendations.",
+        title: t(recommendationsTranslations.missingInfoTitle),
+        description: t(recommendationsTranslations.missingInfoDescription),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const soilForRequest = convertOptionForRequest(selectedSoilOption);
+    const regionForRequest = convertOptionForRequest(selectedRegionOption);
+    const cropForRequest = convertOptionForRequest(selectedCropOption);
+    const stageForRequest = convertOptionForRequest(selectedStageOption);
+
+    if (!soilForRequest || !regionForRequest || !cropForRequest || !stageForRequest) {
+      toast({
+        title: t(recommendationsTranslations.missingInfoTitle),
+        description: t(recommendationsTranslations.missingInfoDescription),
         variant: "destructive",
       });
       return;
     }
 
     setIsLoading(true);
+    setRecommendations(null);
 
-    // Simulate API call to get recommendations
-    setTimeout(() => {
-      const dummyRecommendations = {
-        chemical: {
-          primary: [
-            { name: "NPK 12:32:16", quantity: "150 kg/hectare", frequency: "Once at planting", details: "Mix well in soil before sowing" },
-            { name: "Urea", quantity: "100 kg/hectare", frequency: "Split application", details: "Apply 50kg at 30 days after sowing, and 50kg at flowering stage" }
-          ],
-          secondary: [
-            { name: "Zinc Sulfate", quantity: "25 kg/hectare", frequency: "Once per season", details: "Apply 3 weeks after germination" }
-          ]
+    try {
+      const response = await fetch("/api/recommendations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        organic: {
-          primary: [
-            { name: "Farmyard Manure", quantity: "10-15 tonnes/hectare", frequency: "Once before planting", details: "Apply 2-3 weeks before sowing and mix well" },
-            { name: "Vermicompost", quantity: "5 tonnes/hectare", frequency: "Once at land preparation", details: "Incorporate into soil before planting" }
-          ],
-          secondary: [
-            { name: "Neem Cake", quantity: "200 kg/hectare", frequency: "Once per season", details: "Apply during land preparation" },
-            { name: "Jeevamrut", quantity: "500 liters/hectare", frequency: "Every 15-30 days", details: "Apply as soil drench or foliar spray" }
-          ]
-        },
-        tips: [
-          "For this soil type, maintain pH between 6.0-7.0 for optimal nutrient availability",
-          "Consider green manuring with dhaincha or sunhemp before wheat cultivation",
-          "Use mulching to conserve soil moisture and suppress weeds"
-        ]
-      };
+        body: JSON.stringify({
+          language,
+          soilType: soilForRequest,
+          region: regionForRequest,
+          crop: cropForRequest,
+          growthStage: stageForRequest,
+        }),
+      });
 
-      setRecommendations(dummyRecommendations);
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.details || errorBody?.error || "Unknown server error");
+      }
+
+      const data = (await response.json()) as AiRecommendations;
+      setRecommendations(data);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to fetch recommendations from Gemini.";
+      toast({
+        title: t(soilAnalyzerTranslations.analysisErrorTitle),
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
     <Layout>
-      <section className="bg-muted py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
+      <section className="relative isolate overflow-hidden py-16 md:py-20">
+        <img
+          src="https://images.pexels.com/photos/34617460/pexels-photo-34617460.jpeg?auto=compress&cs=tinysrgb&w=2000"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-slate-900/65" aria-hidden="true" />
+        <div className="container relative mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center text-white">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
               {t(recommendationsTranslations.title)}
             </h1>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-white/90 mb-6">
               {t(recommendationsTranslations.subtitle)}
             </p>
           </div>
@@ -139,12 +222,12 @@ const Recommendations = () => {
                     </label>
                     <Select value={selectedSoil} onValueChange={setSelectedSoil}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select soil type" />
+                        <SelectValue placeholder={t(recommendationsTranslations.soilTypePlaceholder)} />
                       </SelectTrigger>
                       <SelectContent>
                         {soilTypes.map((soil) => (
                           <SelectItem key={soil.id} value={soil.id}>
-                            {soil.name}
+                            {t(soil.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -156,12 +239,12 @@ const Recommendations = () => {
                     </label>
                     <Select value={selectedRegion} onValueChange={setSelectedRegion}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select your region" />
+                        <SelectValue placeholder={t(recommendationsTranslations.regionPlaceholder)} />
                       </SelectTrigger>
                       <SelectContent>
                         {regions.map((region) => (
                           <SelectItem key={region.id} value={region.id}>
-                            {region.name}
+                            {t(region.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -173,12 +256,12 @@ const Recommendations = () => {
                     </label>
                     <Select value={selectedCrop} onValueChange={setSelectedCrop}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select crop" />
+                        <SelectValue placeholder={t(recommendationsTranslations.cropPlaceholder)} />
                       </SelectTrigger>
                       <SelectContent>
                         {cropOptions.map((crop) => (
                           <SelectItem key={crop.id} value={crop.id}>
-                            {crop.name}
+                            {t(crop.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -190,12 +273,12 @@ const Recommendations = () => {
                     </label>
                     <Select value={selectedStage} onValueChange={setSelectedStage}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select growth stage" />
+                        <SelectValue placeholder={t(recommendationsTranslations.stagePlaceholder)} />
                       </SelectTrigger>
                       <SelectContent>
                         {cropStages.map((stage) => (
                           <SelectItem key={stage.id} value={stage.id}>
-                            {stage.name}
+                            {t(stage.label)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -203,8 +286,8 @@ const Recommendations = () => {
                   </div>
                 </div>
 
-                <Button 
-                  className="w-full" 
+                <Button
+                  className="w-full"
                   onClick={handleGetRecommendations}
                   disabled={isLoading}
                 >
@@ -220,6 +303,18 @@ const Recommendations = () => {
             {recommendations && (
               <div className="mt-12 animate-grow">
                 <h2 className="text-2xl font-bold mb-6">{t(recommendationsTranslations.yourRecommendations)}</h2>
+
+                {recommendations.summary && (
+                  <Card className="mb-6">
+                    <CardHeader>
+                      <CardTitle>{t(recommendationsTranslations.summaryHeading)}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground leading-relaxed">{recommendations.summary}</p>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <Tabs defaultValue="chemical">
                   <TabsList className="grid w-full grid-cols-2 mb-6">
                     <TabsTrigger value="chemical">{t(recommendationsTranslations.chemicalFertilizers)}</TabsTrigger>
@@ -230,18 +325,18 @@ const Recommendations = () => {
                     <Card>
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                          <span>Chemical Fertilizer Recommendations</span>
+                          <span>{t(recommendationsTranslations.chemicalCardTitle)}</span>
                         </CardTitle>
                         <CardDescription>
-                          Based on your soil type, region, and crop requirements
+                          {t(recommendationsTranslations.chemicalCardDescription)}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-6">
                           <div>
-                            <h3 className="text-lg font-semibold mb-3">Primary Nutrients</h3>
+                            <h3 className="text-lg font-semibold mb-3">{t(recommendationsTranslations.primaryNutrients)}</h3>
                             <div className="space-y-4">
-                              {recommendations.chemical.primary.map((fertilizer: any, index: number) => (
+                              {recommendations.chemical.primary.map((fertilizer, index) => (
                                 <div key={index} className="bg-muted p-4 rounded-md">
                                   <div className="flex justify-between flex-wrap gap-2 mb-2">
                                     <h4 className="font-medium">{fertilizer.name}</h4>
@@ -250,20 +345,25 @@ const Recommendations = () => {
                                     </span>
                                   </div>
                                   <p className="text-sm text-muted-foreground mb-1">
-                                    <span className="font-medium">Frequency:</span> {fertilizer.frequency}
+                                    <span className="font-medium">{t(recommendationsTranslations.frequencyLabel)}:</span> {fertilizer.frequency}
                                   </p>
                                   <p className="text-sm text-muted-foreground">
-                                    <span className="font-medium">Application:</span> {fertilizer.details}
+                                    <span className="font-medium">{t(recommendationsTranslations.detailsLabel)}:</span> {fertilizer.details}
                                   </p>
+                                  {fertilizer.notes && (
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                      <span className="font-medium">{t(recommendationsTranslations.notesLabel)}:</span> {fertilizer.notes}
+                                    </p>
+                                  )}
                                 </div>
                               ))}
                             </div>
                           </div>
                           
                           <div>
-                            <h3 className="text-lg font-semibold mb-3">Secondary & Micronutrients</h3>
+                            <h3 className="text-lg font-semibold mb-3">{t(recommendationsTranslations.secondaryNutrients)}</h3>
                             <div className="space-y-4">
-                              {recommendations.chemical.secondary.map((fertilizer: any, index: number) => (
+                              {recommendations.chemical.secondary.map((fertilizer, index) => (
                                 <div key={index} className="bg-muted p-4 rounded-md">
                                   <div className="flex justify-between flex-wrap gap-2 mb-2">
                                     <h4 className="font-medium">{fertilizer.name}</h4>
@@ -272,11 +372,16 @@ const Recommendations = () => {
                                     </span>
                                   </div>
                                   <p className="text-sm text-muted-foreground mb-1">
-                                    <span className="font-medium">Frequency:</span> {fertilizer.frequency}
+                                    <span className="font-medium">{t(recommendationsTranslations.frequencyLabel)}:</span> {fertilizer.frequency}
                                   </p>
                                   <p className="text-sm text-muted-foreground">
-                                    <span className="font-medium">Application:</span> {fertilizer.details}
+                                    <span className="font-medium">{t(recommendationsTranslations.detailsLabel)}:</span> {fertilizer.details}
                                   </p>
+                                  {fertilizer.notes && (
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                      <span className="font-medium">{t(recommendationsTranslations.notesLabel)}:</span> {fertilizer.notes}
+                                    </p>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -291,18 +396,18 @@ const Recommendations = () => {
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Leaf className="h-5 w-5" />
-                          <span>Organic Alternatives</span>
+                          <span>{t(recommendationsTranslations.organicAlternatives)}</span>
                         </CardTitle>
                         <CardDescription>
-                          Natural and sustainable options for soil fertility management
+                          {t(recommendationsTranslations.organicCardDescription)}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-6">
                           <div>
-                            <h3 className="text-lg font-semibold mb-3">Primary Organic Inputs</h3>
+                            <h3 className="text-lg font-semibold mb-3">{t(recommendationsTranslations.primaryOrganicInputs)}</h3>
                             <div className="space-y-4">
-                              {recommendations.organic.primary.map((fertilizer: any, index: number) => (
+                              {recommendations.organic.primary.map((fertilizer, index) => (
                                 <div key={index} className="bg-accent p-4 rounded-md">
                                   <div className="flex justify-between flex-wrap gap-2 mb-2">
                                     <h4 className="font-medium">{fertilizer.name}</h4>
@@ -311,20 +416,25 @@ const Recommendations = () => {
                                     </span>
                                   </div>
                                   <p className="text-sm text-muted-foreground mb-1">
-                                    <span className="font-medium">Frequency:</span> {fertilizer.frequency}
+                                    <span className="font-medium">{t(recommendationsTranslations.frequencyLabel)}:</span> {fertilizer.frequency}
                                   </p>
                                   <p className="text-sm text-muted-foreground">
-                                    <span className="font-medium">Application:</span> {fertilizer.details}
+                                    <span className="font-medium">{t(recommendationsTranslations.detailsLabel)}:</span> {fertilizer.details}
                                   </p>
+                                  {fertilizer.notes && (
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                      <span className="font-medium">{t(recommendationsTranslations.notesLabel)}:</span> {fertilizer.notes}
+                                    </p>
+                                  )}
                                 </div>
                               ))}
                             </div>
                           </div>
                           
                           <div>
-                            <h3 className="text-lg font-semibold mb-3">Biofertilizers & Natural Amendments</h3>
+                            <h3 className="text-lg font-semibold mb-3">{t(recommendationsTranslations.biofertilizers)}</h3>
                             <div className="space-y-4">
-                              {recommendations.organic.secondary.map((fertilizer: any, index: number) => (
+                              {recommendations.organic.secondary.map((fertilizer, index) => (
                                 <div key={index} className="bg-accent p-4 rounded-md">
                                   <div className="flex justify-between flex-wrap gap-2 mb-2">
                                     <h4 className="font-medium">{fertilizer.name}</h4>
@@ -333,11 +443,16 @@ const Recommendations = () => {
                                     </span>
                                   </div>
                                   <p className="text-sm text-muted-foreground mb-1">
-                                    <span className="font-medium">Frequency:</span> {fertilizer.frequency}
+                                    <span className="font-medium">{t(recommendationsTranslations.frequencyLabel)}:</span> {fertilizer.frequency}
                                   </p>
                                   <p className="text-sm text-muted-foreground">
-                                    <span className="font-medium">Application:</span> {fertilizer.details}
+                                    <span className="font-medium">{t(recommendationsTranslations.detailsLabel)}:</span> {fertilizer.details}
                                   </p>
+                                  {fertilizer.notes && (
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                      <span className="font-medium">{t(recommendationsTranslations.notesLabel)}:</span> {fertilizer.notes}
+                                    </p>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -355,12 +470,12 @@ const Recommendations = () => {
                       <span>{t(recommendationsTranslations.additionalTips)}</span>
                     </CardTitle>
                     <CardDescription>
-                      Helpful advice to improve your soil and crop management
+                      {t(recommendationsTranslations.tipsCardDescription)}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
-                      {recommendations.tips.map((tip: string, index: number) => (
+                      {recommendations.tips.map((tip, index) => (
                         <li key={index} className="flex items-start gap-2">
                           <span className="text-primary font-bold">•</span>
                           <span>{tip}</span>

@@ -34,36 +34,42 @@ const Index = () => {
               description={translations.feature1Description}
               icon={FileText}
               linkTo="/soil-analyzer"
+              buttonLabel={translations.featureButton}
             />
             <FeatureCard
               title={translations.feature2Title}
               description={translations.feature2Description}
               icon={Leaf}
               linkTo="/recommendations"
+              buttonLabel={translations.featureButton}
             />
             <FeatureCard
               title={translations.feature3Title}
               description={translations.feature3Description}
               icon={Map}
               linkTo="/regions"
+              buttonLabel={translations.featureButton}
             />
             <FeatureCard
               title={translations.feature4Title}
               description={translations.feature4Description}
               icon={BarChart3}
               linkTo="/soil-health"
+              buttonLabel={translations.featureButton}
             />
             <FeatureCard
               title={translations.feature5Title}
               description={translations.feature5Description}
               icon={Leaf}
               linkTo="/organic-farming"
+              buttonLabel={translations.featureButton}
             />
             <FeatureCard
               title={translations.feature6Title}
               description={translations.feature6Description}
               icon={Calendar}
               linkTo="/alerts"
+              buttonLabel={translations.featureButton}
             />
           </div>
         </div>

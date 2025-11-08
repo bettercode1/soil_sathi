@@ -34,6 +34,7 @@ export const homePageTranslations: TranslationLanguages = {
     
     feature6Title: "Season Reminders",
     feature6Description: "Get reminders about when to test soil, apply fertilizers, and other important farm tasks.",
+    featureButton: "Explore",
     
     howItWorksTitle: "How It Works - Just 3 Easy Steps",
     howItWorksDescription: "SoilSathi is simple to use - even without a soil report",
@@ -89,6 +90,7 @@ export const homePageTranslations: TranslationLanguages = {
     
     feature6Title: "मौसम अनुस्मारक",
     feature6Description: "मिट्टी का परीक्षण करने, उर्वरक लगाने और अन्य महत्वपूर्ण खेती कार्यों के बारे में अनुस्मारक प्राप्त करें।",
+    featureButton: "देखें",
     
     howItWorksTitle: "यह काम कैसे करता है - सिर्फ 3 आसान चरण",
     howItWorksDescription: "सॉइल साथी का उपयोग करना आसान है - बिना मिट्टी रिपोर्ट के भी",
@@ -144,6 +146,7 @@ export const homePageTranslations: TranslationLanguages = {
     
     feature6Title: "ਮੌਸਮੀ ਰਿਮਾਈਂਡਰ",
     feature6Description: "ਮਿੱਟੀ ਦੀ ਜਾਂਚ ਕਰਨ, ਖਾਦ ਪਾਉਣ ਅਤੇ ਹੋਰ ਮਹੱਤਵਪੂਰਨ ਖੇਤੀ ਕੰਮਾਂ ਬਾਰੇ ਯਾਦ-ਦਹਾਨੀਆਂ ਪ੍ਰਾਪਤ ਕਰੋ।",
+    featureButton: "ਖੋਜੋ",
     
     howItWorksTitle: "ਇਹ ਕਿਵੇਂ ਕੰਮ ਕਰਦਾ ਹੈ - ਸਿਰਫ 3 ਆਸਾਨ ਕਦਮ",
     howItWorksDescription: "ਸੋਇਲ ਸਾਥੀ ਦੀ ਵਰਤੋਂ ਕਰਨਾ ਆਸਾਨ ਹੈ - ਮਿੱਟੀ ਦੀ ਰਿਪੋਰਟ ਤੋਂ ਬਿਨਾਂ ਵੀ",
@@ -199,6 +202,7 @@ export const homePageTranslations: TranslationLanguages = {
     
     feature6Title: "பருவகால நினைவூட்டல்கள்",
     feature6Description: "மண் பரிசோதனை, உரமிடுதல் மற்றும் பிற முக்கியமான பண்ணை வேலைகள் பற்றிய நினைவூட்டல்களைப் பெறுங்கள்.",
+    featureButton: "ஆராயுங்கள்",
     
     howItWorksTitle: "இது எவ்வாறு செயல்படுகிறது - வெறும் 3 எளிய படிகள்",
     howItWorksDescription: "சாயில் சாதி பயன்படுத்துவது எளிதானது - மண் அறிக்கை இல்லாமலும்",
@@ -254,6 +258,7 @@ export const homePageTranslations: TranslationLanguages = {
     
     feature6Title: "సీజన్ రిమైండర్లు",
     feature6Description: "మట్టి పరీక్ష, ఎరువుల వినియోగం మరియు ఇతర ముఖ్యమైన వ్యవసాయ పనుల గురించి రిమైండర్‌లను పొందండి.",
+    featureButton: "అన్వేషించండి",
     
     howItWorksTitle: "ఇది ఎలా పనిచేస్తుంది - కేవలం 3 సులభమైన దశలు",
     howItWorksDescription: "సాయిల్ సాథి ఉపయోగించడం సులభం - మట్టి నివేదిక లేకుండా కూడా",
@@ -309,6 +314,7 @@ export const homePageTranslations: TranslationLanguages = {
     
     feature6Title: "মৌসুমী রিমাইন্ডার",
     feature6Description: "মাটি পরীক্ষা, সার প্রয়োগ এবং অন্যান্য গুরুত্বপূর্ণ কৃষি কাজের জন্য রিমাইন্ডার পান।",
+    featureButton: "অন্বেষণ করুন",
     
     howItWorksTitle: "এটি কীভাবে কাজ করে - মাত্র ৩টি সহজ ধাপ",
     howItWorksDescription: "সয়েল সাথি ব্যবহার করা সহজ - মাটির রিপোর্ট ছাড়াই",
@@ -364,6 +370,7 @@ export const homePageTranslations: TranslationLanguages = {
     
     feature6Title: "हंगामी आठवणी",
     feature6Description: "माती तपासणी, खते टाकणे आणि इतर महत्त्वाच्या शेती कामांबद्दल आठवणी मिळवा.",
+    featureButton: "अन्वेषण करा",
     
     howItWorksTitle: "हे कसे कार्य करते - फक्त ३ सोप्या पायऱ्या",
     howItWorksDescription: "सॉइल साथी वापरणे सोपे आहे - माती अहवालाशिवायही",

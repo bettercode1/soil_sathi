@@ -1,0 +1,8 @@
+<svg width="120" height="36" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="2" width="32" height="32" rx="8" fill="#166534"/>
+  <path d="M18 10C14.134 10 11 13.134 11 17C11 20.866 14.134 24 18 24C21.866 24 25 20.866 25 17H18V10Z" fill="#FDE68A"/>
+  <path d="M29 20C26.7909 20 25 21.7909 25 24C25 26.2091 26.7909 28 29 28C31.2091 28 33 26.2091 33 24C33 21.7909 31.2091 20 29 20ZM29 26.5C27.6193 26.5 26.5 25.3807 26.5 24C26.5 22.6193 27.6193 21.5 29 21.5C30.3807 21.5 31.5 22.6193 31.5 24C31.5 25.3807 30.3807 26.5 29 26.5Z" fill="#FDE68A"/>
+  <text x="44" y="24" fill="#0F172A" font-family="Poppins, Arial, sans-serif" font-weight="600" font-size="18">SoilSathi</text>
+  <text x="44" y="32" fill="#15803D" font-family="Poppins, Arial, sans-serif" font-weight="500" font-size="9">Soil Wellness Report</text>
+</svg>
+
