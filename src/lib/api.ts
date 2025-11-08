@@ -36,13 +36,36 @@ export const parseJsonResponse = async <T>(response: Response): Promise<T> => {
     }
   };
 
+  const logNonJsonResponse = () => {
+    console.error("[API] Non-JSON response received.", {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url,
+      headers: Object.fromEntries(response.headers.entries()),
+      body: trimmedBody.slice(0, 2_000),
+    });
+  };
+
   if (!contentType.includes("application/json")) {
-    ensureOk(
-      trimmedBody || "Received a non-JSON response from the server."
-    );
-    throw new Error(
-      trimmedBody || "Received a non-JSON response from the server."
-    );
+    if (trimmedBody) {
+      try {
+        const parsedJson = JSON.parse(trimmedBody) as T;
+        console.warn("[API] Parsed JSON without application/json header.", {
+          status: response.status,
+          statusText: response.statusText,
+          url: response.url,
+        });
+        ensureOk("Received a non-JSON response from the server.");
+        return parsedJson;
+      } catch {
+        logNonJsonResponse();
+      }
+    } else {
+      logNonJsonResponse();
+    }
+
+    ensureOk(trimmedBody || "Received a non-JSON response from the server.");
+    throw new Error(trimmedBody || "Received a non-JSON response from the server.");
   }
 
   if (!trimmedBody) {
