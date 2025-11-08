@@ -11,7 +11,8 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "tsx server/index.ts"
+    "server": "tsx server/index.ts",
+    "postinstall": "node ./scripts/postinstall-build.mjs"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
