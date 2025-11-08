@@ -7,6 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { Leaf, Info } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { organicFarmingNutrientTranslations } from "@/constants/allTranslations";
 
 const OrganicFarming = () => {
   const { t } = useLanguage();
@@ -147,33 +148,33 @@ const OrganicFarming = () => {
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="bg-accent/50 p-5 rounded-lg">
-                        <h3 className="font-semibold text-lg mb-3">Nitrogen Sources</h3>
+                        <h3 className="font-semibold text-lg mb-3">{t(organicFarmingNutrientTranslations.nitrogenSources)}</h3>
                         <ul className="space-y-3">
                           <li className="flex gap-3">
-                            <Badge variant="outline" className="bg-plant-light text-plant-dark">Rich</Badge>
+                            <Badge variant="outline" className="bg-plant-light text-plant-dark">{t(organicFarmingNutrientTranslations.rich)}</Badge>
                             <div>
-                              <p className="font-medium">Farmyard Manure</p>
+                              <p className="font-medium">{t(organicFarmingNutrientTranslations.farmyardManure)}</p>
                               <p className="text-sm text-muted-foreground">5-10 tonnes/hectare</p>
                             </div>
                           </li>
                           <li className="flex gap-3">
-                            <Badge variant="outline" className="bg-plant-light text-plant-dark">Rich</Badge>
+                            <Badge variant="outline" className="bg-plant-light text-plant-dark">{t(organicFarmingNutrientTranslations.rich)}</Badge>
                             <div>
-                              <p className="font-medium">Vermicompost</p>
+                              <p className="font-medium">{t(organicFarmingNutrientTranslations.vermicompost)}</p>
                               <p className="text-sm text-muted-foreground">3-5 tonnes/hectare</p>
                             </div>
                           </li>
                           <li className="flex gap-3">
-                            <Badge variant="outline" className="bg-plant-light text-plant-dark">Rich</Badge>
+                            <Badge variant="outline" className="bg-plant-light text-plant-dark">{t(organicFarmingNutrientTranslations.rich)}</Badge>
                             <div>
-                              <p className="font-medium">Green Manuring</p>
+                              <p className="font-medium">{t(organicFarmingNutrientTranslations.greenManuring)}</p>
                               <p className="text-sm text-muted-foreground">Dhaincha, Sunhemp, Cow pea</p>
                             </div>
                           </li>
                           <li className="flex gap-3">
-                            <Badge variant="outline" className="bg-plant-light text-plant-dark">Moderate</Badge>
+                            <Badge variant="outline" className="bg-plant-light text-plant-dark">{t(organicFarmingNutrientTranslations.moderate)}</Badge>
                             <div>
-                              <p className="font-medium">Neem Cake</p>
+                              <p className="font-medium">{t(organicFarmingNutrientTranslations.neemCake)}</p>
                               <p className="text-sm text-muted-foreground">100-200 kg/hectare</p>
                             </div>
                           </li>
@@ -181,26 +182,26 @@ const OrganicFarming = () => {
                       </div>
                       
                       <div className="bg-accent/50 p-5 rounded-lg">
-                        <h3 className="font-semibold text-lg mb-3">Phosphorus Sources</h3>
+                        <h3 className="font-semibold text-lg mb-3">{t(organicFarmingNutrientTranslations.phosphorusSources)}</h3>
                         <ul className="space-y-3">
                           <li className="flex gap-3">
-                            <Badge variant="outline" className="bg-plant-light text-plant-dark">Rich</Badge>
+                            <Badge variant="outline" className="bg-plant-light text-plant-dark">{t(organicFarmingNutrientTranslations.rich)}</Badge>
                             <div>
-                              <p className="font-medium">Bone Meal</p>
+                              <p className="font-medium">{t(organicFarmingNutrientTranslations.boneMeal)}</p>
                               <p className="text-sm text-muted-foreground">200-300 kg/hectare</p>
                             </div>
                           </li>
                           <li className="flex gap-3">
-                            <Badge variant="outline" className="bg-plant-light text-plant-dark">Moderate</Badge>
+                            <Badge variant="outline" className="bg-plant-light text-plant-dark">{t(organicFarmingNutrientTranslations.moderate)}</Badge>
                             <div>
-                              <p className="font-medium">Rock Phosphate</p>
+                              <p className="font-medium">{t(organicFarmingNutrientTranslations.rockPhosphate)}</p>
                               <p className="text-sm text-muted-foreground">300-400 kg/hectare</p>
                             </div>
                           </li>
                           <li className="flex gap-3">
-                            <Badge variant="outline" className="bg-plant-light text-plant-dark">Moderate</Badge>
+                            <Badge variant="outline" className="bg-plant-light text-plant-dark">{t(organicFarmingNutrientTranslations.moderate)}</Badge>
                             <div>
-                              <p className="font-medium">Wood Ash</p>
+                              <p className="font-medium">{t(organicFarmingNutrientTranslations.woodAsh)}</p>
                               <p className="text-sm text-muted-foreground">500-1000 kg/hectare</p>
                             </div>
                           </li>
@@ -208,26 +209,26 @@ const OrganicFarming = () => {
                       </div>
                       
                       <div className="bg-accent/50 p-5 rounded-lg">
-                        <h3 className="font-semibold text-lg mb-3">Potassium Sources</h3>
+                        <h3 className="font-semibold text-lg mb-3">{t(organicFarmingNutrientTranslations.potassiumSources)}</h3>
                         <ul className="space-y-3">
                           <li className="flex gap-3">
-                            <Badge variant="outline" className="bg-plant-light text-plant-dark">Rich</Badge>
+                            <Badge variant="outline" className="bg-plant-light text-plant-dark">{t(organicFarmingNutrientTranslations.rich)}</Badge>
                             <div>
-                              <p className="font-medium">Wood Ash</p>
+                              <p className="font-medium">{t(organicFarmingNutrientTranslations.woodAsh)}</p>
                               <p className="text-sm text-muted-foreground">500-1000 kg/hectare</p>
                             </div>
                           </li>
                           <li className="flex gap-3">
-                            <Badge variant="outline" className="bg-plant-light text-plant-dark">Moderate</Badge>
+                            <Badge variant="outline" className="bg-plant-light text-plant-dark">{t(organicFarmingNutrientTranslations.moderate)}</Badge>
                             <div>
-                              <p className="font-medium">Banana Pseudostem</p>
+                              <p className="font-medium">{t(organicFarmingNutrientTranslations.bananaPseudostem)}</p>
                               <p className="text-sm text-muted-foreground">Chop and mix in soil</p>
                             </div>
                           </li>
                           <li className="flex gap-3">
-                            <Badge variant="outline" className="bg-plant-light text-plant-dark">Moderate</Badge>
+                            <Badge variant="outline" className="bg-plant-light text-plant-dark">{t(organicFarmingNutrientTranslations.moderate)}</Badge>
                             <div>
-                              <p className="font-medium">Seaweed Extract</p>
+                              <p className="font-medium">{t(organicFarmingNutrientTranslations.seaweedExtract)}</p>
                               <p className="text-sm text-muted-foreground">Applied as foliar spray</p>
                             </div>
                           </li>
@@ -235,12 +236,12 @@ const OrganicFarming = () => {
                       </div>
                       
                       <div className="bg-accent/50 p-5 rounded-lg">
-                        <h3 className="font-semibold text-lg mb-3">Micronutrient Sources</h3>
+                        <h3 className="font-semibold text-lg mb-3">{t(organicFarmingNutrientTranslations.micronutrientSources)}</h3>
                         <ul className="space-y-3">
                           <li className="flex gap-3">
-                            <Badge variant="outline" className="bg-plant-light text-plant-dark">Combined</Badge>
+                            <Badge variant="outline" className="bg-plant-light text-plant-dark">{t(organicFarmingNutrientTranslations.combined)}</Badge>
                             <div>
-                              <p className="font-medium">Seaweed Extract</p>
+                              <p className="font-medium">{t(organicFarmingNutrientTranslations.seaweedExtract)}</p>
                               <p className="text-sm text-muted-foreground">Multiple micronutrients</p>
                             </div>
                           </li>
@@ -275,9 +276,9 @@ const OrganicFarming = () => {
               <TabsContent value="preparations">
                 <Card>
                   <CardHeader>
-                    <CardTitle>DIY Organic Preparations</CardTitle>
+                    <CardTitle>{t(organicFarmingNutrientTranslations.diyPreparationsTitle)}</CardTitle>
                     <CardDescription>
-                      Learn how to make your own organic fertilizers and soil amendments
+                      {t(organicFarmingNutrientTranslations.diyPreparationsDesc)}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -478,16 +479,16 @@ const OrganicFarming = () => {
               <TabsContent value="practices">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Sustainable Soil Management Practices</CardTitle>
+                    <CardTitle>{t(organicFarmingNutrientTranslations.sustainablePracticesTitle)}</CardTitle>
                     <CardDescription>
-                      Techniques to improve soil health and fertility naturally
+                      {t(organicFarmingNutrientTranslations.sustainablePracticesDesc)}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <Card>
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-lg">Crop Rotation</CardTitle>
+                          <CardTitle className="text-lg">{t(organicFarmingNutrientTranslations.cropRotation)}</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground mb-4">
@@ -495,7 +496,7 @@ const OrganicFarming = () => {
                           </p>
                           <div className="space-y-3">
                             <div className="bg-muted p-2 rounded-md text-sm">
-                              <p className="font-medium">Benefits:</p>
+                              <p className="font-medium">{t(organicFarmingNutrientTranslations.benefits)}</p>
                               <ul className="list-disc pl-5 mt-1">
                                 <li>Breaks pest and disease cycles</li>
                                 <li>Improves soil structure</li>
@@ -513,7 +514,7 @@ const OrganicFarming = () => {
                       
                       <Card>
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-lg">Mulching</CardTitle>
+                          <CardTitle className="text-lg">{t(organicFarmingNutrientTranslations.mulching)}</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground mb-4">
@@ -539,7 +540,7 @@ const OrganicFarming = () => {
                       
                       <Card>
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-lg">Cover Cropping</CardTitle>
+                          <CardTitle className="text-lg">{t(organicFarmingNutrientTranslations.coverCropping)}</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground mb-4">
@@ -565,7 +566,7 @@ const OrganicFarming = () => {
                       
                       <Card>
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-lg">Companion Planting</CardTitle>
+                          <CardTitle className="text-lg">{t(organicFarmingNutrientTranslations.companionPlanting)}</CardTitle>
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground mb-4">

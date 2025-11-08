@@ -4,9 +4,12 @@ import { useEffect } from "react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { notFoundTranslations } from "@/constants/allTranslations";
 
 const NotFound = () => {
   const location = useLocation();
+  const { t } = useLanguage();
 
   useEffect(() => {
     console.error(
@@ -19,23 +22,23 @@ const NotFound = () => {
     <Layout>
       <div className="min-h-[70vh] flex flex-col items-center justify-center bg-background px-4">
         <div className="text-center">
-          <h1 className="text-5xl font-bold mb-4 text-primary">404</h1>
+          <h1 className="text-5xl font-bold mb-4 text-primary">{t(notFoundTranslations.title)}</h1>
           <p className="text-xl text-muted-foreground mb-8">
-            Oops! The soil expert couldn't find this page.
+            {t(notFoundTranslations.message)}
           </p>
           <Button asChild className="mb-2">
-            <Link to="/">Return to Home</Link>
+            <Link to="/">{t(notFoundTranslations.returnHome)}</Link>
           </Button>
           <p className="text-sm text-muted-foreground mt-6">
-            Looking for soil advice? Try our 
+            {t(notFoundTranslations.lookingFor)}{" "}
             <Link to="/soil-analyzer" className="text-primary hover:underline mx-1">
-              Soil Analyzer
+              {t(notFoundTranslations.soilAnalyzer)}
             </Link>
-            or
+            {" "}{t(notFoundTranslations.or)}{" "}
             <Link to="/recommendations" className="text-primary hover:underline mx-1">
-              Recommendations
+              {t(notFoundTranslations.recommendations)}
             </Link>
-            pages instead.
+            {" "}{t(notFoundTranslations.pagesInstead)}
           </p>
         </div>
       </div>
