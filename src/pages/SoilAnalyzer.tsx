@@ -7,9 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileUp, Camera, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { soilAnalyzerTranslations } from "@/constants/allTranslations";
 
 const SoilAnalyzer = () => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [manualValues, setManualValues] = useState({
@@ -92,11 +95,10 @@ const SoilAnalyzer = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              AI Soil Report Analyzer
+              {t(soilAnalyzerTranslations.title)}
             </h1>
             <p className="text-muted-foreground mb-6">
-              Upload your soil test report or manually input key values to get instant insights
-              about your soil's health and nutrient status.
+              {t(soilAnalyzerTranslations.subtitle)}
             </p>
           </div>
         </div>
@@ -107,16 +109,16 @@ const SoilAnalyzer = () => {
           <div className="max-w-4xl mx-auto">
             <Tabs defaultValue="upload">
               <TabsList className="grid w-full grid-cols-2 mb-8">
-                <TabsTrigger value="upload">Upload Report</TabsTrigger>
-                <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+                <TabsTrigger value="upload">{t(soilAnalyzerTranslations.uploadTab)}</TabsTrigger>
+                <TabsTrigger value="manual">{t(soilAnalyzerTranslations.manualTab)}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="upload">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Upload Soil Test Report</CardTitle>
+                    <CardTitle>{t(soilAnalyzerTranslations.uploadTitle)}</CardTitle>
                     <CardDescription>
-                      Take a clear photo of your soil test report or upload an existing image
+                      {t(soilAnalyzerTranslations.uploadDescription)}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -151,7 +153,7 @@ const SoilAnalyzer = () => {
                             <Button className="gap-2">
                               <label className="flex items-center gap-2 cursor-pointer">
                                 <Camera className="h-4 w-4" />
-                                <span>Take Photo</span>
+                                <span>{t(soilAnalyzerTranslations.takePhoto)}</span>
                                 <Input
                                   type="file"
                                   accept="image/*"
@@ -164,7 +166,7 @@ const SoilAnalyzer = () => {
                             <Button variant="outline" className="gap-2">
                               <label className="flex items-center gap-2 cursor-pointer">
                                 <FileUp className="h-4 w-4" />
-                                <span>Upload File</span>
+                                <span>{t(soilAnalyzerTranslations.uploadFile)}</span>
                                 <Input
                                   type="file"
                                   accept="image/*"
@@ -185,9 +187,9 @@ const SoilAnalyzer = () => {
                       disabled={!uploadedImage || isAnalyzing}
                     >
                       {isAnalyzing ? (
-                        <span className="loading-dots">Analyzing</span>
+                        <span className="loading-dots">{t(soilAnalyzerTranslations.analyzing)}</span>
                       ) : (
-                        "Analyze Report"
+                        t(soilAnalyzerTranslations.analyzeReport)
                       )}
                     </Button>
                   </CardFooter>
@@ -197,16 +199,16 @@ const SoilAnalyzer = () => {
               <TabsContent value="manual">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Manual Soil Data Entry</CardTitle>
+                    <CardTitle>{t(soilAnalyzerTranslations.manualTitle)}</CardTitle>
                     <CardDescription>
-                      Enter key values from your soil test report
+                      {t(soilAnalyzerTranslations.manualDescription)}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <label htmlFor="ph" className="text-sm font-medium">
-                          Soil pH
+                          {t(soilAnalyzerTranslations.soilPH)}
                         </label>
                         <Input
                           id="ph"
@@ -225,7 +227,7 @@ const SoilAnalyzer = () => {
                       </div>
                       <div className="space-y-2">
                         <label htmlFor="nitrogen" className="text-sm font-medium">
-                          Nitrogen (N) kg/ha
+                          {t(soilAnalyzerTranslations.nitrogen)}
                         </label>
                         <Input
                           id="nitrogen"
@@ -238,7 +240,7 @@ const SoilAnalyzer = () => {
                       </div>
                       <div className="space-y-2">
                         <label htmlFor="phosphorus" className="text-sm font-medium">
-                          Phosphorus (P) kg/ha
+                          {t(soilAnalyzerTranslations.phosphorus)}
                         </label>
                         <Input
                           id="phosphorus"
@@ -251,7 +253,7 @@ const SoilAnalyzer = () => {
                       </div>
                       <div className="space-y-2">
                         <label htmlFor="potassium" className="text-sm font-medium">
-                          Potassium (K) kg/ha
+                          {t(soilAnalyzerTranslations.potassium)}
                         </label>
                         <Input
                           id="potassium"
@@ -264,7 +266,7 @@ const SoilAnalyzer = () => {
                       </div>
                       <div className="space-y-2">
                         <label htmlFor="organic" className="text-sm font-medium">
-                          Organic Matter (%)
+                          {t(soilAnalyzerTranslations.organicMatter)}
                         </label>
                         <Input
                           id="organic"
@@ -285,9 +287,9 @@ const SoilAnalyzer = () => {
                       disabled={isAnalyzing}
                     >
                       {isAnalyzing ? (
-                        <span className="loading-dots">Analyzing</span>
+                        <span className="loading-dots">{t(soilAnalyzerTranslations.analyzing)}</span>
                       ) : (
-                        "Analyze Data"
+                        t(soilAnalyzerTranslations.analyzeData)
                       )}
                     </Button>
                   </CardFooter>
@@ -296,10 +298,10 @@ const SoilAnalyzer = () => {
             </Tabs>
 
             <div className="mt-12 border-t border-border pt-8">
-              <h2 className="text-2xl font-bold mb-6">Your Soil Analysis</h2>
+              <h2 className="text-2xl font-bold mb-6">{t(soilAnalyzerTranslations.yourAnalysis)}</h2>
               
               <p className="text-muted-foreground text-center py-12">
-                Upload your soil report or enter data manually to see analysis results here.
+                {t(soilAnalyzerTranslations.analysisPlaceholder)}
               </p>
             </div>
           </div>

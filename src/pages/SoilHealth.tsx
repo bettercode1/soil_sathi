@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { BarChart, LineChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useToast } from "@/components/ui/use-toast";
 import { Calendar, PlusCircle } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { soilHealthTranslations } from "@/constants/allTranslations";
 
 const mockSoilHistoryData = [
   {
@@ -101,6 +103,7 @@ const getStatusColor = (status: string) => {
 
 const SoilHealth = () => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   // Latest soil data is the most recent entry
   const latestSoilData = mockSoilHistoryData[mockSoilHistoryData.length - 1];
@@ -125,11 +128,10 @@ const SoilHealth = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              Soil Health Monitoring
+              {t(soilHealthTranslations.title)}
             </h1>
             <p className="text-muted-foreground mb-6">
-              Track changes in your soil composition over time and monitor the impact of your
-              management practices on soil health.
+              {t(soilHealthTranslations.subtitle)}
             </p>
           </div>
         </div>
@@ -141,9 +143,9 @@ const SoilHealth = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               <Card className="lg:col-span-2">
                 <CardHeader>
-                  <CardTitle>Soil Health Overview</CardTitle>
+                  <CardTitle>{t(soilHealthTranslations.soilHealthOverview)}</CardTitle>
                   <CardDescription>
-                    Current status based on your latest soil test (Jan 2024)
+                    {t(soilHealthTranslations.currentStatus)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -206,21 +208,21 @@ const SoilHealth = () => {
               
               <Card>
                 <CardHeader>
-                  <CardTitle>Actions</CardTitle>
+                  <CardTitle>{t(soilHealthTranslations.actions)}</CardTitle>
                   <CardDescription>
-                    Manage your soil health data
+                    {t(soilHealthTranslations.manageData)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <Button onClick={handleAddNewReading} className="w-full flex items-center gap-2">
                       <PlusCircle className="h-4 w-4" />
-                      <span>Add New Soil Test</span>
+                      <span>{t(soilHealthTranslations.addNewTest)}</span>
                     </Button>
                     
                     <Button variant="outline" onClick={handleSetReminder} className="w-full flex items-center gap-2">
                       <Calendar className="h-4 w-4" />
-                      <span>Set Testing Reminder</span>
+                      <span>{t(soilHealthTranslations.setReminder)}</span>
                     </Button>
                   </div>
                 </CardContent>
@@ -229,9 +231,9 @@ const SoilHealth = () => {
 
             <Card className="mb-8">
               <CardHeader>
-                <CardTitle>Soil Nutrient Trends</CardTitle>
+                <CardTitle>{t(soilHealthTranslations.nutrientTrends)}</CardTitle>
                 <CardDescription>
-                  Track how your soil health has changed over time
+                  {t(soilHealthTranslations.trackChanges)}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -292,9 +294,9 @@ const SoilHealth = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Soil Test History</CardTitle>
+                <CardTitle>{t(soilHealthTranslations.testHistory)}</CardTitle>
                 <CardDescription>
-                  Complete record of your soil test results
+                  {t(soilHealthTranslations.completeRecord)}
                 </CardDescription>
               </CardHeader>
               <CardContent>

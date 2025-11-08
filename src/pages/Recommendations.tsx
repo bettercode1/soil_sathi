@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { Leaf, Info } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { recommendationsTranslations } from "@/constants/allTranslations";
 
 const soilTypes = [
   { id: "black", name: "Black Soil (Regur)" },
@@ -50,6 +52,7 @@ const cropStages = [
 
 const Recommendations = () => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [selectedSoil, setSelectedSoil] = useState("");
   const [selectedRegion, setSelectedRegion] = useState("");
   const [selectedCrop, setSelectedCrop] = useState("");
@@ -109,11 +112,10 @@ const Recommendations = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">
-              Fertilizer Recommendations
+              {t(recommendationsTranslations.title)}
             </h1>
             <p className="text-muted-foreground mb-6">
-              Get personalized recommendations for fertilizers and soil amendments 
-              based on your soil type, region, and crop.
+              {t(recommendationsTranslations.subtitle)}
             </p>
           </div>
         </div>
@@ -124,16 +126,16 @@ const Recommendations = () => {
           <div className="max-w-4xl mx-auto">
             <Card>
               <CardHeader>
-                <CardTitle>Get Custom Recommendations</CardTitle>
+                <CardTitle>{t(recommendationsTranslations.customRecommendations)}</CardTitle>
                 <CardDescription>
-                  Select your soil type, region, crop, and growth stage to receive tailored advice
+                  {t(recommendationsTranslations.selectDetails)}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">
-                      Soil Type
+                      {t(recommendationsTranslations.soilType)}
                     </label>
                     <Select value={selectedSoil} onValueChange={setSelectedSoil}>
                       <SelectTrigger>
@@ -150,7 +152,7 @@ const Recommendations = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">
-                      Region
+                      {t(recommendationsTranslations.region)}
                     </label>
                     <Select value={selectedRegion} onValueChange={setSelectedRegion}>
                       <SelectTrigger>
@@ -167,7 +169,7 @@ const Recommendations = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">
-                      Crop
+                      {t(recommendationsTranslations.crop)}
                     </label>
                     <Select value={selectedCrop} onValueChange={setSelectedCrop}>
                       <SelectTrigger>
@@ -184,7 +186,7 @@ const Recommendations = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">
-                      Crop Stage
+                      {t(recommendationsTranslations.cropStage)}
                     </label>
                     <Select value={selectedStage} onValueChange={setSelectedStage}>
                       <SelectTrigger>
@@ -207,9 +209,9 @@ const Recommendations = () => {
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <span className="loading-dots">Generating Recommendations</span>
+                    <span className="loading-dots">{t(recommendationsTranslations.generatingRecommendations)}</span>
                   ) : (
-                    "Get Recommendations"
+                    t(recommendationsTranslations.getRecommendations)
                   )}
                 </Button>
               </CardContent>
@@ -217,11 +219,11 @@ const Recommendations = () => {
 
             {recommendations && (
               <div className="mt-12 animate-grow">
-                <h2 className="text-2xl font-bold mb-6">Your Recommendations</h2>
+                <h2 className="text-2xl font-bold mb-6">{t(recommendationsTranslations.yourRecommendations)}</h2>
                 <Tabs defaultValue="chemical">
                   <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger value="chemical">Chemical Fertilizers</TabsTrigger>
-                    <TabsTrigger value="organic">Organic Alternatives</TabsTrigger>
+                    <TabsTrigger value="chemical">{t(recommendationsTranslations.chemicalFertilizers)}</TabsTrigger>
+                    <TabsTrigger value="organic">{t(recommendationsTranslations.organicAlternatives)}</TabsTrigger>
                   </TabsList>
                   
                   <TabsContent value="chemical">
@@ -350,7 +352,7 @@ const Recommendations = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Info className="h-5 w-5" />
-                      <span>Additional Tips</span>
+                      <span>{t(recommendationsTranslations.additionalTips)}</span>
                     </CardTitle>
                     <CardDescription>
                       Helpful advice to improve your soil and crop management

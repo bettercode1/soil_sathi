@@ -1,3 +1,7 @@
+type Language = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
+
+type TranslationSet = Record<Language, string>;
+
 type TranslationLanguages = {
   en: Record<string, string>;
   hi: Record<string, string>;
