@@ -3,19 +3,43 @@ import { z } from "zod";
 
 loadEnv();
 
+const extractNumericValue = (value: unknown): number | undefined => {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : undefined;
+  }
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return undefined;
+    }
+
+    if (/^[+-]?\d+$/.test(trimmed)) {
+      const parsed = Number.parseInt(trimmed, 10);
+      return Number.isNaN(parsed) ? undefined : parsed;
+    }
+
+    if (trimmed.includes(":")) {
+      const candidate = trimmed.split(":").at(-1);
+      if (candidate && /^\d+$/.test(candidate)) {
+        const parsed = Number.parseInt(candidate, 10);
+        if (!Number.isNaN(parsed)) {
+          return parsed;
+        }
+      }
+    }
+
+    const numeric = Number(trimmed);
+    return Number.isFinite(numeric) ? numeric : undefined;
+  }
+
+  return undefined;
+};
+
 const coerceOptionalNumber = (max?: number) =>
   z
     .preprocess(
-      (value) => {
-        if (typeof value === "number") {
-          return Number.isNaN(value) ? undefined : value;
-        }
-        if (typeof value === "string") {
-          const trimmed = value.trim();
-          return trimmed ? Number(trimmed) : undefined;
-        }
-        return undefined;
-      },
+      (value) => extractNumericValue(value),
       max
         ? z.number().int().positive().max(max).optional()
         : z.number().int().positive().optional()
