@@ -14,6 +14,7 @@ import html2canvas from "html2canvas";
 import { Leaf } from "lucide-react";
 import BettercodeLogo from "@/assets/bettercode-logo.png";
 import { buildApiUrl, parseJsonResponse } from "@/lib/api";
+import soilAnalyzerHero from "@/assets/soil-analyzer-hero.jpg";
 
 type SoilAnalysis = {
   language: string;
@@ -66,6 +67,54 @@ type SoilAnalysis = {
   analysisTimestamp: string;
 };
 
+type SoilQualityTheme = {
+  background: string;
+  border: string;
+  labelText: string;
+  scoreText: string;
+  ratingText: string;
+};
+
+const getSoilQualityTheme = (score: number | null): SoilQualityTheme => {
+  if (score === null) {
+    return {
+      background: "bg-slate-100/70",
+      border: "border-slate-200",
+      labelText: "text-slate-500",
+      scoreText: "text-slate-700",
+      ratingText: "text-slate-600",
+    };
+  }
+
+  if (score >= 80) {
+    return {
+      background: "bg-emerald-50",
+      border: "border-emerald-300",
+      labelText: "text-emerald-500/70",
+      scoreText: "text-emerald-600",
+      ratingText: "text-emerald-500",
+    };
+  }
+
+  if (score >= 60) {
+    return {
+      background: "bg-amber-50",
+      border: "border-amber-300",
+      labelText: "text-amber-500/70",
+      scoreText: "text-amber-600",
+      ratingText: "text-amber-500",
+    };
+  }
+
+  return {
+    background: "bg-rose-50",
+    border: "border-rose-300",
+    labelText: "text-rose-500/70",
+    scoreText: "text-rose-600",
+    ratingText: "text-rose-500",
+  };
+};
+
 const SoilAnalyzer = () => {
   const { toast } = useToast();
   const { t, language } = useLanguage();
@@ -107,6 +156,19 @@ const SoilAnalyzer = () => {
     const entries = Object.entries(manualValues).filter(([_, value]) => value !== "");
     return Object.fromEntries(entries);
   }, [manualValues]);
+
+  const soilQualityScore = useMemo(() => {
+    if (!analysis) {
+      return null;
+    }
+    const parsed = Number(analysis.soilQuality.score);
+    return Number.isFinite(parsed) ? parsed : null;
+  }, [analysis?.soilQuality.score]);
+
+  const soilQualityTheme = useMemo(
+    () => getSoilQualityTheme(soilQualityScore),
+    [soilQualityScore]
+  );
 
   const requestAnalysis = async (payload: Record<string, unknown>) => {
     setApiError(null);
@@ -307,8 +369,8 @@ const SoilAnalyzer = () => {
     <Layout>
       <section className="relative isolate overflow-hidden py-16 md:py-20">
         <img
-          src="https://images.pexels.com/photos/8851254/pexels-photo-8851254.jpeg?auto=compress&cs=tinysrgb&w=2000"
-          alt=""
+          src={soilAnalyzerHero}
+          alt="Agronomist checking soil sample data in the field"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-slate-900/70" aria-hidden="true" />
@@ -617,16 +679,20 @@ const SoilAnalyzer = () => {
                     </section>
 
                     <section className="grid gap-6 md:grid-cols-[240px,1fr]" data-pdf-export>
-                      <div className="rounded-2xl border border-primary/30 bg-primary/10 p-6 flex flex-col items-center justify-center text-center">
-                        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary/70">
+                      <div
+                        className={`rounded-2xl border ${soilQualityTheme.border} ${soilQualityTheme.background} p-6 flex flex-col items-center justify-center text-center transition-colors`}
+                      >
+                        <p
+                          className={`text-xs font-semibold uppercase tracking-[0.3em] ${soilQualityTheme.labelText}`}
+                        >
                           {t(soilAnalyzerTranslations.soilQualityScore)}
                         </p>
-                        <p className="mt-3 text-5xl font-bold text-primary">
-                          {Number.isFinite(Number(analysis.soilQuality.score))
-                            ? `${Number(analysis.soilQuality.score).toFixed(1)}`
-                            : "—"}
+                        <p className={`mt-3 text-5xl font-bold ${soilQualityTheme.scoreText}`}>
+                          {soilQualityScore !== null ? soilQualityScore.toFixed(1) : "—"}
                         </p>
-                        <p className="mt-2 text-sm font-medium text-primary/80 uppercase tracking-wide">
+                        <p
+                          className={`mt-2 text-sm font-medium uppercase tracking-wide ${soilQualityTheme.ratingText}`}
+                        >
                           {analysis.soilQuality.rating}
                         </p>
                       </div>

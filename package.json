@@ -7,11 +7,14 @@
     "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:backend\"",
     "dev:frontend": "vite",
     "dev:backend": "tsx watch server/index.ts",
-    "build": "vite build",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "vite build",
+    "build:server": "tsc -p tsconfig.server.json",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "tsx server/index.ts",
+    "start": "node dist/server/index.js",
     "postinstall": "node ./scripts/postinstall-build.mjs"
   },
   "dependencies": {

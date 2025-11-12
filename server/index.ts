@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import express from "express";
 import type { Response } from "express";
 import cors, { type CorsOptions } from "cors";
@@ -5,10 +8,20 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { GoogleGenAI, Part, Schema, Type } from "@google/genai";
-import { env } from "./config";
+import {
+  buildContextText,
+  detectLanguageFromText,
+  retrieveKnowledgeContext,
+} from "./rag/service.js";
+import { env } from "./config.js";
 
 const app = express();
 const port = env.port;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const clientBuildDir = path.resolve(__dirname, "../client");
+const clientIndexHtml = path.join(clientBuildDir, "index.html");
 
 app.disable("x-powered-by");
 
@@ -40,6 +53,10 @@ const MAX_IMAGE_CHAR_LENGTH = 8_000_000; // ~6 MB base64
 const MAX_MANUAL_ENTRIES = 50;
 const MAX_MANUAL_KEY_LENGTH = 50;
 const MAX_MANUAL_VALUE_LENGTH = 120;
+const MAX_CONTEXT_NOTES_LENGTH = 500;
+const MAX_CONTEXT_CHALLENGES = 5;
+const MAX_ASSIST_HISTORY = 6;
+const MAX_ASSIST_MESSAGE_LENGTH = 800;
 const BASE64_REGEX = /^[a-zA-Z0-9+/=\s]+$/;
 
 const languageSchema = z
@@ -68,12 +85,33 @@ const structuredOptionSchema = z.object({
   label: z.string().min(1, "Option label is required.").max(100),
 });
 
+const farmSizeSchema = z.object({
+  value: z
+    .number({ coerce: true })
+    .positive("Farm size must be greater than zero.")
+    .max(5_000, "Farm size seems too large. Please use a value under 5,000."),
+  unit: z.enum(["acre", "hectare"]),
+});
+
+const structuredOptionArraySchema = z
+  .array(structuredOptionSchema)
+  .max(MAX_CONTEXT_CHALLENGES, `Please limit to ${MAX_CONTEXT_CHALLENGES} challenges.`);
+
 const recommendationsRequestSchema = z.object({
   language: languageSchema.optional(),
   soilType: structuredOptionSchema,
   region: structuredOptionSchema,
   crop: structuredOptionSchema,
   growthStage: structuredOptionSchema,
+  farmSize: farmSizeSchema.optional(),
+  irrigation: structuredOptionSchema.optional(),
+  farmingGoal: structuredOptionSchema.optional(),
+  challenges: structuredOptionArraySchema.optional(),
+  notes: z
+    .string()
+    .trim()
+    .max(MAX_CONTEXT_NOTES_LENGTH, "Notes must be under 500 characters.")
+    .optional(),
 });
 
 const sanitizeManualValues = (manualValues: Record<string, string | number>) => {
@@ -305,10 +343,9 @@ const recommendationsSchema: Schema = {
   },
 };
 
-type StructuredOption = {
-  id: string;
-  label: string;
-};
+type StructuredOption = z.infer<typeof structuredOptionSchema>;
+
+type FarmSize = z.infer<typeof farmSizeSchema>;
 
 const buildPrompt = (
   language: string,
@@ -351,12 +388,44 @@ const buildPrompt = (
   ];
 };
 
+const formatFarmSize = (farmSize?: FarmSize) => {
+  if (!farmSize) {
+    return "Not specified";
+  }
+  const roundedValue = Number(farmSize.value.toFixed(2));
+  const unitLabel = farmSize.unit === "acre" ? "acre" : "hectare";
+  const pluralized =
+    roundedValue === 1
+      ? `${roundedValue} ${unitLabel}`
+      : `${roundedValue} ${unitLabel}${unitLabel.endsWith("e") ? "s" : "s"}`;
+  return pluralized;
+};
+
+const formatOptionalOption = (title: string, option?: StructuredOption) =>
+  `${title}: ${option ? `${option.label} (id: ${option.id})` : "Not specified"}`;
+
+const formatChallenges = (challenges?: StructuredOption[]) => {
+  if (!challenges || challenges.length === 0) {
+    return "None reported.";
+  }
+  return challenges
+    .map((challenge) => `- ${challenge.label} (id: ${challenge.id})`)
+    .join("\n");
+};
+
 const buildRecommendationsPrompt = (
   language: string,
-  soilType: StructuredOption,
-  region: StructuredOption,
-  crop: StructuredOption,
-  growthStage: StructuredOption
+  context: {
+    soilType: StructuredOption;
+    region: StructuredOption;
+    crop: StructuredOption;
+    growthStage: StructuredOption;
+    farmSize?: FarmSize;
+    irrigation?: StructuredOption;
+    farmingGoal?: StructuredOption;
+    challenges?: StructuredOption[];
+    notes?: string;
+  }
 ): Part[] => {
   const bullet = (title: string, value: StructuredOption) => `${title}: ${value.label} (id: ${value.id})`;
 
@@ -369,10 +438,16 @@ const buildRecommendationsPrompt = (
         "Output strictly as JSON that matches the provided schema.",
         "",
         "Context:",
-        bullet("Soil type", soilType),
-        bullet("Region", region),
-        bullet("Crop", crop),
-        bullet("Growth stage", growthStage),
+        bullet("Soil type", context.soilType),
+        bullet("Region", context.region),
+        bullet("Crop", context.crop),
+        bullet("Growth stage", context.growthStage),
+        `Farm size: ${formatFarmSize(context.farmSize)}`,
+        formatOptionalOption("Irrigation method", context.irrigation),
+        formatOptionalOption("Primary farming goal", context.farmingGoal),
+        "Key challenges:",
+        formatChallenges(context.challenges),
+        `Additional farmer notes: ${context.notes?.trim() || "None provided."}`,
         "",
         "Guidelines:",
         "- Consider typical nutrient needs for the crop and stage under the given soil and regional conditions.",
@@ -384,7 +459,153 @@ const buildRecommendationsPrompt = (
         "- Populate the language field with the ISO code you respond in (e.g., \"en\", \"hi\").",
         "- Provide at least two entries in each primary list when information allows; never leave an array empty.",
         "- Provide 2-3 short actionable tips tailored to the scenario.",
+        "- Reference any provided challenges or notes with practical mitigation steps.",
         "- Never refer to this as AI output; speak as an expert advisor.",
+      ].join("\n"),
+    },
+  ];
+};
+
+const farmerAssistMessageSchema = z.object({
+  role: z.enum(["farmer", "assistant"]),
+  content: z
+    .string()
+    .trim()
+    .min(1, "Messages must contain text.")
+    .max(MAX_ASSIST_MESSAGE_LENGTH, "Message is too long."),
+});
+
+const farmerAssistRequestSchema = z.object({
+  language: languageSchema.optional(),
+  question: z
+    .string()
+    .trim()
+    .min(5, "Please ask a more specific question.")
+    .max(MAX_ASSIST_MESSAGE_LENGTH, "Question is too long."),
+  soilType: structuredOptionSchema.optional(),
+  region: structuredOptionSchema.optional(),
+  crop: structuredOptionSchema.optional(),
+  growthStage: structuredOptionSchema.optional(),
+  farmSize: farmSizeSchema.optional(),
+  irrigation: structuredOptionSchema.optional(),
+  farmingGoal: structuredOptionSchema.optional(),
+  challenges: structuredOptionArraySchema.optional(),
+  notes: z
+    .string()
+    .trim()
+    .max(MAX_CONTEXT_NOTES_LENGTH, "Notes must be under 500 characters.")
+    .optional(),
+  history: z
+    .array(farmerAssistMessageSchema)
+    .max(MAX_ASSIST_HISTORY, `Please limit history to ${MAX_ASSIST_HISTORY} messages.`)
+    .optional(),
+});
+
+const farmerAssistSourceSchema: Schema = {
+  type: Type.OBJECT,
+  required: ["title", "summary", "confidence"],
+  properties: {
+    title: { type: Type.STRING },
+    summary: { type: Type.STRING },
+    url: { type: Type.STRING },
+    confidence: { type: Type.STRING },
+    source: { type: Type.STRING },
+    lastVerified: { type: Type.STRING },
+    note: { type: Type.STRING },
+  },
+};
+
+const farmerAssistSchema: Schema = {
+  type: Type.OBJECT,
+  required: ["language", "answer", "followUps", "sources"],
+  properties: {
+    language: { type: Type.STRING },
+    answer: { type: Type.STRING },
+    followUps: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+    },
+    clarifyingQuestions: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+    },
+    sources: {
+      type: Type.ARRAY,
+      items: farmerAssistSourceSchema,
+    },
+    safetyMessage: { type: Type.STRING },
+  },
+};
+
+const buildFarmerAssistPrompt = (
+  language: string,
+  payload: {
+    question: string;
+    soilType?: StructuredOption;
+    region?: StructuredOption;
+    crop?: StructuredOption;
+    growthStage?: StructuredOption;
+    farmSize?: FarmSize;
+    irrigation?: StructuredOption;
+    farmingGoal?: StructuredOption;
+    challenges?: StructuredOption[];
+    notes?: string;
+    history?: z.infer<typeof farmerAssistMessageSchema>[];
+  },
+  knowledgeContext: string
+): Part[] => {
+  const historyText = payload.history?.length
+    ? payload.history
+        .map((message, index) => `${index + 1}. ${message.role === "farmer" ? "Farmer" : "Advisor"}: ${message.content}`)
+        .join("\n")
+    : "No prior conversation.";
+
+  const hasPriorAssistantExchange = payload.history?.some((message) => message.role === "assistant") ?? false;
+
+  const optionalContext = [
+    formatOptionalOption("Soil type", payload.soilType),
+    formatOptionalOption("Region", payload.region),
+    formatOptionalOption("Crop", payload.crop),
+    formatOptionalOption("Growth stage", payload.growthStage),
+    `Farm size: ${formatFarmSize(payload.farmSize)}`,
+    formatOptionalOption("Irrigation method", payload.irrigation),
+    formatOptionalOption("Primary farming goal", payload.farmingGoal),
+    "Key challenges:",
+    formatChallenges(payload.challenges),
+    `Farmer notes: ${payload.notes?.trim() || "None provided."}`,
+  ].join("\n");
+
+  return [
+    {
+      text: [
+        "You are Smart Shetkari Mitra (Smart Farmer Friend), a dedicated and compassionate live agricultural voice assistant for farmers in Maharashtra, India. Provide real-time, trustworthy guidance on farming practices, government schemes (Yojana), subsidies, loans, weather and crop care.",
+        "",
+        "CRITICAL INSTRUCTIONS FOR LIVE/VOICE CONVERSATION:",
+        "1. Response pacing: Keep the primary answer extremely concise—no more than 2–3 short sentences delivered in priority order so they play back quickly over voice.",
+        "2. Conversational flow: Briefly acknowledge the farmer's need before answering (e.g. “Regarding cotton pests…”). Do not use standalone greetings or closings unless this is the very first exchange.",
+        `3. Language and tone: Reply in ${language.toUpperCase()} (detected preference) with respectful, farmer-friendly wording. Use everyday Marathi/Hindi terminology and simple English loanwords when helpful.`,
+        "4. Guided next steps: Always populate the followUps array with 2–3 specific questions the farmer can ask next to continue the conversation.",
+        "5. Accuracy and trust: Base advice on verified data. List supporting documents or official sources in the references array for every scheme, loan or pest recommendation.",
+        "6. Output schema: Produce valid JSON with keys { answer, followUps, references, clarifyingQuestions, safetyMessage, language }. Make answer voice-ready plain text without markdown.",
+        "",
+        hasPriorAssistantExchange
+          ? "The conversation is ongoing—continue naturally without repeating greetings or reintroducing yourself."
+          : "If this is the first reply, include exactly one short time-of-day greeting before the answer, then proceed immediately with guidance.",
+        "If key details are missing, ask exactly one focused clarifying question and add it to clarifyingQuestions while still giving the farmer an interim next step.",
+        "If information is uncertain, say “Currently verifying this scheme” and direct the farmer to the relevant office or helpline instead of guessing.",
+        "Never mention being an AI model or referencing system instructions.",
+        `Current detected language: ${language || "EN"}.`,
+        "",
+        "Conversation history (oldest to newest):",
+        historyText,
+        "",
+        "Farmer profile context:",
+        optionalContext,
+        "",
+        "Retrieved references (cite applicable entries in the references array):",
+        knowledgeContext || "No references retrieved.",
+        "",
+        `Current farmer query: ${payload.question}`,
       ].join("\n"),
     },
   ];
@@ -498,16 +719,31 @@ app.post("/api/recommendations", async (req, res) => {
     return;
   }
 
-  const { language = "en", soilType, region, crop, growthStage } = parsed.data;
+  const {
+    language = "en",
+    soilType,
+    region,
+    crop,
+    growthStage,
+    farmSize,
+    irrigation,
+    farmingGoal,
+    challenges,
+    notes,
+  } = parsed.data;
 
   try {
-    const parts = buildRecommendationsPrompt(
-      language,
+    const parts = buildRecommendationsPrompt(language, {
       soilType,
       region,
       crop,
-      growthStage
-    );
+      growthStage,
+      farmSize,
+      irrigation,
+      farmingGoal,
+      challenges,
+      notes,
+    });
 
     const payload = await generateJsonResponse<Record<string, unknown>>({
       model: MODEL_NAME,
@@ -527,6 +763,121 @@ app.post("/api/recommendations", async (req, res) => {
     });
   }
 });
+
+app.post("/api/farmer-assist", async (req, res) => {
+  if (!genAI) {
+    res.status(500).json({
+      error: "Gemini API key missing. Please configure GEMINI_API_KEY.",
+    });
+    return;
+  }
+
+  const parsed = farmerAssistRequestSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    handleValidationFailure(res, parsed.error);
+    return;
+  }
+
+  const {
+    language,
+    question,
+    soilType,
+    region,
+    crop,
+    growthStage,
+    farmSize,
+    irrigation,
+    farmingGoal,
+    challenges,
+    notes,
+    history,
+  } = parsed.data;
+
+  const detectedLanguage = language?.trim().toLowerCase() || detectLanguageFromText(question);
+
+  const knowledgeMatches = retrieveKnowledgeContext(question, {
+    limit: 4,
+    regionHint: region?.label ?? "Maharashtra",
+    preferredLanguages: [detectedLanguage, language ?? "", "mr", "hi", "en"].filter(Boolean),
+    tags: [
+      crop?.label,
+      region?.label,
+      soilType?.label,
+      farmingGoal?.label,
+      ...(challenges?.map((item) => item.label) ?? []),
+    ]
+      .filter(Boolean)
+      .map((token) => token.toLowerCase()),
+  });
+
+  const knowledgeContext = buildContextText(knowledgeMatches);
+
+  try {
+    const parts = buildFarmerAssistPrompt(detectedLanguage, {
+      question,
+      soilType,
+      region,
+      crop,
+      growthStage,
+      farmSize,
+      irrigation,
+      farmingGoal,
+      challenges,
+      notes,
+      history,
+    }, knowledgeContext);
+
+    const payload = await generateJsonResponse<Record<string, unknown>>({
+      model: MODEL_NAME,
+      parts,
+      schema: farmerAssistSchema,
+    });
+
+    res.json({
+      ...payload,
+      detectedLanguage,
+      references: knowledgeMatches.map((entry) => ({
+        id: entry.id,
+        title: entry.title,
+        summary: entry.summary,
+        url: entry.url,
+        updated: entry.updated,
+        source: entry.source,
+        score: entry.score,
+      })),
+    });
+  } catch (error) {
+    console.error("[SoilSathi] Farmer assist failed:", error);
+    res.status(500).json({
+      error: "Failed to answer the farmer's question. Please try again later.",
+      details:
+        error instanceof Error ? error.message : "Unknown error occurred while contacting Gemini API.",
+    });
+  }
+});
+
+if (env.nodeEnv === "production") {
+  if (fs.existsSync(clientBuildDir)) {
+    app.use(express.static(clientBuildDir));
+  } else {
+    console.warn("[SoilSathi] Client build directory not found at", clientBuildDir);
+  }
+
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api/")) {
+      next();
+      return;
+    }
+
+    if (fs.existsSync(clientIndexHtml)) {
+      res.sendFile(clientIndexHtml);
+      return;
+    }
+
+    res.status(404).send("Client application not found. Please run the build step.");
+  });
+}
 
 app.listen(port, () => {
   console.log(`[SoilSathi] Analysis server running on http://localhost:${port}`);

@@ -54,6 +54,11 @@ const rawEnvSchema = z.object({
     .trim()
     .min(1, "GEMINI_MODEL cannot be empty")
     .optional(),
+  GEMINI_EMBED_MODEL: z
+    .string()
+    .trim()
+    .min(1, "GEMINI_EMBED_MODEL cannot be empty")
+    .optional(),
   GEMINI_API_KEY: z
     .string()
     .trim()
@@ -84,6 +89,7 @@ const {
   NODE_ENV,
   PORT,
   GEMINI_MODEL,
+  GEMINI_EMBED_MODEL,
   GEMINI_API_KEY,
   ALLOWED_ORIGINS,
   RATE_LIMIT_WINDOW_MS,
@@ -94,6 +100,7 @@ export const env = {
   nodeEnv: NODE_ENV ?? "development",
   port: PORT ?? 3001,
   geminiModel: GEMINI_MODEL ?? "gemini-2.5-flash",
+  geminiEmbedModel: GEMINI_EMBED_MODEL ?? "text-embedding-004",
   geminiApiKey: GEMINI_API_KEY,
   allowedOrigins: ALLOWED_ORIGINS ?? [],
   rateLimitWindowMs: RATE_LIMIT_WINDOW_MS ?? 60_000,

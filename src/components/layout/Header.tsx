@@ -17,7 +17,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Menu, Leaf, Globe } from "lucide-react";
+import {
+  Menu,
+  Leaf,
+  Globe,
+  Home,
+  Microscope,
+  ListChecks,
+  HeartPulse,
+  Sprout,
+  LifeBuoy,
+  type LucideIcon,
+} from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +55,7 @@ const Header = () => {
       recommendations: "Recommendations",
       soilHealth: "Soil Health",
       organicFarming: "Organic Farming",
+      helpDesk: "Help Desk",
       yourSoilAdvisor: "Your Soil Advisor"
     },
     hi: {
@@ -52,6 +64,7 @@ const Header = () => {
       recommendations: "सिफारिशें",
       soilHealth: "मिट्टी स्वास्थ्य",
       organicFarming: "जैविक खेती",
+      helpDesk: "सहायता डेस्क",
       yourSoilAdvisor: "आपका मिट्टी सलाहकार"
     },
     pa: {
@@ -60,6 +73,7 @@ const Header = () => {
       recommendations: "ਸਿਫਾਰਸ਼ਾਂ",
       soilHealth: "ਮਿੱਟੀ ਦੀ ਸਿਹਤ",
       organicFarming: "ਜੈਵਿਕ ਖੇਤੀ",
+      helpDesk: "ਸਹਾਇਤਾ ਡੈਸਕ",
       yourSoilAdvisor: "ਤੁਹਾਡਾ ਮਿੱਟੀ ਸਲਾਹਕਾਰ"
     },
     ta: {
@@ -68,6 +82,7 @@ const Header = () => {
       recommendations: "பரிந்துரைகள்",
       soilHealth: "மண் ஆரோக்கியம்",
       organicFarming: "இயற்கை விவசாயம்",
+      helpDesk: "உதவி மையம்",
       yourSoilAdvisor: "உங்கள் மண் ஆலோசகர்"
     },
     te: {
@@ -76,6 +91,7 @@ const Header = () => {
       recommendations: "సిఫార్సులు",
       soilHealth: "నేల ఆరోగ్యం",
       organicFarming: "సేంద్రీయ వ్యవసాయం",
+      helpDesk: "సహాయ డెస్క్",
       yourSoilAdvisor: "మీ మట్టి సలహాదారు"
     },
     bn: {
@@ -84,6 +100,7 @@ const Header = () => {
       recommendations: "সুপারিশগুলি",
       soilHealth: "মাটির স্বাস্থ্য",
       organicFarming: "জৈব চাষ",
+      helpDesk: "সহায়তা ডেস্ক",
       yourSoilAdvisor: "আপনার মাটির উপদেষ্টা"
     },
     mr: {
@@ -92,32 +109,45 @@ const Header = () => {
       recommendations: "शिफारसी",
       soilHealth: "मातीचे आरोग्य",
       organicFarming: "सेंद्रिय शेती",
+      helpDesk: "सहाय्यता डेस्क",
       yourSoilAdvisor: "तुमचा माती सल्लागार"
     }
   };
 
+  type NavKey = keyof typeof translations.en;
+
+  const navItems: Array<{ key: NavKey; href: string; icon: LucideIcon }> = [
+    { key: "home", href: "/", icon: Home },
+    { key: "soilAnalyzer", href: "/soil-analyzer", icon: Microscope },
+    { key: "recommendations", href: "/recommendations", icon: ListChecks },
+    { key: "soilHealth", href: "/soil-health", icon: HeartPulse },
+    { key: "organicFarming", href: "/organic-farming", icon: Sprout },
+    { key: "helpDesk", href: "/farmer-help-desk", icon: LifeBuoy },
+  ];
+
+  const getLabel = (key: NavKey) =>
+    t({
+      en: translations.en[key],
+      hi: translations.hi[key],
+      pa: translations.pa[key],
+      ta: translations.ta[key],
+      te: translations.te[key],
+      bn: translations.bn[key],
+      mr: translations.mr[key],
+    });
+
   const NavigationLinks = () => (
-    <nav className="flex gap-6 items-center">
-      <Link to="/" className="text-foreground hover:text-primary transition-colors">
-        {t({ en: translations.en.home, hi: translations.hi.home, pa: translations.pa.home, 
-             ta: translations.ta.home, te: translations.te.home, bn: translations.bn.home, mr: translations.mr.home })}
-      </Link>
-      <Link to="/soil-analyzer" className="text-foreground hover:text-primary transition-colors">
-        {t({ en: translations.en.soilAnalyzer, hi: translations.hi.soilAnalyzer, pa: translations.pa.soilAnalyzer, 
-             ta: translations.ta.soilAnalyzer, te: translations.te.soilAnalyzer, bn: translations.bn.soilAnalyzer, mr: translations.mr.soilAnalyzer })}
-      </Link>
-      <Link to="/recommendations" className="text-foreground hover:text-primary transition-colors">
-        {t({ en: translations.en.recommendations, hi: translations.hi.recommendations, pa: translations.pa.recommendations, 
-             ta: translations.ta.recommendations, te: translations.te.recommendations, bn: translations.bn.recommendations, mr: translations.mr.recommendations })}
-      </Link>
-      <Link to="/soil-health" className="text-foreground hover:text-primary transition-colors">
-        {t({ en: translations.en.soilHealth, hi: translations.hi.soilHealth, pa: translations.pa.soilHealth, 
-             ta: translations.ta.soilHealth, te: translations.te.soilHealth, bn: translations.bn.soilHealth, mr: translations.mr.soilHealth })}
-      </Link>
-      <Link to="/organic-farming" className="text-foreground hover:text-primary transition-colors">
-        {t({ en: translations.en.organicFarming, hi: translations.hi.organicFarming, pa: translations.pa.organicFarming, 
-             ta: translations.ta.organicFarming, te: translations.te.organicFarming, bn: translations.bn.organicFarming, mr: translations.mr.organicFarming })}
-      </Link>
+    <nav className="flex min-w-0 flex-1 items-center justify-start gap-x-3 gap-y-2 overflow-x-auto whitespace-nowrap pr-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-x-4 xl:gap-x-6">
+      {navItems.map(({ key, href, icon: Icon }) => (
+        <Link
+          key={key}
+          to={href}
+          className="flex items-center gap-2 whitespace-nowrap text-sm font-medium text-foreground/90 transition-colors hover:text-primary md:text-[0.95rem]"
+        >
+          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span>{getLabel(key)}</span>
+        </Link>
+      ))}
     </nav>
   );
 
@@ -165,20 +195,18 @@ const Header = () => {
         isScrolled && "bg-background/70 border-border/40 shadow-sm"
       )}
     >
-      <div className="container mx-auto flex items-center justify-between px-4 py-3 lg:py-4">
-        <div className="flex items-center gap-5">
-          <Link to="/" className="flex items-center gap-3">
-            <Leaf className="h-10 w-10 text-plant-dark" />
+      <div className="container mx-auto flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 md:flex-nowrap lg:py-4">
+        <div className="flex items-center gap-3 md:gap-4">
+          <Link to="/" className="flex items-center gap-2">
+            <Leaf className="h-6 w-6 text-plant-dark" />
             <div>
-              <h1 className="text-2xl font-bold text-primary flex items-center gap-1">
-                SoilSathi <span className="text-base font-normal text-secondary">(सॉइल साथी)</span>
-              </h1>
+              <h1 className="text-lg font-semibold text-primary md:text-xl">SoilSathi</h1>
             </div>
           </Link>
           <img
             src="/lovable-uploads/b7bbcec3-ea93-4139-9de1-934572a3cd1f.png"
             alt="Bettercode"
-            className="h-7 w-auto"
+            className="h-5 w-auto md:h-6"
           />
         </div>
 
@@ -206,68 +234,23 @@ const Header = () => {
                     })}
                   </SheetDescription>
                 </SheetHeader>
-                <div className="flex flex-col gap-4 py-4">
-                  <Link to="/" className="px-2 py-3 hover:bg-accent rounded-md transition-colors">
-                    {t({ 
-                      en: translations.en.home, 
-                      hi: translations.hi.home,
-                      pa: translations.pa.home,
-                      ta: translations.ta.home,
-                      te: translations.te.home,
-                      bn: translations.bn.home,
-                      mr: translations.mr.home
-                    })}
-                  </Link>
-                  <Link to="/soil-analyzer" className="px-2 py-3 hover:bg-accent rounded-md transition-colors">
-                    {t({ 
-                      en: translations.en.soilAnalyzer, 
-                      hi: translations.hi.soilAnalyzer,
-                      pa: translations.pa.soilAnalyzer,
-                      ta: translations.ta.soilAnalyzer,
-                      te: translations.te.soilAnalyzer,
-                      bn: translations.bn.soilAnalyzer,
-                      mr: translations.mr.soilAnalyzer
-                    })}
-                  </Link>
-                  <Link to="/recommendations" className="px-2 py-3 hover:bg-accent rounded-md transition-colors">
-                    {t({ 
-                      en: translations.en.recommendations, 
-                      hi: translations.hi.recommendations,
-                      pa: translations.pa.recommendations,
-                      ta: translations.ta.recommendations,
-                      te: translations.te.recommendations,
-                      bn: translations.bn.recommendations,
-                      mr: translations.mr.recommendations
-                    })}
-                  </Link>
-                  <Link to="/soil-health" className="px-2 py-3 hover:bg-accent rounded-md transition-colors">
-                    {t({ 
-                      en: translations.en.soilHealth, 
-                      hi: translations.hi.soilHealth,
-                      pa: translations.pa.soilHealth,
-                      ta: translations.ta.soilHealth,
-                      te: translations.te.soilHealth,
-                      bn: translations.bn.soilHealth,
-                      mr: translations.mr.soilHealth
-                    })}
-                  </Link>
-                  <Link to="/organic-farming" className="px-2 py-3 hover:bg-accent rounded-md transition-colors">
-                    {t({ 
-                      en: translations.en.organicFarming, 
-                      hi: translations.hi.organicFarming,
-                      pa: translations.pa.organicFarming,
-                      ta: translations.ta.organicFarming,
-                      te: translations.te.organicFarming,
-                      bn: translations.bn.organicFarming,
-                      mr: translations.mr.organicFarming
-                    })}
-                  </Link>
+                <div className="flex flex-col gap-2 py-4">
+                  {navItems.map(({ key, href, icon: Icon }) => (
+                    <Link
+                      key={key}
+                      to={href}
+                      className="flex items-center gap-3 rounded-md px-2 py-3 transition-colors hover:bg-accent"
+                    >
+                      <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                      <span className="text-base font-medium text-foreground">{getLabel(key)}</span>
+                    </Link>
+                  ))}
                 </div>
               </SheetContent>
             </Sheet>
           </div>
         ) : (
-          <div className="flex items-center gap-4">
+          <div className="flex flex-1 items-center justify-end gap-4 min-[1100px]:gap-6">
             <NavigationLinks />
             <LanguageSelector />
           </div>

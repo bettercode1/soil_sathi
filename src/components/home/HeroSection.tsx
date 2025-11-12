@@ -20,10 +20,10 @@ const HeroSection: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-black/85 via-neutral-950/80 to-emerald-950/70 backdrop-blur-sm" />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-5 md:py-12">
+      <div className="relative z-10 container mx-auto px-4 py-10 md:py-14">
         <div className="grid gap-12 md:grid-cols-[1.05fr,0.95fr] md:items-center">
-          <div className="max-w-2xl">
-            <span className="mb-6 inline-flex items-center rounded-full bg-emerald-400/15 px-4 py-1 text-sm font-medium text-emerald-200 ring-1 ring-inset ring-emerald-400/40">
+          <div className="max-w-2xl text-center md:text-left">
+            <span className="mb-5 inline-flex items-center rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-medium uppercase tracking-wide text-emerald-200 ring-1 ring-inset ring-emerald-400/40 md:px-4 md:text-sm">
               {t({
                 en: "Precision soil insights",
                 hi: "सटीक मिट्टी अंतर्दृष्टि",
@@ -35,7 +35,7 @@ const HeroSection: React.FC = () => {
               })}
             </span>
 
-            <h1 className="mb-6 text-4xl font-bold leading-tight md:text-5xl">
+            <h1 className="mb-5 text-3xl font-bold leading-tight sm:text-[2.5rem] md:text-5xl">
             {t({
               en: "Smart Soil Helper for Farmers",
               hi: "किसानों के लिए स्मार्ट मिट्टी सहायक",
@@ -47,7 +47,7 @@ const HeroSection: React.FC = () => {
             })}
           </h1>
 
-            <p className="mb-10 text-lg text-slate-200/80">
+          <p className="mb-8 text-base text-slate-200/80 md:text-lg">
             {t({
               en: "Upload your soil report or just tell us about your soil. We'll help you grow better crops with the right fertilizers.",
               hi: "अपनी मिट्टी की रिपोर्ट अपलोड करें या बस हमें अपनी मिट्टी के बारे में बताएं। हम आपको सही उर्वरकों के साथ बेहतर फसल उगाने में मदद करेंगे।",
@@ -59,11 +59,11 @@ const HeroSection: React.FC = () => {
             })}
           </p>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center md:justify-start">
               <Button
                 asChild
                 size="lg"
-                className="gap-2 py-6 text-lg shadow-lg shadow-emerald-500/30"
+                className="w-full gap-2 py-4 text-base shadow-lg shadow-emerald-500/30 sm:w-auto sm:py-5 sm:text-lg"
               >
                 <Link to="/soil-analyzer">
                   <FlaskConical className="h-6 w-6 mr-2" />
@@ -83,7 +83,7 @@ const HeroSection: React.FC = () => {
                 asChild
                 variant="outline"
                 size="lg"
-                className="border border-white/25 bg-white/5 py-6 text-lg text-white backdrop-blur-sm transition hover:bg-white/10"
+                className="w-full border border-white/25 bg-white/5 py-4 text-base text-white backdrop-blur-sm transition hover:bg-white/10 sm:w-auto sm:py-5 sm:text-lg"
               >
                 <Link to="/recommendations">
                   <Sprout className="mr-2 h-6 w-6 text-emerald-200" />
@@ -102,7 +102,7 @@ const HeroSection: React.FC = () => {
           </div>
 
           <div className="relative flex items-center justify-center">
-            <div className="relative w-full max-w-xl overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/5 shadow-[0_40px_80px_-40px_rgba(16,185,129,0.65)]">
+            <div className="relative w-full max-w-xs overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_24px_60px_-35px_rgba(16,185,129,0.65)] sm:max-w-sm md:max-w-xl md:rounded-[2.5rem] md:shadow-[0_40px_80px_-40px_rgba(16,185,129,0.65)]">
               <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
               <img
                 src={heroImage}

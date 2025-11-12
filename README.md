@@ -1,73 +1,60 @@
-# Welcome to your Lovable project
+# Soil Sathi
 
-## Project info
+Modern React + Express application that delivers soil health insights, fertilizer recommendations, and a conversational farmer assistant powered by Gemini.
 
-**URL**: https://lovable.dev/projects/fc9d08ac-2906-40cd-93a2-8f97c288e039
+## Tech Stack
 
-## How can I edit this code?
+- Vite + React 18 + TypeScript
+- Tailwind CSS & shadcn/ui
+- Express API with Gemini integrations
+- RAG knowledge base for contextual answers
 
-There are several ways of editing your application.
+## Getting Started
 
-**Use Lovable**
+```bash
+# install dependencies
+npm install
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/fc9d08ac-2906-40cd-93a2-8f97c288e039) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# start both Vite dev server (port 8080) and Express API (port 3001)
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Key scripts:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- `npm run dev`: run frontend and backend concurrently.
+- `npm run build`: produce a production build (`dist/client` + `dist/server`).
+- `npm run start`: serve the prebuilt app with Node.
+- `npm run lint`: run ESLint across the project.
 
-**Use GitHub Codespaces**
+## Environment Variables
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Create a `.env` file in `soil_sathi/` (or configure variables in Render) with the following keys:
 
-## What technologies are used for this project?
+- `PORT` (optional) – defaults to `3001`.
+- `GEMINI_API_KEY` – required for Gemini-powered endpoints.
+- `GEMINI_MODEL` – defaults to `gemini-2.5-flash`.
+- `GEMINI_EMBED_MODEL` – defaults to `text-embedding-004`.
+- `ALLOWED_ORIGINS` – comma-separated list for CORS (leave empty to accept any origin).
+- `RATE_LIMIT_WINDOW_MS` / `RATE_LIMIT_MAX_REQUESTS` – optional rate-limit tuning.
 
-This project is built with:
+## Production Build & Preview
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```bash
+npm run build
+npm run start
+```
 
-## How can I deploy this project?
+The command above creates a static client build in `dist/client` and compiles the Express server to `dist/server`. The production server will serve both the API and the static assets on the same port.
 
-Simply open [Lovable](https://lovable.dev/projects/fc9d08ac-2906-40cd-93a2-8f97c288e039) and click on Share -> Publish.
+## Deploying to Render
 
-## Can I connect a custom domain to my Lovable project?
+A ready-to-use `render.yaml` blueprint is included at the repository root.
 
-Yes, you can!
+1. Create a new Web Service from Render’s Blueprint option and point it to this repository.
+2. Render will use the `render.yaml` file to:
+   - Install dependencies and run the build (`npm install && npm run build`).
+   - Start the Express server (`npm run start`).
+   - Keep dev dependencies available during build (`NPM_CONFIG_PRODUCTION=false`).
+3. Configure the environment variables above (especially `GEMINI_API_KEY`) in the Render dashboard.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Once the deployment succeeds, API routes will be available under `/api/*`, and the React SPA will be served from the same domain.

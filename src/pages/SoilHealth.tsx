@@ -1,14 +1,15 @@
 
 import React from "react";
 import Layout from "@/components/layout/Layout";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { BarChart, LineChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useToast } from "@/components/ui/use-toast";
-import { Calendar, PlusCircle } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { soilHealthTranslations, soilAnalyzerTranslations } from "@/constants/allTranslations";
+import { soilAnalyzerTranslations, soilHealthTranslations } from "@/constants/allTranslations";
+import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Timer, Plus } from "lucide-react";
+import soilHealthHero from "@/assets/soil-health-hero.jpg";
 
 type LanguageCode = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
 type LocalizedString = Record<LanguageCode, string>;
@@ -207,8 +208,8 @@ const SoilHealth = () => {
     <Layout>
       <section className="relative isolate overflow-hidden py-16 md:py-20">
         <img
-          src="https://images.pexels.com/photos/5231047/pexels-photo-5231047.jpeg?auto=compress&cs=tinysrgb&w=2000"
-          alt=""
+          src={soilHealthHero}
+          alt="Farmer surveying healthy crop rows during sunrise"
           className="absolute inset-0 h-full w-full object-cover object-center md:object-top"
         />
         <div className="absolute inset-0 bg-slate-900/70" aria-hidden="true" />
@@ -303,12 +304,12 @@ const SoilHealth = () => {
                 <CardContent>
                   <div className="space-y-4">
                     <Button onClick={handleAddNewReading} className="w-full flex items-center gap-2">
-                      <PlusCircle className="h-4 w-4" />
+                      <Plus className="h-4 w-4" />
                       <span>{t(soilHealthTranslations.addNewTest)}</span>
                     </Button>
                     
                     <Button variant="outline" onClick={handleSetReminder} className="w-full flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
+                      <Timer className="h-4 w-4" />
                       <span>{t(soilHealthTranslations.setReminder)}</span>
                     </Button>
                   </div>
