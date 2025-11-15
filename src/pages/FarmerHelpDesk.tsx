@@ -27,6 +27,7 @@ import {
   Sparkles,
   Sprout,
   Volume2,
+  VolumeX,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { recommendationsTranslations } from "@/constants/allTranslations";
@@ -37,6 +38,7 @@ type SpeechRecognitionResultItem = {
   0?: {
     transcript?: string;
   };
+  isFinal?: boolean;
 };
 
 type SpeechRecognitionEventLike = {
@@ -49,9 +51,18 @@ type SpeechRecognitionInstance = {
   lang: string;
   start: () => void;
   stop: () => void;
+  abort: () => void;
   onresult: ((event: SpeechRecognitionEventLike) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: { error?: string }) => void) | null;
   onend: (() => void) | null;
+  onaudiostart: (() => void) | null;
+  onaudioend: (() => void) | null;
+  onsoundstart: (() => void) | null;
+  onsoundend: (() => void) | null;
+  onspeechstart: (() => void) | null;
+  onspeechend: (() => void) | null;
+  onnomatch: (() => void) | null;
+  onstart: (() => void) | null;
 };
 
 type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
@@ -127,10 +138,12 @@ type AnimatedMessageState = {
 const MAX_ASSIST_HISTORY_MESSAGES = 6;
 
 const DEVANAGARI_REGEX = /[\u0900-\u097F]/;
+// Enhanced Marathi hints with more agricultural and regional terms
 const MARATHI_HINT_REGEX =
-  /(शेत|शेतकरी|महाराष्ट्र|कर्ज|योजना|उत्पादन|खत|पाऊस|माती|सल्ला|अनुदान)/;
+  /(शेत|शेतकरी|महाराष्ट्र|कर्ज|योजना|उत्पादन|खत|पाऊस|माती|सल्ला|अनुदान|शेती|पिक|बियाणे|सिंचन|खरपतवार|कीटक|रोग|उत्पन्न|बाजार|मंडी|कृषी|शेतीमाल|पाणी|वीज|ट्रॅक्टर|कंबाईन|स्प्रे|ड्रिप|स्प्रिंकलर|आंबा|कापूस|सोयाबीन|गहू|तांदूळ|ज्वारी|बाजरी|नागली|तूर|मूग|उडीद|हरभरा|चवळी|मटकी|कांदा|टोमॅटो|मिरची|भेंडी|वांगी|काकडी|लोकी|कर्दळ|पपई|कलिंगड|द्राक्ष|केळी|संत्रा|मोसंबी|नारळ|शेंदूर|काजू|बदाम|पिस्ता|आंबा|पेरू|चिकू|अननस|पपई|कर्दळ|द्राक्ष|केळी|संत्रा|मोसंबी|नारळ|शेंदूर|काजू|बदाम|पिस्ता)/i;
+// Enhanced Hindi hints with more agricultural and regional terms
 const HINDI_HINT_REGEX =
-  /(किसान|योजना|ऋण|उर्वरक|मौसम|पैदावार|फसल|खरीफ|रबी|बीमा|सरकार)/;
+  /(किसान|योजना|ऋण|उर्वरक|मौसम|पैदावार|फसल|खरीफ|रबी|बीमा|सरकार|खेती|बीज|सिंचाई|खरपतवार|कीट|रोग|उत्पादन|बाजार|मंडी|कृषि|कृषि उत्पाद|पानी|बिजली|ट्रैक्टर|कंबाइन|स्प्रे|ड्रिप|स्प्रिंकलर|आम|कपास|सोयाबीन|गेहूं|चावल|ज्वार|बाजरा|रागी|अरहर|मूंग|उड़द|चना|मटर|प्याज|टमाटर|मिर्च|भिंडी|बैंगन|खीरा|लौकी|केला|अंगूर|संतरा|मौसंबी|नारियल|सिंदूर|काजू|बादाम|पिस्ता|अनानास|पपीता|तरबूज|खरबूजा)/i;
 
 const getTimeOfDayGreeting = (language: LanguageCode, referenceDate: Date = new Date()): string => {
   const hour = referenceDate.getHours();
@@ -194,7 +207,9 @@ const helpDeskText: Record<
   | "typeFallbackHint"
   | "thinkingMessage"
   | "typingMessage"
-  | "speakingMessage",
+  | "speakingMessage"
+  | "muteMessageLabel"
+  | "unmuteMessageLabel",
   Record<LanguageCode, string>
 > = {
   tagline: {
@@ -430,6 +445,24 @@ const helpDeskText: Record<
     ta: "Speaking your answer…",
     te: "Speaking your answer…",
     bn: "Speaking your answer…",
+  },
+  muteMessageLabel: {
+    en: "Mute this message",
+    hi: "इस संदेश को म्यूट करें",
+    mr: "हा संदेश म्यूट करा",
+    pa: "ਇਸ ਸੁਨੇਹੇ ਨੂੰ ਮੂਕ ਕਰੋ",
+    ta: "இந்த செய்தியை முடக்கு",
+    te: "ఈ సందేశాన్ని మ్యూట్ చేయండి",
+    bn: "এই বার্তাটি নিঃশব্দ করুন",
+  },
+  unmuteMessageLabel: {
+    en: "Unmute this message",
+    hi: "इस संदेश को अनम्यूट करें",
+    mr: "हा संदेश अनम्यूट करा",
+    pa: "ਇਸ ਸੁਨੇਹੇ ਨੂੰ ਅਨਮੂਕ ਕਰੋ",
+    ta: "இந்த செய்தியை முடக்க நீக்கு",
+    te: "ఈ సందేశాన్ని అన్మ్యూట్ చేయండి",
+    bn: "এই বার্তাটি আনমিউট করুন",
   },
 };
 
@@ -867,22 +900,81 @@ const renderAnswerText = (text: string) => {
     });
 };
 
-const detectInputLanguage = (value: string): LanguageCode => {
-  if (!value) {
-    return "en";
+/**
+ * Enhanced language detection with improved accuracy using:
+ * 1. Script analysis (Devanagari detection)
+ * 2. Contextual keyword matching with scoring
+ * 3. Character frequency analysis
+ * 4. Fallback to user preference
+ */
+const detectInputLanguage = (value: string, preferredLanguage?: LanguageCode): LanguageCode => {
+  if (!value || value.trim().length === 0) {
+    return preferredLanguage || "en";
   }
 
-  if (DEVANAGARI_REGEX.test(value)) {
-    if (MARATHI_HINT_REGEX.test(value)) {
+  const trimmedValue = value.trim();
+  
+  // Check for Devanagari script
+  if (DEVANAGARI_REGEX.test(trimmedValue)) {
+    // Score-based detection for better accuracy
+    let marathiScore = 0;
+    let hindiScore = 0;
+    
+    // Count keyword matches (more matches = higher confidence)
+    const marathiMatches = trimmedValue.match(MARATHI_HINT_REGEX);
+    const hindiMatches = trimmedValue.match(HINDI_HINT_REGEX);
+    
+    if (marathiMatches) {
+      marathiScore += marathiMatches.length * 2; // Weight matches
+    }
+    if (hindiMatches) {
+      hindiScore += hindiMatches.length * 2;
+    }
+    
+    // Character frequency analysis (Marathi-specific characters)
+    // Marathi uses some unique characters like ॲ, ऑ, ळ, ऱ्
+    const marathiSpecificChars = /[ॲऑळऱ्]/g;
+    const marathiCharMatches = trimmedValue.match(marathiSpecificChars);
+    if (marathiCharMatches) {
+      marathiScore += marathiCharMatches.length * 1.5;
+    }
+    
+    // Hindi-specific characters and patterns
+    const hindiSpecificPatterns = /(क्या|है|हो|गया|आया|किया|दिया|लिया)/g;
+    const hindiPatternMatches = trimmedValue.match(hindiSpecificPatterns);
+    if (hindiPatternMatches) {
+      hindiScore += hindiPatternMatches.length * 1.5;
+    }
+    
+    // Length-based confidence (longer text = more reliable)
+    const textLength = trimmedValue.length;
+    const lengthMultiplier = Math.min(textLength / 50, 1.5); // Cap at 1.5x
+    
+    marathiScore *= lengthMultiplier;
+    hindiScore *= lengthMultiplier;
+    
+    // Determine language based on scores
+    if (marathiScore > hindiScore && marathiScore > 1) {
       return "mr";
     }
-    if (HINDI_HINT_REGEX.test(value)) {
+    if (hindiScore > marathiScore && hindiScore > 1) {
       return "hi";
     }
-    return "mr";
+    
+    // If scores are equal or low, use preferred language or default to Marathi
+    // (since this is Maharashtra-focused)
+    return preferredLanguage === "hi" ? "hi" : "mr";
   }
 
-  return "en";
+  // For non-Devanagari text, check for English patterns
+  // If it contains mostly English characters, return English
+  const englishPattern = /^[a-zA-Z0-9\s.,!?'"()-]+$/;
+  if (englishPattern.test(trimmedValue) || trimmedValue.length > 0) {
+    return preferredLanguage || "en";
+  }
+
+  // Fallback to preferred language or English
+  return preferredLanguage || "en";
 };
 
 const mapLanguageToLocale = (code: string): string => {
@@ -930,6 +1022,12 @@ const FarmerHelpDesk = () => {
   const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [animatedMessages, setAnimatedMessages] = useState<Record<string, AnimatedMessageState>>({});
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [mutedMessageIds, setMutedMessageIds] = useState<Set<string>>(new Set());
+  const [micManuallyOpened, setMicManuallyOpened] = useState(false);
+  const [interimTranscript, setInterimTranscript] = useState("");
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+  const pauseTimeoutRef = useRef<number | null>(null);
+  const lastSpeechTimeRef = useRef<number>(0);
 
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
@@ -939,12 +1037,14 @@ const FarmerHelpDesk = () => {
   const activationLanguageRef = useRef<LanguageCode>("en");
   const pendingSpeechSubmitRef = useRef(false);
   const animationIntervalsRef = useRef<Record<string, number>>({});
-  const handleSubmitQuestionRef = useRef<((event?: React.FormEvent<HTMLFormElement>) => Promise<void>) | null>(
+  const handleSubmitQuestionRef = useRef<((event?: React.FormEvent<HTMLFormElement>, questionOverride?: string) => Promise<void>) | null>(
     null,
   );
   const animatedMessageIdsRef = useRef<Set<string>>(new Set());
   const lastAutoResumeMessageIdRef = useRef<string | null>(null);
   const detectedLanguageSourceRef = useRef<"initial" | "manual" | "input" | "voice" | "response">("initial");
+  const userInteractedRef = useRef(false);
+  const processedResultIndexRef = useRef(0); // Track which recognition results we've already processed
 
   const languageOptions = useMemo<Array<{ code: LanguageCode; label: string }>>(
     () => [
@@ -968,6 +1068,10 @@ const FarmerHelpDesk = () => {
     [setDetectedLanguage],
   );
 
+  /**
+   * Enhanced voice selection with better language matching and natural voice preferences
+   * Prioritizes native voices for each language with fallback strategies
+   */
   const selectVoiceForLanguage = useCallback(
     (languageCode: LanguageCode): SpeechSynthesisVoice | null => {
       if (availableVoices.length === 0) {
@@ -977,29 +1081,68 @@ const FarmerHelpDesk = () => {
       const locale = mapLanguageToLocale(languageCode).toLowerCase();
       const base = locale.split("-")[0];
 
+      // Enhanced preference map with more specific voice matching
       const preferenceMap: Partial<Record<LanguageCode, string[]>> = {
-        mr: [locale, base, "hi-in", "hi", "en-in", "en"],
-        hi: [locale, base, "hi", "en-in", "en"],
-        en: ["en-in", "en-us", "en-gb", "en"],
+        mr: [
+          locale,           // mr-IN (exact match)
+          "mr",            // Marathi (any variant)
+          "hi-in",         // Hindi-India (closest Devanagari script)
+          "hi",            // Hindi (any variant)
+          "en-in",         // English-India (fallback)
+          "en",            // English (final fallback)
+        ],
+        hi: [
+          locale,          // hi-IN (exact match)
+          "hi",            // Hindi (any variant)
+          "mr-in",         // Marathi-India (closest Devanagari script)
+          "mr",            // Marathi (any variant)
+          "en-in",         // English-India (fallback)
+          "en",            // English (final fallback)
+        ],
+        en: [
+          "en-in",         // English-India (preferred for Indian context)
+          "en-us",         // English-US
+          "en-gb",         // English-UK
+          "en",            // English (any variant)
+        ],
       };
 
       const preferences = preferenceMap[languageCode] ?? preferenceMap.en ?? ["en"];
 
+      // First pass: exact locale match
       for (const tag of preferences) {
-        const match = availableVoices.find((voice) => voice.lang.toLowerCase() === tag);
+        const match = availableVoices.find((voice) => 
+          voice.lang.toLowerCase() === tag.toLowerCase()
+        );
         if (match) {
           return match;
         }
       }
 
+      // Second pass: language code match (e.g., "mr" matches "mr-IN", "mr-MX", etc.)
       for (const tag of preferences) {
         const normalized = tag.includes("-") ? tag.split("-")[0] : tag;
-        const match = availableVoices.find((voice) => voice.lang.toLowerCase().startsWith(normalized));
+        const match = availableVoices.find((voice) => 
+          voice.lang.toLowerCase().startsWith(normalized.toLowerCase() + "-") ||
+          voice.lang.toLowerCase() === normalized.toLowerCase()
+        );
         if (match) {
           return match;
         }
       }
 
+      // Third pass: partial match (fallback)
+      for (const tag of preferences) {
+        const normalized = tag.includes("-") ? tag.split("-")[0] : tag;
+        const match = availableVoices.find((voice) => 
+          voice.lang.toLowerCase().includes(normalized.toLowerCase())
+        );
+        if (match) {
+          return match;
+        }
+      }
+
+      // Final fallback: return first available voice
       return availableVoices[0] ?? null;
     },
     [availableVoices],
@@ -1012,11 +1155,16 @@ const FarmerHelpDesk = () => {
       }
 
       try {
+        // Set appropriate mode based on whether mic is manually opened
+        recognitionRef.current.continuous = force ? true : false; // Continuous for manual, single for auto
+        recognitionRef.current.interimResults = force ? true : false; // Interim results for manual mode
         recognitionRef.current.lang = mapLanguageToLocale(detectedLanguage);
         recognitionRef.current.start();
         setIsListening(true);
         pendingSpeechSubmitRef.current = false;
         setVoiceError(null);
+        setInterimTranscript("");
+        processedResultIndexRef.current = 0; // Reset processed index when recognition starts
         return true;
       } catch (error) {
         setIsListening(false);
@@ -1144,40 +1292,207 @@ const FarmerHelpDesk = () => {
 
     try {
       const recognitionInstance = new SpeechRecognitionCtor();
-      recognitionInstance.continuous = false;
-      recognitionInstance.interimResults = false;
+      // Use continuous mode when mic is manually opened for better control
+      recognitionInstance.continuous = true;
+      recognitionInstance.interimResults = true; // Enable interim results for real-time feedback
       recognitionInstance.lang = mapLanguageToLocale(detectedLanguage);
+      
+      const PAUSE_DURATION_MS = 2000; // Wait 2 seconds of silence before processing
+      
       recognitionInstance.onresult = (event: SpeechRecognitionEventLike) => {
-        const transcript = Array.from(event.results)
-          .map((result) => (result[0]?.transcript ?? "").trim())
-          .join(" ")
-          .trim();
+        const results = Array.from(event.results);
+        let finalTranscript = "";
+        let interimTranscript = "";
 
-        if (transcript.length > 0) {
-          recognitionInstance.stop();
-          setIsListening(false);
-          const detected = detectInputLanguage(transcript);
-          setQuestion(transcript);
-          updateDetectedLanguage(detected, "voice");
-          pendingSpeechSubmitRef.current = true;
-          setTimeout(() => {
-            if (pendingSpeechSubmitRef.current) {
-              handleSubmitQuestionRef.current?.();
-              pendingSpeechSubmitRef.current = false;
+        // Only process NEW results that we haven't seen before
+        // This prevents duplicate text from being added when continuous recognition fires multiple times
+        for (let i = processedResultIndexRef.current; i < results.length; i++) {
+          const transcript = results[i][0]?.transcript ?? "";
+          if (results[i].isFinal) {
+            finalTranscript += transcript + " ";
+            // Update processed index to skip this result next time
+            processedResultIndexRef.current = i + 1;
+          } else {
+            // Only use the LAST interim result (most recent)
+            if (i === results.length - 1) {
+              interimTranscript = transcript;
             }
-          }, 150);
+          }
+        }
+
+        finalTranscript = finalTranscript.trim();
+        interimTranscript = interimTranscript.trim();
+
+        // Update interim transcript for real-time display (only if we have new interim text)
+        if (interimTranscript) {
+          setInterimTranscript(interimTranscript);
+          lastSpeechTimeRef.current = Date.now();
+          
+          // Clear any existing pause timeout
+          if (pauseTimeoutRef.current) {
+            window.clearTimeout(pauseTimeoutRef.current);
+            pauseTimeoutRef.current = null;
+          }
+        } else if (finalTranscript.length === 0) {
+          // Clear interim if we don't have any interim or final results
+          setInterimTranscript("");
+        }
+
+        // If we have final results, append them to the question (don't auto-submit)
+        if (finalTranscript.length > 0 && !isProcessingVoice) {
+          // Stop speech synthesis when user speaks
+          if (typeof window !== "undefined" && window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+            setIsSpeaking(false);
+          }
+          
+          // Clear pause timeout
+          if (pauseTimeoutRef.current) {
+            window.clearTimeout(pauseTimeoutRef.current);
+            pauseTimeoutRef.current = null;
+          }
+          
+          const detected = detectInputLanguage(finalTranscript, detectedLanguage);
+          
+          // Append final transcript to existing question (add space if needed)
+          // Only append if it's not already in the question to prevent duplicates
+          setQuestion((prev) => {
+            const trimmedPrev = prev.trim();
+            const trimmedFinal = finalTranscript.trim();
+            if (!trimmedPrev) {
+              return trimmedFinal;
+            }
+            // Check if the final transcript is already at the end of the question
+            if (trimmedPrev.endsWith(trimmedFinal)) {
+              return trimmedPrev; // Don't duplicate
+            }
+            // Add space between existing content and new content
+            return `${trimmedPrev} ${trimmedFinal}`;
+          });
+          
+          updateDetectedLanguage(detected, "voice");
+          setInterimTranscript(""); // Clear interim since we got final
+          
+          // Keep mic open - don't stop recognition or submit
+          // Mic stays active for continuous input
         }
       };
-      recognitionInstance.onerror = () => {
-        setIsListening(false);
-        pendingSpeechSubmitRef.current = false;
+      
+      recognitionInstance.onerror = (event: { error?: string }) => {
+        const errorType = event.error;
+        
+        // Handle different error types with appropriate responses
+        switch (errorType) {
+          case "no-speech":
+            // This is normal - user hasn't spoken yet, keep listening
+            return;
+          case "aborted":
+            // Recognition was manually stopped, don't show error
+            return;
+          case "audio-capture":
+            // Microphone not available or permission denied
+            setIsListening(false);
+            setMicManuallyOpened(false);
+            setVoiceError(t(helpDeskText.voiceUnsupported) || "Microphone not available. Please check permissions.");
+            setInterimTranscript("");
+            pendingSpeechSubmitRef.current = false;
+            break;
+          case "network":
+            // Network error
+            setIsListening(false);
+            setVoiceError("Network error. Please check your connection.");
+            setInterimTranscript("");
+            pendingSpeechSubmitRef.current = false;
+            break;
+          case "not-allowed":
+            // Permission denied
+            setIsListening(false);
+            setMicManuallyOpened(false);
+            setVoiceError("Microphone permission denied. Please allow microphone access.");
+            setInterimTranscript("");
+            pendingSpeechSubmitRef.current = false;
+            break;
+          case "service-not-allowed":
+            // Service not allowed
+            setIsListening(false);
+            setMicManuallyOpened(false);
+            setVoiceError(t(helpDeskText.voiceUnsupported) || "Speech recognition service not available.");
+            setInterimTranscript("");
+            pendingSpeechSubmitRef.current = false;
+            break;
+          default:
+            // Other errors - log but don't necessarily stop
+            console.warn("Speech recognition error:", errorType);
+            if (errorType && !["no-speech", "aborted"].includes(errorType)) {
+              setIsListening(false);
+              pendingSpeechSubmitRef.current = false;
+              setInterimTranscript("");
+              // Only show error for critical failures
+              if (micManuallyOpened) {
+                setVoiceError(`Recognition error: ${errorType}. Please try again.`);
+              }
+            }
+        }
       };
+      
       recognitionInstance.onend = () => {
-        setIsListening(false);
-        const restarted = resumeAutoListening();
-        if (!restarted) {
-          pendingSpeechSubmitRef.current = false;
+        // Clear pause timeout
+        if (pauseTimeoutRef.current) {
+          window.clearTimeout(pauseTimeoutRef.current);
+          pauseTimeoutRef.current = null;
         }
+        
+        // Only update listening state if mic was manually opened
+        // (auto-resume will handle state for auto-listening mode)
+        if (micManuallyOpened) {
+          setIsListening(false);
+          setInterimTranscript("");
+          
+          // Auto-resume if mic was manually opened and not processing
+          if (!isProcessingVoice && recognitionRef.current) {
+            // Keep mic open - restart listening after a short delay
+            setTimeout(() => {
+              try {
+                if (recognitionRef.current && micManuallyOpened && !isProcessingVoice) {
+                  recognitionRef.current.lang = mapLanguageToLocale(detectedLanguage);
+                  recognitionRef.current.continuous = true;
+                  recognitionRef.current.interimResults = true;
+                  recognitionRef.current.start();
+                  setIsListening(true);
+                  setVoiceError(null); // Clear any previous errors
+                  processedResultIndexRef.current = 0; // Reset processed index when recognition restarts
+                }
+              } catch (error) {
+                // If restart fails, log but don't show error (might be temporary)
+                console.warn("Failed to restart recognition:", error);
+                setMicManuallyOpened(false);
+                setIsListening(false);
+              }
+            }, 300);
+          }
+        } else if (!micManuallyOpened) {
+          // Auto-resume only if autoListen is enabled
+          setIsListening(false);
+          setInterimTranscript("");
+          const restarted = resumeAutoListening();
+          if (!restarted) {
+            pendingSpeechSubmitRef.current = false;
+          }
+        }
+      };
+      
+      recognitionInstance.onaudiostart = () => {
+        setIsListening(true);
+      };
+      
+      recognitionInstance.onspeechstart = () => {
+        setIsListening(true);
+        lastSpeechTimeRef.current = Date.now();
+      };
+      
+      recognitionInstance.onspeechend = () => {
+        // Speech ended, but keep listening for more input
+        lastSpeechTimeRef.current = Date.now();
       };
 
       recognitionRef.current = recognitionInstance;
@@ -1195,18 +1510,32 @@ const FarmerHelpDesk = () => {
 
   useEffect(() => {
     if (!speechSupported || typeof window === "undefined" || !window.speechSynthesis) {
+      console.log("[Speech Init] Speech synthesis not supported or window not available");
       return;
     }
 
+    console.log("[Speech Init] Initializing speech synthesis...");
+    
     const updateVoices = () => {
       const voices = window.speechSynthesis.getVoices();
+      console.log("[Speech Init] Voices loaded:", voices.length);
       if (voices.length > 0) {
         setAvailableVoices(voices);
+        console.log("[Speech Init] Available voices:", voices.map(v => ({ name: v.name, lang: v.lang })));
+      } else {
+        console.warn("[Speech Init] No voices available yet");
       }
     };
 
+    // Try to get voices immediately
     updateVoices();
+    
+    // Some browsers need the voiceschanged event
     window.speechSynthesis.addEventListener("voiceschanged", updateVoices);
+    
+    // Also try after a delay (some browsers load voices asynchronously)
+    setTimeout(updateVoices, 1000);
+    
     return () => {
       window.speechSynthesis.removeEventListener("voiceschanged", updateVoices);
     };
@@ -1259,64 +1588,540 @@ const FarmerHelpDesk = () => {
     setLatestReferences([]);
   }, [activationSequence, isActivated]);
 
+  // Track user interaction for browser autoplay policies
   useEffect(() => {
-    if (!speechSupported || assistantResponses.length === 0) {
+    const handleUserInteraction = () => {
+      userInteractedRef.current = true;
+    };
+
+    // Listen for various user interaction events
+    window.addEventListener("click", handleUserInteraction, { once: true });
+    window.addEventListener("keydown", handleUserInteraction, { once: true });
+    window.addEventListener("touchstart", handleUserInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener("click", handleUserInteraction);
+      window.removeEventListener("keydown", handleUserInteraction);
+      window.removeEventListener("touchstart", handleUserInteraction);
+    };
+  }, []);
+
+  useEffect(() => {
+    console.log("[Speech Debug] useEffect triggered", {
+      speechSupported,
+      responsesCount: assistantResponses.length,
+      autoSpeak,
+      hasWindow: typeof window !== "undefined",
+      hasSpeechSynthesis: typeof window !== "undefined" && !!window.speechSynthesis,
+    });
+
+    if (!speechSupported) {
+      console.log("[Speech Debug] Speech not supported, returning");
+      return;
+    }
+    if (assistantResponses.length === 0) {
+      console.log("[Speech Debug] No assistant responses, returning");
       return;
     }
     if (typeof window === "undefined" || !window.speechSynthesis) {
+      console.log("[Speech Debug] Window or speechSynthesis not available, returning");
       return;
+    }
+    
+    // Check if user has interacted (required for some browsers' autoplay policies)
+    // Note: Speech synthesis usually works without user interaction, but we check anyway
+    if (!userInteractedRef.current) {
+      // Try to enable speech anyway - most browsers allow speech synthesis without user interaction
+      // But log a warning if it fails
+      console.log("[Speech Debug] User interaction not detected, but will attempt speech");
     }
     const latest = assistantResponses[assistantResponses.length - 1];
     if (!latest || !latest.answer.trim()) {
+      console.log("[Speech Debug] No latest response or empty answer", { latest: latest?.id, hasAnswer: !!latest?.answer });
       return;
     }
+    // CRITICAL: Mark as spoken immediately to prevent infinite loop
     if (spokenIdsRef.current.has(latest.id)) {
+      console.log("[Speech Debug] Message already spoken, skipping", latest.id);
       return;
     }
+    // Mark as spoken BEFORE starting to prevent re-triggering
+    spokenIdsRef.current.add(latest.id);
 
-    const languageForVoice = (latest.detectedLanguage || latest.language || detectedLanguage) as LanguageCode;
-    const utterance = new SpeechSynthesisUtterance(stripMarkup(latest.answer));
-    utterance.lang = mapLanguageToLocale(languageForVoice);
-    utterance.rate = 0.95;
-    utterance.pitch = 1;
-    const targetVoice = selectVoiceForLanguage(languageForVoice);
-    if (targetVoice) {
-      utterance.voice = targetVoice;
-    }
-
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      const restarted = resumeAutoListening();
-      if (restarted) {
-        lastAutoResumeMessageIdRef.current = latest.id;
-      }
+    // Ensure voices are loaded before speaking
+    // Some browsers require voices to be loaded before use
+    const ensureVoicesLoaded = () => {
+      return new Promise<void>((resolve) => {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          resolve();
+          return;
+        }
+        
+        // Wait for voices to load
+        const onVoicesChanged = () => {
+          const loadedVoices = window.speechSynthesis.getVoices();
+          if (loadedVoices.length > 0) {
+            window.speechSynthesis.removeEventListener("voiceschanged", onVoicesChanged);
+            resolve();
+          }
+        };
+        
+        window.speechSynthesis.addEventListener("voiceschanged", onVoicesChanged);
+        
+        // Timeout after 2 seconds if voices don't load
+        setTimeout(() => {
+          window.speechSynthesis.removeEventListener("voiceschanged", onVoicesChanged);
+          resolve(); // Continue anyway
+        }, 2000);
+      });
     };
 
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-      const restarted = resumeAutoListening();
-      if (restarted) {
-        lastAutoResumeMessageIdRef.current = latest.id;
+    const speakMessage = async () => {
+      // Wait for voices to be available
+      await ensureVoicesLoaded();
+      
+      // Refresh available voices (but don't update state to avoid re-render)
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0 && availableVoices.length === 0) {
+        // Use setTimeout to avoid triggering re-render during effect
+        setTimeout(() => setAvailableVoices(voices), 0);
       }
+
+      const languageForVoice = (latest.detectedLanguage || latest.language || detectedLanguage) as LanguageCode;
+      const cleanedText = stripMarkup(latest.answer);
+      
+      if (!cleanedText || cleanedText.trim().length === 0) {
+        // Remove from spoken set if text is empty
+        spokenIdsRef.current.delete(latest.id);
+        return;
+      }
+      
+      // Check if this message is muted BEFORE creating utterance
+      if (mutedMessageIds.has(latest.id)) {
+        setIsSpeaking(false);
+        return;
+      }
+
+      if (!autoSpeak) {
+        console.log("[Speech Debug] AutoSpeak is disabled, not speaking");
+        setIsSpeaking(false);
+        return;
+      }
+      
+      console.log("[Speech Debug] Starting speech synthesis", {
+        messageId: latest.id,
+        language: languageForVoice,
+        textLength: cleanedText.length,
+        textPreview: cleanedText.substring(0, 50),
+      });
+      
+      // Create utterance with enhanced natural speech settings
+      const utterance = new SpeechSynthesisUtterance(cleanedText);
+      utterance.lang = mapLanguageToLocale(languageForVoice);
+      
+      // Optimize speech parameters for natural, farmer-friendly delivery
+      // Slightly slower rate for better comprehension, especially for non-native speakers
+      utterance.rate = languageForVoice === "en" ? 0.9 : 0.85; // Slower for Indian languages
+      utterance.pitch = 1.0; // Natural pitch
+      utterance.volume = 1.0; // Full volume - ensure maximum volume
+      
+      // Force volume to maximum (some browsers may ignore the property)
+      try {
+        if (utterance.volume !== 1.0) {
+          utterance.volume = 1.0;
+        }
+      } catch (e) {
+        console.warn("[Speech Debug] Could not set volume:", e);
+      }
+      
+      // Select appropriate voice for language (use fresh voices list)
+      const currentVoices = window.speechSynthesis.getVoices();
+      const locale = mapLanguageToLocale(languageForVoice).toLowerCase();
+      const base = locale.split("-")[0];
+      
+      console.log("[Speech Debug] Selecting voice for language:", languageForVoice, "locale:", locale);
+      console.log("[Speech Debug] Available voices count:", currentVoices.length);
+      console.log("[Speech Debug] Voice list:");
+      currentVoices.forEach((voice, index) => {
+        console.log(`[Speech Debug]   ${index + 1}. "${voice.name}" - Language: ${voice.lang} - Default: ${voice.default}`);
+      });
+      
+      // Try to find the best matching voice
+      let targetVoice = currentVoices.find((voice) => {
+        const voiceLang = voice.lang.toLowerCase();
+        // Exact match
+        if (voiceLang === locale) return true;
+        // Language code match (e.g., mr-IN, mr)
+        if (voiceLang.startsWith(base + "-") || voiceLang === base) return true;
+        return false;
+      });
+      
+      // If no match found, try to find any voice with the language code in the name
+      if (!targetVoice) {
+        targetVoice = currentVoices.find((voice) => {
+          const voiceName = voice.name.toLowerCase();
+          const voiceLang = voice.lang.toLowerCase();
+          // Check if language code appears in voice name or lang
+          return voiceName.includes(base) || voiceLang.includes(base);
+        });
+      }
+      
+      // CRITICAL: For Hindi/Marathi, NEVER use English voices - they can't pronounce Devanagari script
+      // English voices (even en-IN) will fail immediately (speech ends in 16-26ms)
+      if (!targetVoice && (languageForVoice === "mr" || languageForVoice === "hi")) {
+        // First, try to find Hindi or Marathi specific voices
+        targetVoice = currentVoices.find((voice) => {
+          const voiceLang = voice.lang.toLowerCase();
+          const voiceName = voice.name.toLowerCase();
+          // Look for Hindi or Marathi in language code or name
+          return voiceLang.includes("hi") || voiceLang.includes("mr") || 
+                 voiceName.includes("hindi") || voiceName.includes("marathi");
+        });
+        
+        // If no Hindi/Marathi voice, try any Indian non-English voice
+        if (!targetVoice) {
+          targetVoice = currentVoices.find((voice) => {
+            const voiceLang = voice.lang.toLowerCase();
+            const voiceName = voice.name.toLowerCase();
+            // Must have "in" or "india" but NOT be English
+            const hasIndia = voiceLang.includes("in") || voiceName.includes("india");
+            const isEnglish = voiceLang.startsWith("en");
+            return hasIndia && !isEnglish;
+          });
+        }
+        
+        // Last resort: any non-English voice
+        if (!targetVoice) {
+          targetVoice = currentVoices.find((voice) => {
+            const voiceLang = voice.lang.toLowerCase();
+            return !voiceLang.startsWith("en");
+          });
+        }
+        
+        // If we still don't have a voice, don't use English - it won't work
+        if (!targetVoice) {
+          console.error("[Speech Debug] ❌ No non-English voice available for Hindi/Marathi!");
+          console.error("[Speech Debug] English voices cannot pronounce Devanagari script");
+        }
+      }
+      
+      // Last resort: use default voice but ONLY if it's not English for Hindi/Marathi
+      if (!targetVoice) {
+        targetVoice = currentVoices[0] || null;
+        if (targetVoice && (languageForVoice === "mr" || languageForVoice === "hi")) {
+          const voiceLang = targetVoice.lang.toLowerCase();
+          // NEVER use English voices for Hindi/Marathi - they can't pronounce Devanagari
+          if (voiceLang.startsWith("en")) {
+          console.error("[Speech Debug] ❌ CRITICAL: No Hindi/Marathi voice found!");
+          console.error("[Speech Debug] Available voices:", currentVoices.map(v => ({ name: v.name, lang: v.lang })));
+          console.error("[Speech Debug] Full voice details:");
+          currentVoices.forEach((voice, index) => {
+            console.error(`[Speech Debug]   ${index + 1}. "${voice.name}" - Language: ${voice.lang} - Default: ${voice.default}`);
+          });
+          console.error("[Speech Debug] English voices cannot pronounce Hindi/Marathi Devanagari script");
+          console.error("[Speech Debug] Please install Hindi/Marathi language packs in Windows Settings");
+            // Don't set the voice - skip speech to avoid silent failure
+            targetVoice = null;
+          } else {
+            console.warn("[Speech Debug] ⚠️ No matching voice found, using default:", targetVoice?.name);
+          }
+        }
+      }
+      
+      if (targetVoice) {
+        utterance.voice = targetVoice;
+        console.log("[Speech Debug] ✅ Using voice:", targetVoice.name, "lang:", targetVoice.lang, "for language:", languageForVoice);
+        
+        // Verify the voice is actually set
+        if (utterance.voice !== targetVoice) {
+          console.warn("[Speech Debug] ⚠️ Voice may not have been set correctly");
+        }
+      } else {
+        console.error("[Speech Debug] ❌ No suitable voice available!");
+        // For Hindi/Marathi without a proper voice, show error and skip speech
+        if (languageForVoice === "mr" || languageForVoice === "hi") {
+          const errorMsg = languageForVoice === "hi" 
+            ? "हिंदी वॉइस उपलब्ध नहीं है। कृपया Windows Settings में Hindi Language Pack इंस्टॉल करें।"
+            : "मराठी आवाज उपलब्ध नाही. कृपया Windows Settings मध्ये Marathi Language Pack इंस्टॉल करा.";
+          setVoiceError(errorMsg);
+          console.error("[Speech Debug] ❌ No Hindi/Marathi voice found!");
+          console.error("[Speech Debug] Available voices:", currentVoices.map(v => ({ name: v.name, lang: v.lang })));
+          console.error("[Speech Debug] Full voice list:");
+          currentVoices.forEach((voice, index) => {
+            console.error(`[Speech Debug]   ${index + 1}. "${voice.name}" - Language: ${voice.lang} - Default: ${voice.default}`);
+          });
+          console.error("[Speech Debug] Please install Hindi/Marathi language packs in Windows Settings");
+          console.error("[Speech Debug] See LANGUAGE_PACK_INSTALLATION.md for instructions");
+          setIsSpeaking(false);
+          return; // Skip speech - it won't work without proper voice
+        }
+      }
+
+      // Track start time for duration calculation
+      const speechStartTimeRef = { value: null as number | null };
+      
+      utterance.onstart = () => {
+        speechStartTimeRef.value = Date.now();
+        setIsSpeaking(true);
+        setVoiceError(null); // Clear any previous errors
+        console.log("[Speech Debug] ✅ Speech STARTED successfully:", cleanedText.substring(0, 50));
+        console.log("[Speech Debug] Speech synthesis status:", {
+          speaking: window.speechSynthesis.speaking,
+          pending: window.speechSynthesis.pending,
+          paused: window.speechSynthesis.paused,
+        });
+        console.log("[Speech Debug] Utterance details:", {
+          text: utterance.text.substring(0, 50),
+          lang: utterance.lang,
+          voice: utterance.voice?.name,
+          voiceLang: utterance.voice?.lang,
+          rate: utterance.rate,
+          pitch: utterance.pitch,
+          volume: utterance.volume,
+        });
+        
+        // CRITICAL: Check if wrong voice is being used for Hindi/Marathi
+        if (languageForVoice === "mr" || languageForVoice === "hi") {
+          const voiceLang = utterance.voice?.lang?.toLowerCase() || "";
+          const voiceName = utterance.voice?.name?.toLowerCase() || "";
+          
+          // Check if it's an English voice (not en-IN)
+          if (voiceLang.startsWith("en") && !voiceLang.includes("in") && !voiceName.includes("india")) {
+            console.error("[Speech Debug] ❌ CRITICAL: English voice detected for Hindi/Marathi!");
+            console.error("[Speech Debug] Voice:", utterance.voice?.name, "cannot pronounce Devanagari script");
+            console.error("[Speech Debug] Cancelling speech immediately to prevent silent failure");
+            
+            // Cancel immediately
+            window.speechSynthesis.cancel();
+            setIsSpeaking(false);
+            spokenIdsRef.current.delete(latest.id);
+            
+            // Show user-friendly error
+            const langName = languageForVoice === "mr" ? "Marathi" : "Hindi";
+            setVoiceError(`No ${langName} voice available on your system. English voices cannot pronounce ${langName} text. Please install ${langName} language packs in Windows Settings, or switch to English language.`);
+            return;
+          }
+          
+          // Warn if not perfect match but might work
+          if (!voiceLang.includes("mr") && !voiceLang.includes("hi") && !voiceLang.includes("in")) {
+            console.warn("[Speech Debug] ⚠️ WARNING: Using non-Indian voice for Indian language text!");
+            console.warn("[Speech Debug] Voice:", utterance.voice?.name, "may not pronounce", languageForVoice, "correctly");
+          }
+        }
+      };
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        console.log("[Speech Debug] ✅ Speech ENDED successfully");
+        
+        // Check if speech actually played
+        if (speechStartTimeRef.value) {
+          const duration = Date.now() - speechStartTimeRef.value;
+          console.log("[Speech Debug] Speech duration:", duration, "ms");
+          if (duration < 100) {
+            console.warn("[Speech Debug] ⚠️ Speech ended too quickly - may not have played audio!");
+            console.warn("[Speech Debug] This might indicate the voice cannot handle the text language");
+          } else {
+            console.log("[Speech Debug] ✅ Speech played for", duration, "ms - audio should have been heard");
+          }
+        }
+        
+        // Enhanced state management: Auto-resume listening after speech ends
+        // Only auto-resume if mic wasn't manually opened (manual mode handles its own resumption)
+        if (!micManuallyOpened && autoListen) {
+          // Small delay to ensure speech has fully ended
+          setTimeout(() => {
+            if (!isSpeaking && !micManuallyOpened) {
+              const restarted = resumeAutoListening();
+              if (restarted) {
+                lastAutoResumeMessageIdRef.current = latest.id;
+              }
+            }
+          }, 200);
+        }
+      };
+
+      utterance.onerror = (error) => {
+        console.error("[Speech Debug] ❌ Speech synthesis ERROR:", error, error.error);
+        console.error("[Speech Debug] Error details:", {
+          errorType: error.error,
+          charIndex: error.charIndex,
+          charLength: error.charLength,
+          utterance: error.utterance?.text?.substring(0, 50),
+        });
+        setIsSpeaking(false);
+        // Remove from spoken set on error so it can be retried
+        spokenIdsRef.current.delete(latest.id);
+        
+        // Provide helpful error messages
+        const errorMsg = error.error || "unknown";
+        if (errorMsg === "not-allowed") {
+          setVoiceError("Speech synthesis not allowed. Please check browser permissions.");
+        } else if (errorMsg === "synthesis-failed") {
+          setVoiceError("Failed to synthesize speech. Please try again.");
+        } else if (errorMsg === "interrupted") {
+          // This is normal when cancelling, don't show error
+          console.log("Speech interrupted (normal)");
+        } else {
+          setVoiceError("Failed to speak response. Text is still available.");
+        }
+        
+        // Auto-resume listening even on error if autoListen is enabled
+        if (!micManuallyOpened && autoListen && errorMsg !== "interrupted") {
+          setTimeout(() => {
+            if (!isSpeaking && !micManuallyOpened) {
+              const restarted = resumeAutoListening();
+              if (restarted) {
+                lastAutoResumeMessageIdRef.current = latest.id;
+              }
+            }
+          }, 200);
+        }
+      };
+
+      // Improved speech synthesis with better error handling and browser compatibility
+      const startSpeech = () => {
+        try {
+          // Check if speech synthesis is available and not paused
+          if (!window.speechSynthesis) {
+            console.error("Speech synthesis not available");
+            setVoiceError("Speech synthesis not available in this browser.");
+            spokenIdsRef.current.delete(latest.id);
+            return;
+          }
+
+          // Check if message is muted
+          if (mutedMessageIds.has(latest.id)) {
+            setIsSpeaking(false);
+            return;
+          }
+
+          // Cancel any ongoing speech first, but wait for it to complete
+          if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+            window.speechSynthesis.cancel();
+            // Wait a bit longer to ensure cancellation completes
+            setTimeout(() => {
+              try {
+                if (window.speechSynthesis && !mutedMessageIds.has(latest.id)) {
+                  // Double-check speech synthesis is still available
+                  if (window.speechSynthesis.speak) {
+                    console.log("[Speech Debug] 🎤 Calling speechSynthesis.speak() (after cancellation)");
+                    window.speechSynthesis.speak(utterance);
+                    // Optimistically set speaking state (will be confirmed by onstart event)
+                    setIsSpeaking(true);
+                    console.log("[Speech Debug] Speech queued successfully, checking status...");
+                    // Check status after a short delay
+                    setTimeout(() => {
+                      console.log("[Speech Debug] Speech status check:", {
+                        speaking: window.speechSynthesis.speaking,
+                        pending: window.speechSynthesis.pending,
+                        paused: window.speechSynthesis.paused,
+                      });
+                    }, 100);
+                  } else {
+                    console.error("speechSynthesis.speak is not available");
+                    setVoiceError("Speech synthesis not supported. Please try again.");
+                    spokenIdsRef.current.delete(latest.id);
+                  }
+                }
+              } catch (speakError) {
+                console.error("Error calling speak after cancellation:", speakError);
+                setVoiceError("Failed to start speech. Please try again.");
+                setIsSpeaking(false);
+                spokenIdsRef.current.delete(latest.id);
+              }
+            }, 200);
+          } else {
+            // No ongoing speech, start immediately
+            try {
+              if (window.speechSynthesis.speak) {
+                console.log("[Speech Debug] 🎤 Calling speechSynthesis.speak() (immediate)");
+                
+                // Check if speech synthesis is paused (some browsers pause by default)
+                if (window.speechSynthesis.paused) {
+                  console.log("[Speech Debug] Speech synthesis was paused, resuming...");
+                  try {
+                    window.speechSynthesis.resume();
+                  } catch (e) {
+                    console.warn("[Speech Debug] Could not resume:", e);
+                  }
+                }
+                
+                // Cancel any pending speech first
+                if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+                  window.speechSynthesis.cancel();
+                  // Wait a moment for cancellation
+                  setTimeout(() => {
+                    window.speechSynthesis.speak(utterance);
+                    setIsSpeaking(true);
+                  }, 50);
+                } else {
+                  window.speechSynthesis.speak(utterance);
+                }
+                
+                // Optimistically set speaking state (will be confirmed by onstart event)
+                setIsSpeaking(true);
+                console.log("[Speech Debug] Speech started immediately, checking status...");
+                
+                // Verify speech actually started after a short delay
+                setTimeout(() => {
+                  const status = {
+                    speaking: window.speechSynthesis.speaking,
+                    pending: window.speechSynthesis.pending,
+                    paused: window.speechSynthesis.paused,
+                  };
+                  console.log("[Speech Debug] Speech status check:", status);
+                  if (!status.speaking && !status.pending && !status.paused) {
+                    // Speech didn't start, might be a browser autoplay issue
+                    console.warn("[Speech Debug] ⚠️ Speech may not have started - trying again...");
+                    // Try once more
+                    try {
+                      window.speechSynthesis.cancel();
+                      setTimeout(() => {
+                        window.speechSynthesis.speak(utterance);
+                      }, 100);
+                    } catch (retryError) {
+                      console.error("[Speech Debug] Retry failed:", retryError);
+                    }
+                  }
+                }, 500);
+              } else {
+                console.error("speechSynthesis.speak is not available");
+                setVoiceError("Speech synthesis not supported. Please try again.");
+                spokenIdsRef.current.delete(latest.id);
+              }
+            } catch (speakError) {
+              console.error("Error calling speak:", speakError);
+              setVoiceError("Failed to start speech. Please try again.");
+              setIsSpeaking(false);
+              spokenIdsRef.current.delete(latest.id);
+            }
+          }
+        } catch (error) {
+          console.error("Error in startSpeech:", error);
+          setVoiceError("Failed to start speech. Please try again.");
+          setIsSpeaking(false);
+          spokenIdsRef.current.delete(latest.id);
+        }
+      };
+
+      // Start speech synthesis
+      startSpeech();
     };
 
-    if (autoSpeak) {
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utterance);
-      spokenIdsRef.current.add(latest.id);
-      setIsSpeaking(true);
-    } else {
-      setIsSpeaking(false);
-    }
-  }, [assistantResponses, autoSpeak, detectedLanguage, resumeAutoListening, selectVoiceForLanguage, speechSupported]);
+    void speakMessage();
+    // Removed availableVoices from dependencies to prevent infinite loop
+  }, [assistantResponses, autoSpeak, detectedLanguage, micManuallyOpened, mutedMessageIds, resumeAutoListening, speechSupported]);
 
   useEffect(() => {
-    if (!isActivated || isListening) {
+    // Only auto-resume if mic wasn't manually opened
+    if (!isActivated || isListening || micManuallyOpened) {
       return;
     }
 
     resumeAutoListening();
-  }, [isActivated, isListening, resumeAutoListening]);
+  }, [isActivated, isListening, micManuallyOpened, resumeAutoListening]);
 
   useEffect(() => {
     if (!chatContainerRef.current) {
@@ -1405,7 +2210,8 @@ const FarmerHelpDesk = () => {
   }, [chatTimeline]);
 
   useEffect(() => {
-    if (!autoListen || isListening || !listeningSupported || !latestAssistantMessage) {
+    // Don't auto-resume if mic was manually opened
+    if (!autoListen || isListening || !listeningSupported || !latestAssistantMessage || micManuallyOpened) {
       return;
     }
 
@@ -1426,7 +2232,7 @@ const FarmerHelpDesk = () => {
     if (restarted) {
       lastAutoResumeMessageIdRef.current = latestAssistantMessage.id;
     }
-  }, [animatedMessages, autoListen, isListening, latestAssistantMessage, listeningSupported, resumeAutoListening]);
+  }, [animatedMessages, autoListen, isListening, latestAssistantMessage, listeningSupported, micManuallyOpened, resumeAutoListening]);
 
   useEffect(() => {
     return () => {
@@ -1435,6 +2241,11 @@ const FarmerHelpDesk = () => {
           window.clearInterval(intervalId);
         }
       });
+      // Cleanup pause timeout
+      if (pauseTimeoutRef.current) {
+        window.clearTimeout(pauseTimeoutRef.current);
+        pauseTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -1466,60 +2277,332 @@ const FarmerHelpDesk = () => {
     }
   }, [detectedLanguage, getLanguageName]);
 
+  /**
+   * Enhanced mic toggle with robust error handling and state management
+   * Provides manual control over microphone with proper cleanup and recovery
+   */
   const handleToggleListening = () => {
     if (!listeningSupported || !recognitionRef.current) {
-      setVoiceError(t(helpDeskText.voiceUnsupported));
+      setVoiceError(t(helpDeskText.voiceUnsupported) || "Speech recognition not supported in this browser.");
       return;
     }
 
     if (isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-      pendingSpeechSubmitRef.current = false;
+      // Stop listening - cleanup and reset state
+      try {
+        // Stop speech synthesis first
+        if (typeof window !== "undefined" && window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+          setIsSpeaking(false);
+        }
+        
+        // Clear pause timeout
+        if (pauseTimeoutRef.current) {
+          window.clearTimeout(pauseTimeoutRef.current);
+          pauseTimeoutRef.current = null;
+        }
+        
+        // Stop recognition with proper error handling
+        try {
+          if (recognitionRef.current.abort) {
+            recognitionRef.current.abort();
+          } else {
+            recognitionRef.current.stop();
+          }
+        } catch (stopError) {
+          console.warn("Error stopping recognition:", stopError);
+          // Continue with cleanup even if stop fails
+        }
+        
+        // Reset all state
+        setIsListening(false);
+        setMicManuallyOpened(false);
+        setInterimTranscript("");
+        setIsProcessingVoice(false);
+        pendingSpeechSubmitRef.current = false;
+        setVoiceError(null); // Clear any errors
+        
+      } catch (error) {
+        console.error("Error in handleToggleListening (stop):", error);
+        // Force reset state even on error
+        setIsListening(false);
+        setMicManuallyOpened(false);
+        setInterimTranscript("");
+        setIsProcessingVoice(false);
+        pendingSpeechSubmitRef.current = false;
+      }
       return;
     }
 
-    setVoiceError(null);
-    const started = resumeAutoListening(true, (error) => {
-      setVoiceError(error instanceof Error ? error.message : t(helpDeskText.voiceUnsupported));
-    });
+    // Start listening - initialize and configure
+    try {
+      // Stop any ongoing speech
+      if (typeof window !== "undefined" && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+      }
 
-    if (!started) {
-      pendingSpeechSubmitRef.current = false;
+      // Clear any existing pause timeout
+      if (pauseTimeoutRef.current) {
+        window.clearTimeout(pauseTimeoutRef.current);
+        pauseTimeoutRef.current = null;
+      }
+
+      // Reset state
+      setVoiceError(null);
+      setInterimTranscript("");
+      setIsProcessingVoice(false);
+      setMicManuallyOpened(true); // Mark mic as manually opened
+      
+      // Update recognition settings for continuous mode
+      if (recognitionRef.current) {
+        recognitionRef.current.continuous = true;
+        recognitionRef.current.interimResults = true;
+        recognitionRef.current.lang = mapLanguageToLocale(detectedLanguage);
+      }
+      
+      // Start recognition with error callback
+      const started = resumeAutoListening(true, (error) => {
+        const errorMessage = error instanceof Error 
+          ? error.message 
+          : t(helpDeskText.voiceUnsupported) || "Failed to start microphone";
+        setVoiceError(errorMessage);
+        setMicManuallyOpened(false);
+        setIsListening(false);
+        setInterimTranscript("");
+      });
+
+      if (!started) {
+        pendingSpeechSubmitRef.current = false;
+        setMicManuallyOpened(false);
+        setIsListening(false);
+        setVoiceError("Failed to start microphone. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error in handleToggleListening (start):", error);
+      setVoiceError(error instanceof Error ? error.message : "Failed to start microphone");
+      setMicManuallyOpened(false);
+      setIsListening(false);
+      setInterimTranscript("");
+      setIsProcessingVoice(false);
     }
   };
 
   const handleSpeakMessage = useCallback(
-    (message: ChatTimelineMessage) => {
+    async (message: ChatTimelineMessage) => {
+      // Prevent multiple simultaneous calls
+      if (isSpeaking) {
+        console.log("Already speaking, ignoring request");
+        return;
+      }
+
       if (typeof window === "undefined" || !window.speechSynthesis) {
-        setVoiceError(t(helpDeskText.voiceUnsupported));
+        setVoiceError(t(helpDeskText.voiceUnsupported) || "Speech synthesis not supported.");
+        return;
+      }
+
+      // Check if message is muted
+      if (mutedMessageIds.has(message.id)) {
         return;
       }
 
       const cleanedText = stripMarkup(message.content);
-      if (!cleanedText) {
+      if (!cleanedText || cleanedText.trim().length === 0) {
         return;
+      }
+
+      // Check if already spoken
+      if (spokenIdsRef.current.has(message.exchangeId)) {
+        console.log("Message already spoken, ignoring");
+        return;
+      }
+
+      // Mark as speaking immediately to prevent multiple calls
+      setIsSpeaking(true);
+
+      // Ensure voices are loaded
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length === 0) {
+        // Wait for voices to load
+        await new Promise<void>((resolve) => {
+          const onVoicesChanged = () => {
+            const loadedVoices = window.speechSynthesis.getVoices();
+            if (loadedVoices.length > 0) {
+              window.speechSynthesis.removeEventListener("voiceschanged", onVoicesChanged);
+              resolve();
+            }
+          };
+          window.speechSynthesis.addEventListener("voiceschanged", onVoicesChanged);
+          setTimeout(() => {
+            window.speechSynthesis.removeEventListener("voiceschanged", onVoicesChanged);
+            resolve();
+          }, 2000);
+        });
       }
 
       setVoiceError(null);
       const languageForVoice = (message.detectedLanguage || detectedLanguage) as LanguageCode;
+      
+      // Create utterance with enhanced natural speech settings
       const utterance = new SpeechSynthesisUtterance(cleanedText);
       utterance.lang = mapLanguageToLocale(languageForVoice);
-      utterance.rate = 0.95;
-      utterance.pitch = 1;
-      const targetVoice = selectVoiceForLanguage(languageForVoice);
+      
+      // Optimize speech parameters for natural, farmer-friendly delivery
+      utterance.rate = languageForVoice === "en" ? 0.9 : 0.85; // Slower for Indian languages
+      utterance.pitch = 1.0; // Natural pitch
+      utterance.volume = 1.0; // Full volume
+      
+      // Select appropriate voice for language (use fresh voices list)
+      const currentVoices = window.speechSynthesis.getVoices();
+      const targetVoice = currentVoices.find((voice) => {
+        const locale = mapLanguageToLocale(languageForVoice).toLowerCase();
+        const base = locale.split("-")[0];
+        if (voice.lang.toLowerCase() === locale) return true;
+        if (voice.lang.toLowerCase().startsWith(base + "-") || voice.lang.toLowerCase() === base) return true;
+        return false;
+      }) || currentVoices[0] || null;
+      
       if (targetVoice) {
         utterance.voice = targetVoice;
+        console.log("Manual speak - Using voice:", targetVoice.name, "for language:", languageForVoice);
+      } else {
+        console.warn("Manual speak - No voice found for language:", languageForVoice);
       }
+      
+      // Enhanced error handling for speech synthesis
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        setVoiceError(null);
+        console.log("Manual speech started:", cleanedText.substring(0, 50));
+      };
 
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utterance);
-      spokenIdsRef.current.add(message.exchangeId);
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        spokenIdsRef.current.add(message.exchangeId);
+        console.log("Manual speech ended successfully");
+      };
+
+      utterance.onerror = (error) => {
+        console.error("Manual speech synthesis error:", error, error.error);
+        setIsSpeaking(false);
+        
+        const errorMsg = error.error || "unknown";
+        if (errorMsg === "not-allowed") {
+          setVoiceError("Speech synthesis not allowed. Please check browser permissions.");
+        } else if (errorMsg === "synthesis-failed") {
+          setVoiceError("Failed to synthesize speech. Please try again.");
+        } else if (errorMsg === "interrupted") {
+          // This is normal when cancelling, don't show error
+          console.log("Manual speech interrupted (normal)");
+          setIsSpeaking(false);
+        } else {
+          setVoiceError("Failed to speak message. Please try again.");
+        }
+      };
+
+      // Improved speech synthesis with better error handling
+      const startSpeech = () => {
+        try {
+          // Check if speech synthesis is available
+          if (!window.speechSynthesis) {
+            console.error("Speech synthesis not available");
+            setVoiceError("Speech synthesis not available in this browser.");
+            setIsSpeaking(false);
+            return;
+          }
+
+          // Check if message is muted
+          if (mutedMessageIds.has(message.id)) {
+            setIsSpeaking(false);
+            return;
+          }
+
+          // Cancel any ongoing speech first, but wait for it to complete
+          if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+            window.speechSynthesis.cancel();
+            // Wait a bit longer to ensure cancellation completes
+            setTimeout(() => {
+              try {
+                if (window.speechSynthesis && !mutedMessageIds.has(message.id)) {
+                  // Double-check speech synthesis is still available
+                  if (window.speechSynthesis.speak) {
+                    window.speechSynthesis.speak(utterance);
+                    console.log("Manual speech queued successfully");
+                  } else {
+                    console.error("speechSynthesis.speak is not available");
+                    setVoiceError("Speech synthesis not supported. Please try again.");
+                    setIsSpeaking(false);
+                  }
+                } else {
+                  setIsSpeaking(false);
+                }
+              } catch (speakError) {
+                console.error("Error calling speak after cancellation:", speakError);
+                setVoiceError("Failed to start speech. Please try again.");
+                setIsSpeaking(false);
+              }
+            }, 200);
+          } else {
+            // No ongoing speech, start immediately
+            try {
+              if (window.speechSynthesis.speak) {
+                window.speechSynthesis.speak(utterance);
+                console.log("Manual speech started immediately");
+              } else {
+                console.error("speechSynthesis.speak is not available");
+                setVoiceError("Speech synthesis not supported. Please try again.");
+                setIsSpeaking(false);
+              }
+            } catch (speakError) {
+              console.error("Error calling speak:", speakError);
+              setVoiceError("Failed to start speech. Please try again.");
+              setIsSpeaking(false);
+            }
+          }
+        } catch (error) {
+          console.error("Error in startSpeech:", error);
+          setVoiceError("Failed to speak message. Please try again.");
+          setIsSpeaking(false);
+        }
+      };
+
+      // Start speech synthesis
+      startSpeech();
     },
-    [detectedLanguage, selectVoiceForLanguage, t],
+    [detectedLanguage, t, mutedMessageIds, isSpeaking],
+  );
+
+  const handleToggleMuteMessage = useCallback(
+    (messageId: string) => {
+      setMutedMessageIds((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(messageId)) {
+          newSet.delete(messageId);
+          // If unmuting and currently speaking this message, stop and restart
+          if (typeof window !== "undefined" && window.speechSynthesis && window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            setIsSpeaking(false);
+          }
+        } else {
+          newSet.add(messageId);
+          // Stop speaking if this message is currently being spoken
+          if (typeof window !== "undefined" && window.speechSynthesis && window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            setIsSpeaking(false);
+          }
+        }
+        return newSet;
+      });
+    },
+    [],
   );
 
   const handleActivate = () => {
+    console.log("[Activation] Activating Live Voice Assistant...");
+    console.log("[Activation] Speech supported:", speechSupported);
+    console.log("[Activation] AutoSpeak:", autoSpeak);
+    console.log("[Activation] AutoListen:", autoListen);
+    
     activationLanguageRef.current = selectedLanguageValue ?? "en";
     lastGreetedActivationRef.current = null;
     setActivationSequence((previous) => previous + 1);
@@ -1537,19 +2620,57 @@ const FarmerHelpDesk = () => {
     });
     animationIntervalsRef.current = {};
     spokenIdsRef.current.clear();
+    setVoiceError(null); // Clear any previous errors
+    
+    // Verify speech synthesis is available
+    if (speechSupported && typeof window !== "undefined" && window.speechSynthesis) {
+      const voices = window.speechSynthesis.getVoices();
+      console.log("[Activation] Speech synthesis available, voices:", voices.length);
+      if (voices.length === 0) {
+        console.warn("[Activation] No voices loaded yet, may need to wait");
+      }
+    } else {
+      console.warn("[Activation] Speech synthesis not available");
+    }
+    
     if (autoListen) {
+      console.log("[Activation] Starting auto-listen...");
       const started = resumeAutoListening(false, (error) => {
+        console.error("[Activation] Failed to start auto-listen:", error);
         setVoiceError(error instanceof Error ? error.message : t(helpDeskText.voiceUnsupported));
       });
       if (!started) {
+        console.warn("[Activation] Auto-listen did not start");
         setIsListening(false);
+      } else {
+        console.log("[Activation] Auto-listen started successfully");
       }
     }
+    
+    console.log("[Activation] ✅ Live Voice Assistant activated!");
   };
 
   const handleSubmitQuestion = useCallback(
-    async (event?: React.FormEvent<HTMLFormElement>) => {
+    async (event?: React.FormEvent<HTMLFormElement>, questionOverride?: string) => {
       event?.preventDefault();
+
+      // Stop microphone/recognition when send button is clicked
+      if (recognitionRef.current && isListening) {
+        try {
+          if (recognitionRef.current.abort) {
+            recognitionRef.current.abort();
+          } else {
+            recognitionRef.current.stop();
+          }
+          setIsListening(false);
+          setMicManuallyOpened(false);
+        } catch (stopError) {
+          console.warn("Error stopping recognition on send:", stopError);
+          // Continue even if stop fails
+          setIsListening(false);
+          setMicManuallyOpened(false);
+        }
+      }
 
       if (!isActivated) {
         toast({
@@ -1560,7 +2681,8 @@ const FarmerHelpDesk = () => {
         return;
       }
 
-      const trimmedQuestion = question.trim();
+      const questionToSubmit = questionOverride ?? question;
+      const trimmedQuestion = questionToSubmit.trim();
       if (!trimmedQuestion) {
         toast({
           title: t(recommendationsTranslations.assistantMissingQuestionTitle),
@@ -1580,7 +2702,7 @@ const FarmerHelpDesk = () => {
       }
 
       const preferredLanguage = selectedLanguageValue;
-      const inputLanguage = detectInputLanguage(trimmedQuestion);
+      const inputLanguage = detectInputLanguage(trimmedQuestion, preferredLanguage);
       const effectiveLanguage = preferredLanguage || inputLanguage;
 
       updateDetectedLanguage(effectiveLanguage, "input");
@@ -1601,15 +2723,62 @@ const FarmerHelpDesk = () => {
 
         if (!response.ok) {
           let errorMessage = `Server responded with ${response.status}`;
+          let errorTitle = t(recommendationsTranslations.assistantErrorTitle);
+          
           try {
-            const errorPayload = await parseJsonResponse<{ error?: string; details?: string }>(response.clone());
-            errorMessage = errorPayload.details || errorPayload.error || errorMessage;
+            // Parse the response text directly to avoid parseJsonResponse throwing
+            const responseText = await response.clone().text();
+            let errorPayload: { 
+              error?: string | { code?: number; message?: string; status?: string }; 
+              details?: string;
+              code?: number;
+              status?: string;
+              message?: string;
+            } = {};
+            
+            try {
+              errorPayload = JSON.parse(responseText);
+            } catch {
+              // If JSON parsing fails, use the raw text
+              errorMessage = responseText || errorMessage;
+            }
+            
+            // Extract error message from nested error object if present
+            let extractedMessage: string | undefined;
+            if (errorPayload.error) {
+              if (typeof errorPayload.error === "string") {
+                extractedMessage = errorPayload.error;
+              } else if (typeof errorPayload.error === "object" && errorPayload.error !== null) {
+                extractedMessage = errorPayload.error.message;
+              }
+            }
+            
+            // Handle 503 Service Unavailable (model overloaded)
+            if (response.status === 503 || errorPayload.status === "UNAVAILABLE" || 
+                (typeof errorPayload.error === "object" && errorPayload.error?.status === "UNAVAILABLE")) {
+              errorTitle = t(recommendationsTranslations.assistantErrorTitle);
+              errorMessage = extractedMessage || errorPayload.details || errorPayload.message || 
+                "The model is currently overloaded. Please wait a moment and try again.";
+            } else {
+              errorMessage = extractedMessage || errorPayload.details || errorPayload.message || errorMessage;
+            }
           } catch (parseError) {
-            if (parseError instanceof Error && parseError.message) {
-              errorMessage = parseError.message;
+            // If it's a 503 status, provide a helpful message even if parsing fails
+            if (response.status === 503) {
+              errorMessage = "The model is currently overloaded. Please wait a moment and try again.";
+            } else if (parseError instanceof Error && parseError.message) {
+              // Only use parseError message if it's not a JSON string
+              const parsedMsg = parseError.message;
+              if (!parsedMsg.startsWith("{") && !parsedMsg.includes('"error"')) {
+                errorMessage = parsedMsg;
+              }
             }
           }
-          throw new Error(errorMessage);
+          
+          const customError = new Error(errorMessage) as Error & { title?: string; statusCode?: number };
+          customError.title = errorTitle;
+          customError.statusCode = response.status;
+          throw customError;
         }
 
         const data = await parseJsonResponse<AiAssistResponsePayload>(response);
@@ -1646,14 +2815,77 @@ const FarmerHelpDesk = () => {
         setAssistantResponses((previous) => [...previous, exchange]);
         setLatestReferences(data.references ?? []);
         setQuestion("");
+        setInterimTranscript(""); // Clear interim transcript after successful submission
         pendingSpeechSubmitRef.current = false;
+        setIsProcessingVoice(false);
+        
+        // Enhanced state management: Restart listening after submission if mic was manually opened
+        // Wait for speech to potentially start before resuming listening
+        if (micManuallyOpened && recognitionRef.current && !isListening) {
+          // Delay restart to allow speech synthesis to start if autoSpeak is enabled
+          const restartDelay = autoSpeak ? 1000 : 500; // Longer delay if speech will play
+          
+          setTimeout(() => {
+            try {
+              if (recognitionRef.current && micManuallyOpened && !isProcessingVoice) {
+                recognitionRef.current.lang = mapLanguageToLocale(responseLanguage);
+                recognitionRef.current.continuous = true;
+                recognitionRef.current.interimResults = true;
+                recognitionRef.current.start();
+                setIsListening(true);
+                setVoiceError(null); // Clear any errors
+                processedResultIndexRef.current = 0; // Reset processed index when recognition restarts
+              }
+            } catch (error) {
+              console.warn("Failed to restart recognition after submission:", error);
+              // Don't show error - might be temporary
+            }
+          }, restartDelay);
+        }
       } catch (error) {
-        const message =
+        let message =
           error instanceof Error ? error.message : "Failed to get advice from Gemini assistant.";
+        const errorTitle = (error as Error & { title?: string })?.title || t(recommendationsTranslations.assistantErrorTitle);
+        const statusCode = (error as Error & { statusCode?: number })?.statusCode;
+        
+        // Clean up any JSON strings that might be in the error message
+        if (message && (message.startsWith("{") || message.includes('"error"'))) {
+          try {
+            const parsed = JSON.parse(message);
+            if (parsed && typeof parsed === "object") {
+              // Extract message from nested error object
+              if (parsed.error) {
+                if (typeof parsed.error === "string") {
+                  message = parsed.error;
+                } else if (typeof parsed.error === "object" && parsed.error.message) {
+                  message = parsed.error.message;
+                }
+              } else if (parsed.details) {
+                message = parsed.details;
+              } else if (parsed.message) {
+                message = parsed.message;
+              }
+            }
+          } catch {
+            // If parsing fails, use a fallback message
+            if (statusCode === 503) {
+              message = "The assistant is temporarily unavailable due to high demand. Please wait a few seconds and try again.";
+            }
+          }
+        }
+        
+        // For 503 errors, show a more helpful message
+        const displayMessage = statusCode === 503 
+          ? (message.includes("overloaded") || message.includes("unavailable") 
+              ? message 
+              : "The assistant is temporarily unavailable due to high demand. Please wait a few seconds and try again.")
+          : message || t(recommendationsTranslations.assistantErrorDescription);
+        
         toast({
-          title: t(recommendationsTranslations.assistantErrorTitle),
-          description: message || t(recommendationsTranslations.assistantErrorDescription),
+          title: errorTitle,
+          description: displayMessage,
           variant: "destructive",
+          duration: statusCode === 503 ? 8000 : 5000, // Show 503 errors longer
         });
       } finally {
         setIsLoading(false);
@@ -1665,10 +2897,9 @@ const FarmerHelpDesk = () => {
 
   const handleSuggestionClick = (value: string) => {
     setQuestion(value);
-    updateDetectedLanguage(detectInputLanguage(value), "input");
-    setTimeout(() => {
-      void handleSubmitQuestion();
-    }, 0);
+    updateDetectedLanguage(detectInputLanguage(value, detectedLanguage), "input");
+    // Pass the question directly to avoid state update timing issues
+    void handleSubmitQuestion(undefined, value);
   };
 
   useEffect(() => {
@@ -1868,26 +3099,62 @@ const FarmerHelpDesk = () => {
                                           )}
                                         </div>
                                         {isAssistant && (
-                                          <TooltipProvider>
-                                            <Tooltip>
-                                              <TooltipTrigger asChild>
-                                                <Button
-                                                  type="button"
-                                                  size="icon"
-                                                  variant="ghost"
-                                                  className="flex h-9 w-9 rounded-full border border-amber-200 bg-white/90 text-amber-600 hover:bg-amber-100 sm:h-8 sm:w-8"
-                                                  onClick={() => handleSpeakMessage(message)}
-                                                  disabled={!speechSupported || isAnimating}
-                                                  aria-label={t(helpDeskText.playVoiceLabel)}
-                                                >
-                                                  <Volume2 className="h-4 w-4" />
-                                                </Button>
-                                              </TooltipTrigger>
-                                              <TooltipContent>
-                                                {speechSupported ? t(helpDeskText.autoSpeakHelper) : t(helpDeskText.speakDisabled)}
-                                              </TooltipContent>
-                                            </Tooltip>
-                                          </TooltipProvider>
+                                          <div className="flex items-center gap-1">
+                                            <TooltipProvider>
+                                              <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                  <Button
+                                                    type="button"
+                                                    size="icon"
+                                                    variant="ghost"
+                                                    className={`flex h-9 w-9 rounded-full border bg-white/90 text-amber-600 hover:bg-amber-100 sm:h-8 sm:w-8 ${
+                                                      mutedMessageIds.has(message.id)
+                                                        ? "border-amber-300 opacity-60"
+                                                        : "border-amber-200"
+                                                    }`}
+                                                    onClick={() => handleToggleMuteMessage(message.id)}
+                                                    disabled={!speechSupported || isAnimating}
+                                                    aria-label={mutedMessageIds.has(message.id) ? t(helpDeskText.unmuteMessageLabel) : t(helpDeskText.muteMessageLabel)}
+                                                  >
+                                                    {mutedMessageIds.has(message.id) ? (
+                                                      <VolumeX className="h-4 w-4" />
+                                                    ) : (
+                                                      <Volume2 className="h-4 w-4" />
+                                                    )}
+                                                  </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                  {mutedMessageIds.has(message.id)
+                                                    ? t(helpDeskText.unmuteMessageLabel)
+                                                    : speechSupported
+                                                      ? t(helpDeskText.muteMessageLabel)
+                                                      : t(helpDeskText.speakDisabled)}
+                                                </TooltipContent>
+                                              </Tooltip>
+                                            </TooltipProvider>
+                                            {!mutedMessageIds.has(message.id) && (
+                                              <TooltipProvider>
+                                                <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                    <Button
+                                                      type="button"
+                                                      size="icon"
+                                                      variant="ghost"
+                                                      className="flex h-9 w-9 rounded-full border border-amber-200 bg-white/90 text-amber-600 hover:bg-amber-100 sm:h-8 sm:w-8"
+                                                      onClick={() => handleSpeakMessage(message)}
+                                                      disabled={!speechSupported || isAnimating}
+                                                      aria-label={t(helpDeskText.playVoiceLabel)}
+                                                    >
+                                                      <Volume2 className="h-4 w-4" />
+                                                    </Button>
+                                                  </TooltipTrigger>
+                                                  <TooltipContent>
+                                                    {speechSupported ? t(helpDeskText.playVoiceLabel) : t(helpDeskText.speakDisabled)}
+                                                  </TooltipContent>
+                                                </Tooltip>
+                                              </TooltipProvider>
+                                            )}
+                                          </div>
                                         )}
                                       </div>
 
@@ -2048,21 +3315,33 @@ const FarmerHelpDesk = () => {
                           </TooltipProvider>
 
                           <Textarea
-                            value={question}
+                            value={
+                              isListening && interimTranscript
+                                ? `${question.trim()} ${interimTranscript}`.trim()
+                                : question
+                            }
                             onChange={(event) => {
-                              setQuestion(event.target.value);
-                              updateDetectedLanguage(detectInputLanguage(event.target.value), "input");
+                              if (!isListening) {
+                                setQuestion(event.target.value);
+                                updateDetectedLanguage(detectInputLanguage(event.target.value, detectedLanguage), "input");
+                              }
                             }}
                             onKeyDown={(event) => {
-                              if (event.key === "Enter" && !event.shiftKey) {
+                              if (event.key === "Enter" && !event.shiftKey && !isListening) {
                                 event.preventDefault();
                                 void handleSubmitQuestion();
                               }
                             }}
-                            placeholder={t(recommendationsTranslations.assistantPlaceholder)}
+                            placeholder={
+                              isListening && interimTranscript
+                                ? interimTranscript
+                                : t(recommendationsTranslations.assistantPlaceholder)
+                            }
                             rows={2}
-                            className="min-h-[42px] flex-1 resize-none border-0 bg-transparent px-0 py-1.5 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
-                            readOnly={voiceOnlyActive}
+                            className={`min-h-[42px] flex-1 resize-none border-0 bg-transparent px-0 py-1.5 text-sm focus-visible:ring-0 focus-visible:ring-offset-0 ${
+                              isListening && interimTranscript ? "text-emerald-600 italic" : ""
+                            }`}
+                            readOnly={voiceOnlyActive || isListening}
                           />
 
                           {!voiceOnlyActive && (
@@ -2081,11 +3360,21 @@ const FarmerHelpDesk = () => {
                         <div className="flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                           <div className="flex items-center gap-2">
                             {isListening ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-500" />
+                              <>
+                                <div className="relative inline-flex h-3.5 w-3.5 items-center justify-center">
+                                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/60" />
+                                  <Mic className="relative h-3.5 w-3.5 text-emerald-500" />
+                                </div>
+                                <span className="text-emerald-600 font-medium">
+                                  {interimTranscript ? `${t(helpDeskText.listening)}... "${interimTranscript}"` : t(helpDeskText.listening)}
+                                </span>
+                              </>
                             ) : (
-                              <Mic className="h-3.5 w-3.5 text-emerald-400" />
+                              <>
+                                <Mic className="h-3.5 w-3.5 text-emerald-400" />
+                                <span>{t(helpDeskText.micHint)}</span>
+                              </>
                             )}
-                            <span>{isListening ? t(helpDeskText.listening) : t(helpDeskText.micHint)}</span>
                           </div>
                           {!speechSupported && <span>{t(helpDeskText.speakDisabled)}</span>}
                         </div>

@@ -642,11 +642,11 @@ const OrganicFarming = () => {
         </div>
       </section>
 
-      <section className="py-12">
+      <section className="py-8 md:py-12">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <Tabs defaultValue="nutrients">
-              <TabsList className="grid w-full grid-cols-3 mb-8">
+              <TabsList className="grid w-full grid-cols-3 mb-6 md:mb-8 h-auto">
                 <TabsTrigger value="nutrients">{t(translations.nutrientsTab)}</TabsTrigger>
                 <TabsTrigger value="preparations">{t(translations.preparationsTab)}</TabsTrigger>
                 <TabsTrigger value="practices">{t(translations.practicesTab)}</TabsTrigger>
@@ -655,28 +655,28 @@ const OrganicFarming = () => {
               <TabsContent value="nutrients">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Leaf className="h-5 w-5 text-plant" />
-                      <span>{t(translations.nutrientSourcesTitle)}</span>
+                    <CardTitle className="flex items-center gap-2 text-lg md:text-xl break-words">
+                      <Leaf className="h-5 w-5 text-plant shrink-0" />
+                      <span className="break-words">{t(translations.nutrientSourcesTitle)}</span>
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="break-words">
                       {t(translations.nutrientSourcesDesc)}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                       {nutrientSections.map((section, index) => (
-                        <div key={index} className="bg-accent/50 p-5 rounded-lg">
-                          <h3 className="font-semibold text-lg mb-3">{t(section.title)}</h3>
+                        <div key={index} className="bg-accent/50 p-4 md:p-5 rounded-lg">
+                          <h3 className="font-semibold text-base md:text-lg mb-3 break-words">{t(section.title)}</h3>
                           <ul className="space-y-3">
                             {section.items.map((item, itemIndex) => (
-                              <li key={itemIndex} className="flex gap-3">
-                                <Badge variant="outline" className="bg-plant-light text-plant-dark">
+                              <li key={itemIndex} className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                                <Badge variant="outline" className="bg-plant-light text-plant-dark shrink-0 w-fit">
                                   {t(item.badge)}
                                 </Badge>
-                                <div>
-                                  <p className="font-medium">{t(item.name)}</p>
-                                  <p className="text-sm text-muted-foreground">{t(item.detail)}</p>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-medium break-words">{t(item.name)}</p>
+                                  <p className="text-sm text-muted-foreground break-words">{t(item.detail)}</p>
                                 </div>
                               </li>
                             ))}
@@ -685,9 +685,9 @@ const OrganicFarming = () => {
                       ))}
                     </div>
 
-                    <div className="flex items-center gap-2 bg-muted p-4 rounded-md mt-6">
-                      <Info className="h-5 w-5 text-primary flex-shrink-0" />
-                      <p className="text-sm">
+                    <div className="flex items-start gap-2 bg-muted p-3 md:p-4 rounded-md mt-6">
+                      <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                      <p className="text-sm break-words">
                         {t(translations.infoText)}
                       </p>
                     </div>
@@ -698,8 +698,8 @@ const OrganicFarming = () => {
               <TabsContent value="preparations">
                 <Card>
                   <CardHeader>
-                    <CardTitle>{t(organicFarmingNutrientTranslations.diyPreparationsTitle)}</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-lg md:text-xl break-words">{t(organicFarmingNutrientTranslations.diyPreparationsTitle)}</CardTitle>
+                    <CardDescription className="break-words">
                       {t(organicFarmingNutrientTranslations.diyPreparationsDesc)}
                     </CardDescription>
                   </CardHeader>
@@ -707,28 +707,28 @@ const OrganicFarming = () => {
                     <Accordion type="single" collapsible className="w-full">
                       {diyPreparationsData.map((prep) => (
                         <AccordionItem key={prep.value} value={prep.value}>
-                          <AccordionTrigger>
-                            <div className="flex items-center gap-2">
-                              <span>{t(prep.title)}</span>
-                              {prep.badge && <Badge>{t(prep.badge)}</Badge>}
+                          <AccordionTrigger className="text-left">
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 min-w-0 flex-1">
+                              <span className="break-words">{t(prep.title)}</span>
+                              {prep.badge && <Badge className="shrink-0 w-fit">{t(prep.badge)}</Badge>}
                             </div>
                           </AccordionTrigger>
                           <AccordionContent>
                             <div className="space-y-4">
-                              <p>{t(prep.description)}</p>
+                              <p className="break-words">{t(prep.description)}</p>
                               {prep.sections.map((section, index) => (
                                 <div key={index}>
-                                  <h4 className="font-medium mb-2">{t(section.heading)}</h4>
+                                  <h4 className="font-medium mb-2 break-words">{t(section.heading)}</h4>
                                   {section.type === "unordered" ? (
-                                    <ul className="list-disc pl-5 space-y-1">
+                                    <ul className="list-disc pl-5 space-y-1.5">
                                       {section.items.map((item, itemIndex) => (
-                                        <li key={itemIndex}>{t(item)}</li>
+                                        <li key={itemIndex} className="break-words">{t(item)}</li>
                                       ))}
                                     </ul>
                                   ) : (
-                                    <ol className="list-decimal pl-5 space-y-1">
+                                    <ol className="list-decimal pl-5 space-y-1.5">
                                       {section.items.map((item, itemIndex) => (
-                                        <li key={itemIndex}>{t(item)}</li>
+                                        <li key={itemIndex} className="break-words">{t(item)}</li>
                                       ))}
                                     </ol>
                                   )}
@@ -746,40 +746,40 @@ const OrganicFarming = () => {
               <TabsContent value="practices">
                 <Card>
                   <CardHeader>
-                    <CardTitle>{t(organicFarmingNutrientTranslations.sustainablePracticesTitle)}</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-lg md:text-xl break-words">{t(organicFarmingNutrientTranslations.sustainablePracticesTitle)}</CardTitle>
+                    <CardDescription className="break-words">
                       {t(organicFarmingNutrientTranslations.sustainablePracticesDesc)}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                       {practiceCards.map((card, index) => (
-                        <Card key={index}>
+                        <Card key={index} className="flex flex-col">
                           <CardHeader className="pb-2">
-                            <CardTitle className="text-lg">{t(card.title)}</CardTitle>
+                            <CardTitle className="text-base md:text-lg break-words">{t(card.title)}</CardTitle>
                           </CardHeader>
-                          <CardContent>
-                            <p className="text-sm text-muted-foreground mb-4">{t(card.description)}</p>
-                            <div className="space-y-3">
-                              <div className="bg-muted p-2 rounded-md text-sm">
-                                <p className="font-medium">{t(card.benefitHeading)}</p>
-                                <ul className="list-disc pl-5 mt-1 space-y-1">
+                          <CardContent className="flex-1 flex flex-col">
+                            <p className="text-sm text-muted-foreground mb-4 break-words">{t(card.description)}</p>
+                            <div className="space-y-3 flex-1">
+                              <div className="bg-muted p-3 md:p-2 rounded-md text-sm">
+                                <p className="font-medium mb-2 break-words">{t(card.benefitHeading)}</p>
+                                <ul className="list-disc pl-5 space-y-1.5">
                                   {card.benefits.map((benefit, benefitIndex) => (
-                                    <li key={benefitIndex}>{t(benefit)}</li>
+                                    <li key={benefitIndex} className="break-words">{t(benefit)}</li>
                                   ))}
                                 </ul>
                               </div>
                               {card.extraHeading && card.extraContent && (
-                                <div className="bg-muted p-2 rounded-md text-sm">
-                                  <p className="font-medium">{t(card.extraHeading)}</p>
+                                <div className="bg-muted p-3 md:p-2 rounded-md text-sm">
+                                  <p className="font-medium mb-2 break-words">{t(card.extraHeading)}</p>
                                   {Array.isArray(card.extraContent) ? (
-                                    <ul className="list-disc pl-5 mt-1 space-y-1">
+                                    <ul className="list-disc pl-5 space-y-1.5">
                                       {card.extraContent.map((item, itemIndex) => (
-                                        <li key={itemIndex}>{t(item)}</li>
+                                        <li key={itemIndex} className="break-words">{t(item)}</li>
                                       ))}
                                     </ul>
                                   ) : (
-                                    <p className="mt-1">{t(card.extraContent)}</p>
+                                    <p className="mt-1 break-words">{t(card.extraContent)}</p>
                                   )}
                                 </div>
                               )}

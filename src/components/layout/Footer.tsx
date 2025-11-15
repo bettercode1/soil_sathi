@@ -1,7 +1,8 @@
 
-import { ChevronRight, Facebook, Leaf, Linkedin, Mail, Phone, Youtube } from "lucide-react";
+import { ChevronRight, Facebook, Leaf, Linkedin, Mail, Phone, Youtube, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Button } from "@/components/ui/button";
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -79,7 +80,7 @@ const Footer = () => {
             </div>
           </div>
 
-          <div className="grid gap-y-10 gap-x-12 text-sm text-slate-300 sm:grid-cols-2 lg:grid-cols-3 lg:gap-x-16">
+          <div className="grid gap-y-10 gap-x-12 text-sm text-slate-300 sm:grid-cols-2 lg:grid-cols-[auto_auto_1fr] lg:gap-x-16 xl:gap-x-20">
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-white">
                 {t({
@@ -210,7 +211,7 @@ const Footer = () => {
               </ul>
             </div>
 
-              <div className="space-y-5">
+            <div className="space-y-5 w-fit min-w-[280px]">
               <h3 className="text-lg font-semibold text-white">
                 {t({
                   en: "Contact",
@@ -222,17 +223,27 @@ const Footer = () => {
                   mr: "संपर्क",
                 })}
               </h3>
-              <div className="mx-auto flex w-full max-w-[320px] flex-col items-center gap-4 rounded-2xl border border-emerald-300/20 bg-white/5 p-6 text-center text-sm shadow-inner backdrop-blur sm:max-w-[360px] lg:max-w-[380px] xl:max-w-[420px]">
-                <div className="flex items-center justify-center gap-3 text-slate-200">
-                  <Mail className="h-4 w-4 text-emerald-300" />
-                  <a href="mailto:support@soilsathi.in" className="transition hover:text-emerald-300">
+              <div className="flex w-full flex-col gap-3">
+                {/* Email Card */}
+                <div className="flex w-full items-center gap-4 rounded-xl border border-emerald-400/40 bg-white/[0.03] p-4 transition-all hover:border-emerald-400/60 hover:bg-white/[0.06]">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-2 border-emerald-400/40 bg-transparent">
+                    <Mail className="h-5 w-5 text-white" strokeWidth={2} />
+                  </div>
+                  <a
+                    href="mailto:support@soilsathi.in"
+                    className="flex-1 text-sm font-medium text-white transition-colors hover:text-emerald-300 whitespace-nowrap"
+                  >
                     support@soilsathi.in
                   </a>
                 </div>
-                <div className="flex items-start justify-center gap-3 text-slate-200">
-                  <Phone className="mt-1 h-4 w-4 text-emerald-300" />
-                  <div className="text-left">
-                    <p>
+
+                {/* Phone Card */}
+                <div className="flex w-full items-start gap-4 rounded-xl border border-emerald-400/40 bg-white/[0.03] p-4 transition-all hover:border-emerald-400/60 hover:bg-white/[0.06]">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-2 border-emerald-400/40 bg-transparent">
+                    <Phone className="h-5 w-5 text-white" strokeWidth={2} />
+                  </div>
+                  <div className="flex-1 space-y-0.5">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-emerald-300">
                       {t({
                         en: "Toll Free",
                         hi: "टोल फ्री",
@@ -243,7 +254,12 @@ const Footer = () => {
                         mr: "टोल फ्री",
                       })}
                     </p>
-                    <p className="font-semibold text-white">1800-XXX-XXXX</p>
+                    <a
+                      href="tel:1800-XXX-XXXX"
+                      className="block text-lg font-bold leading-tight text-white transition-colors hover:text-emerald-300"
+                    >
+                      1800-XXX-XXXX
+                    </a>
                   </div>
                 </div>
               </div>

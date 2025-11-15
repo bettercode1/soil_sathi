@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, FlaskConical, Sprout } from "lucide-react";
+import { ChevronRight, FlaskConical, Sprout, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import heroImage from "@/Images/Hero Section.png";
@@ -78,6 +78,22 @@ const HeroSection: React.FC = () => {
                   })}
                   <ChevronRight className="ml-1 h-6 w-6" />
                 </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="w-full border-emerald-400/40 bg-white/[0.03] text-white hover:bg-emerald-400/20 hover:border-emerald-400/60 hover:text-white py-4 text-base sm:w-auto sm:py-5 sm:text-lg"
+              >
+                <a
+                  href="https://sparkly-alpaca-b9997d.netlify.app/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  <span>Krushi Mitra</span>
+                  <ExternalLink className="h-4 w-4" />
+                </a>
               </Button>
               <Button
                 asChild

@@ -31,20 +31,31 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
+import BettercodeLogo from "@/assets/bettercode-logo.png";
 
 const Header = () => {
   const isMobile = useIsMobile();
   const { language, setLanguage, t, getLanguageName } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 16);
     };
 
+    const handleResize = () => {
+      setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1280);
+    };
+
     handleScroll();
+    handleResize();
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   // Simple translations for the header
@@ -137,14 +148,14 @@ const Header = () => {
     });
 
   const NavigationLinks = () => (
-    <nav className="flex min-w-0 flex-1 items-center justify-start gap-x-3 gap-y-2 overflow-x-auto whitespace-nowrap pr-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-x-4 xl:gap-x-6">
+    <nav className="flex min-w-0 flex-1 items-center justify-start gap-x-2 gap-y-2 overflow-x-auto whitespace-nowrap pr-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-x-2.5 lg:gap-x-4 xl:gap-x-6">
       {navItems.map(({ key, href, icon: Icon }) => (
         <Link
           key={key}
           to={href}
-          className="flex items-center gap-2 whitespace-nowrap text-sm font-medium text-foreground/90 transition-colors hover:text-primary md:text-[0.95rem]"
+          className="flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-foreground/90 transition-colors hover:text-primary md:text-sm lg:text-[0.95rem] md:gap-1.5 lg:gap-2 shrink-0"
         >
-          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground md:h-4 md:w-4" aria-hidden="true" />
           <span>{getLabel(key)}</span>
         </Link>
       ))}
@@ -155,9 +166,9 @@ const Header = () => {
   const LanguageSelector = () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="flex items-center gap-1">
-          <Globe className="w-4 h-4 mr-1" />
-          {getLanguageName(language)}
+        <Button variant="outline" size="sm" className="flex items-center gap-1 text-xs md:text-sm shrink-0">
+          <Globe className="w-3.5 h-3.5 md:w-4 md:h-4 mr-0.5 md:mr-1" />
+          <span>{getLanguageName(language)}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -195,27 +206,27 @@ const Header = () => {
         isScrolled && "bg-background/70 border-border/40 shadow-sm"
       )}
     >
-      <div className="container mx-auto flex flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 md:flex-nowrap lg:py-4">
-        <div className="flex items-center gap-3 md:gap-4">
-          <Link to="/" className="flex items-center gap-2">
-            <Leaf className="h-6 w-6 text-plant-dark" />
+      <div className="container mx-auto flex items-center justify-between gap-x-4 gap-y-3 px-4 py-3 md:gap-x-6 lg:py-4 overflow-hidden">
+        <div className="flex items-center gap-2 md:gap-3 lg:gap-4 shrink-0 min-w-0">
+          <Link to="/" className="flex items-center gap-1.5 md:gap-2">
+            <Leaf className="h-5 w-5 md:h-6 md:w-6 text-plant-dark shrink-0" />
             <div>
-              <h1 className="text-lg font-semibold text-primary md:text-xl">SoilSathi</h1>
+              <h1 className="text-base font-semibold text-primary md:text-lg lg:text-xl whitespace-nowrap">SoilSathi</h1>
             </div>
           </Link>
           <img
-            src="/lovable-uploads/b7bbcec3-ea93-4139-9de1-934572a3cd1f.png"
+            src={BettercodeLogo}
             alt="Bettercode"
-            className="h-5 w-auto md:h-6"
+            className="h-4 w-auto md:h-5 lg:h-6 shrink-0"
           />
         </div>
 
-        {isMobile ? (
-          <div className="flex items-center gap-2">
+        {(isMobile || isTablet) ? (
+          <div className="flex items-center gap-2 shrink-0">
             <LanguageSelector />
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" className="shrink-0">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>

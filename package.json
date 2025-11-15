@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:backend\"",
+    "dev": "concurrently -n \"FRONTEND,BACKEND\" -c \"cyan,magenta\" \"npm:dev:frontend\" \"npm:dev:backend\" --kill-others-on-fail false --restart-tries 3",
     "dev:frontend": "vite",
     "dev:backend": "tsx watch server/index.ts",
     "build": "npm run build:client && npm run build:server",

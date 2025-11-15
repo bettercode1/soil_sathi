@@ -1,3 +1,10 @@
+// Ensure environment variables are loaded first
+console.log("[SoilSathi] Loading environment variables...");
+import { config as loadEnv } from "dotenv";
+loadEnv();
+console.log("[SoilSathi] Environment variables loaded");
+
+console.log("[SoilSathi] Importing dependencies...");
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,15 +15,24 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
 import { GoogleGenAI, Part, Schema, Type } from "@google/genai";
+console.log("[SoilSathi] Core dependencies imported");
+
+console.log("[SoilSathi] Importing RAG services...");
 import {
   buildContextText,
   detectLanguageFromText,
   retrieveKnowledgeContext,
 } from "./rag/service.js";
-import { env } from "./config.js";
+console.log("[SoilSathi] RAG services imported");
 
+console.log("[SoilSathi] Importing config...");
+import { env } from "./config.js";
+console.log("[SoilSathi] Config imported");
+
+console.log("[SoilSathi] Initializing Express app...");
 const app = express();
 const port = env.port;
+console.log("[SoilSathi] Express app initialized, port:", port);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,7 +62,23 @@ app.use("/api/", apiRateLimiter);
 const MODEL_NAME = env.geminiModel;
 const API_KEY = env.geminiApiKey;
 
-const genAI = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
+// Initialize Gemini client - automatically reads GEMINI_API_KEY from environment
+// Per official docs: https://ai.google.dev/gemini-api/docs/quickstart
+// The client gets the API key from the environment variable GEMINI_API_KEY
+// Allow backend to start even without API key (will show error on API calls)
+let genAI: GoogleGenAI | null = null;
+if (API_KEY && API_KEY !== "your_gemini_api_key_here" && API_KEY.length > 20) {
+  try {
+    genAI = new GoogleGenAI({ apiKey: API_KEY });
+    console.log("[SoilSathi] ✅ Gemini client initialized successfully");
+  } catch (error) {
+    console.error("[SoilSathi] ❌ Failed to initialize Gemini client:", error);
+    genAI = null;
+  }
+} else {
+  console.warn("[SoilSathi] ⚠️ GEMINI_API_KEY not configured or invalid");
+  console.warn("[SoilSathi] Backend will start but API endpoints will return errors");
+}
 
 const MAX_REPORT_TEXT_LENGTH = 10_000;
 const MAX_IMAGE_CHAR_LENGTH = 8_000_000; // ~6 MB base64
@@ -138,46 +170,171 @@ const validateImageData = (data: string) => {
 
 const buildGenerationConfig = (schema: Schema) =>
   ({
-    temperature: 0.5,
-    topP: 0.8,
-    topK: 40,
+    temperature: 0.3, // Lower temperature for faster, more deterministic responses
+    topP: 0.7, // Reduced from 0.8 for faster generation
+    topK: 20, // Reduced from 40 for faster generation
+    // Note: maxOutputTokens removed - may not be supported in all Gemini API versions
     responseMimeType: "application/json",
     responseSchema: schema,
   }) satisfies Record<string, unknown>;
+
+// Timeout wrapper for API calls
+const withTimeout = <T>(promise: Promise<T>, timeoutMs: number, errorMessage: string): Promise<T> => {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(errorMessage)), timeoutMs)
+    ),
+  ]);
+};
 
 const generateJsonResponse = async <T>({
   model,
   parts,
   schema,
+  timeoutMs = 60000, // Default 60 seconds (longer for image analysis)
 }: {
   model: string;
   parts: Part[];
   schema: Schema;
+  timeoutMs?: number;
 }): Promise<T> => {
+  const isDev = env.nodeEnv === "development";
+  if (isDev) {
+    console.log("[Gemini] generateJsonResponse called");
+    console.log("[Gemini] Model:", model);
+    console.log("[Gemini] Parts count:", parts.length);
+    console.log("[Gemini] Timeout:", timeoutMs, "ms");
+  }
+  
   if (!genAI) {
+    console.error("[Gemini] ❌ Gemini client is not configured!");
     throw new Error("Gemini client is not configured.");
   }
 
-  const result = await genAI.models.generateContent({
-    model,
-    contents: [{ role: "user" as const, parts }],
-    config: buildGenerationConfig(schema),
-  });
-
-  const rawText = result.text as unknown;
-  const textValue =
-    typeof rawText === "function"
-      ? (rawText as () => string)()
-      : (rawText as string | undefined);
-
-  if (!textValue) {
-    throw new Error("Empty response from Gemini");
-  }
-
   try {
-    return JSON.parse(textValue) as T;
-  } catch (error) {
-    throw new Error("Received invalid JSON from Gemini");
+    const config = buildGenerationConfig(schema);
+    if (isDev) {
+      console.log("[Gemini] Calling genAI.models.generateContent...");
+    }
+    
+    // Add configurable timeout to prevent hanging requests
+    const apiCall = genAI.models.generateContent({
+      model,
+      contents: [{ role: "user" as const, parts }],
+      config,
+    });
+    
+    const result = await withTimeout(
+      apiCall,
+      timeoutMs,
+      `Gemini API request timed out after ${timeoutMs / 1000} seconds`
+    );
+    
+    if (isDev) {
+      console.log("[Gemini] ✅ Response received from Gemini");
+    }
+
+    const rawText = result.text as unknown;
+    
+    const textValue =
+      typeof rawText === "function"
+        ? (rawText as () => string)()
+        : (rawText as string | undefined);
+
+    if (!textValue) {
+      console.error("[Gemini] ❌ Empty response from Gemini");
+      throw new Error("Empty response from Gemini");
+    }
+
+    try {
+      const parsed = JSON.parse(textValue) as T;
+      if (isDev) {
+        console.log("[Gemini] ✅ JSON parsed successfully");
+      }
+      return parsed;
+    } catch (parseError) {
+      console.error("[Gemini] ❌ JSON parsing failed!");
+      console.error("[Gemini] Parse error:", parseError);
+      if (isDev) {
+        console.error("[Gemini] Text that failed to parse:", textValue);
+      }
+      throw new Error(`Received invalid JSON from Gemini: ${parseError instanceof Error ? parseError.message : "Unknown parse error"}`);
+    }
+  } catch (error: unknown) {
+    console.error("\n========== [Gemini] API ERROR ==========");
+    console.error("[Gemini] Error caught in generateJsonResponse");
+    console.error("[Gemini] Error type:", typeof error);
+    console.error("[Gemini] Error:", error);
+    
+    // Handle Gemini API errors - check multiple possible error formats
+    if (error && typeof error === "object") {
+      console.error("[Gemini] Error is an object, checking formats...");
+      // Format 1: { error: { code, message, status } }
+      if ("error" in error) {
+        const apiError = error as { error?: { code?: number; message?: string; status?: string } };
+        const errorCode = apiError.error?.code;
+        const errorMessage = apiError.error?.message || "Unknown error from Gemini API";
+        const errorStatus = apiError.error?.status;
+
+        const customError = new Error(errorMessage) as Error & { statusCode?: number; apiError?: unknown };
+        customError.statusCode = errorCode || 500;
+        customError.apiError = apiError.error;
+        throw customError;
+      }
+
+      // Format 2: Direct error object with code/message/status
+      if ("code" in error || "status" in error || "message" in error) {
+        const apiError = error as { code?: number; message?: string; status?: string };
+        const errorCode = apiError.code;
+        const errorMessage = apiError.message || "Unknown error from Gemini API";
+        const errorStatus = apiError.status;
+
+        const customError = new Error(errorMessage) as Error & { statusCode?: number; apiError?: unknown };
+        customError.statusCode = errorCode || 500;
+        customError.apiError = { code: errorCode, message: errorMessage, status: errorStatus };
+        throw customError;
+      }
+
+      // Format 3: Error with cause property (nested error)
+      if ("cause" in error && error.cause && typeof error.cause === "object") {
+        const cause = error.cause as { code?: number; message?: string; status?: string; error?: unknown };
+        if ("code" in cause || "status" in cause) {
+          const errorCode = cause.code;
+          const errorMessage = cause.message || (error as Error).message || "Unknown error from Gemini API";
+          const errorStatus = cause.status;
+
+          const customError = new Error(errorMessage) as Error & { statusCode?: number; apiError?: unknown };
+          customError.statusCode = errorCode || 500;
+          customError.apiError = { code: errorCode, message: errorMessage, status: errorStatus };
+          throw customError;
+        }
+      }
+    }
+
+    // If it's a standard Error, check if message contains error info
+    if (error instanceof Error) {
+      try {
+        // Try to parse JSON from error message
+        const parsed = JSON.parse(error.message);
+        if (parsed && typeof parsed === "object" && ("error" in parsed || "code" in parsed)) {
+          const apiError = parsed.error || parsed;
+          const errorCode = apiError.code;
+          const errorMessage = apiError.message || error.message;
+          const errorStatus = apiError.status;
+
+          const customError = new Error(errorMessage) as Error & { statusCode?: number; apiError?: unknown };
+          customError.statusCode = errorCode || 500;
+          customError.apiError = apiError;
+          throw customError;
+        }
+      } catch {
+        // Not JSON, continue with original error
+      }
+    }
+
+    // Re-throw other errors as-is
+    throw error;
   }
 };
 
@@ -554,6 +711,9 @@ const buildFarmerAssistPrompt = (
   },
   knowledgeContext: string
 ): Part[] => {
+  // Ensure language is valid
+  const normalizedLanguage = language?.toLowerCase()?.trim();
+  const validLanguage = (normalizedLanguage && ["mr", "hi", "en"].includes(normalizedLanguage) ? normalizedLanguage : "en") as "mr" | "hi" | "en";
   const historyText = payload.history?.length
     ? payload.history
         .map((message, index) => `${index + 1}. ${message.role === "farmer" ? "Farmer" : "Advisor"}: ${message.content}`)
@@ -582,19 +742,25 @@ const buildFarmerAssistPrompt = (
         "",
         "CRITICAL INSTRUCTIONS FOR LIVE/VOICE CONVERSATION:",
         "1. Response pacing: Keep the primary answer extremely concise—no more than 2–3 short sentences delivered in priority order so they play back quickly over voice.",
-        "2. Conversational flow: Briefly acknowledge the farmer's need before answering (e.g. “Regarding cotton pests…”). Do not use standalone greetings or closings unless this is the very first exchange.",
-        `3. Language and tone: Reply in ${language.toUpperCase()} (detected preference) with respectful, farmer-friendly wording. Use everyday Marathi/Hindi terminology and simple English loanwords when helpful.`,
+        "2. Conversational flow: Briefly acknowledge the farmer's need before answering (e.g. 'Regarding cotton pests…'). Do not use standalone greetings or closings unless this is the very first exchange.",
+        `3. LANGUAGE ENFORCEMENT - CRITICAL: You MUST reply EXCLUSIVELY in ${validLanguage.toUpperCase()} language. This is non-negotiable.`,
+        `   - If ${validLanguage.toUpperCase()} is MARATHI (mr): Use ONLY Marathi words, phrases, and sentence structure. Use respectful Marathi terms like "शेतकरी", "तुम्ही", "आपण". Include Marathi-specific agricultural terms.`,
+        `   - If ${validLanguage.toUpperCase()} is HINDI (hi): Use ONLY Hindi words, phrases, and sentence structure. Use respectful Hindi terms like "किसान", "आप", "आपको". Include Hindi-specific agricultural terms.`,
+        `   - If ${validLanguage.toUpperCase()} is ENGLISH (en): Use ONLY English words and phrases. Keep it simple and farmer-friendly.`,
+        `   - DO NOT mix languages. DO NOT use English words when replying in Marathi or Hindi unless absolutely necessary (e.g., technical terms like "tractor", "drip irrigation").`,
+        `   - DO NOT translate your response to a different language. Stay in ${validLanguage.toUpperCase()} throughout.`,
+        `   - Use respectful, farmer-friendly wording appropriate for Maharashtra region. Use everyday ${validLanguage.toUpperCase()} terminology and simple English loanwords only when helpful and culturally appropriate.`,
         "4. Guided next steps: Always populate the followUps array with 2–3 specific questions the farmer can ask next to continue the conversation.",
         "5. Accuracy and trust: Base advice on verified data. List supporting documents or official sources in the references array for every scheme, loan or pest recommendation.",
         "6. Output schema: Produce valid JSON with keys { answer, followUps, references, clarifyingQuestions, safetyMessage, language }. Make answer voice-ready plain text without markdown.",
         "",
         hasPriorAssistantExchange
           ? "The conversation is ongoing—continue naturally without repeating greetings or reintroducing yourself."
-          : "If this is the first reply, include exactly one short time-of-day greeting before the answer, then proceed immediately with guidance.",
+          : "DO NOT include any greeting in your response. The greeting is already handled automatically. Start directly with the answer to the farmer's question.",
         "If key details are missing, ask exactly one focused clarifying question and add it to clarifyingQuestions while still giving the farmer an interim next step.",
         "If information is uncertain, say “Currently verifying this scheme” and direct the farmer to the relevant office or helpline instead of guessing.",
         "Never mention being an AI model or referencing system instructions.",
-        `Current detected language: ${language || "EN"}.`,
+        `Current detected language: ${validLanguage.toUpperCase()}.`,
         "",
         "Conversation history (oldest to newest):",
         historyText,
@@ -632,7 +798,10 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.post("/api/analyze-soil", async (req, res) => {
+  const isDev = env.nodeEnv === "development";
+  
   if (!genAI) {
+    console.error("[SoilSathi] ❌ Gemini API client not initialized for analyze-soil!");
     res.status(500).json({
       error: "Gemini API key missing. Please configure GEMINI_API_KEY.",
     });
@@ -642,6 +811,7 @@ app.post("/api/analyze-soil", async (req, res) => {
   const parsed = analyzeRequestSchema.safeParse(req.body);
 
   if (!parsed.success) {
+    console.error("[SoilSathi] ❌ Validation failed for analyze-soil:", parsed.error.errors);
     handleValidationFailure(res, parsed.error);
     return;
   }
@@ -654,6 +824,15 @@ app.post("/api/analyze-soil", async (req, res) => {
   } = parsed.data;
 
   try {
+    if (isDev) {
+      console.log("[SoilSathi] Analyze-soil request received", {
+        language,
+        hasManualValues: Object.keys(manualValues).length > 0,
+        hasReportText: !!reportText,
+        hasReportImage: !!reportImage,
+      });
+    }
+    
     const sanitizedManualValues = sanitizeManualValues(manualValues);
     const trimmedReportText = reportText?.trim() || undefined;
     const parts = buildPrompt(language, sanitizedManualValues, trimmedReportText);
@@ -685,21 +864,54 @@ app.post("/api/analyze-soil", async (req, res) => {
       parts.push(imagePart);
     }
 
+    if (isDev) {
+      console.log("[SoilSathi] Calling Gemini API for soil analysis...");
+    }
+    
+    // Use longer timeout for image analysis (90 seconds)
     const payload = await generateJsonResponse<Record<string, unknown>>({
       model: MODEL_NAME,
       parts,
       schema: analysisSchema,
+      timeoutMs: 90000, // 90 seconds for image analysis
     });
 
+    if (isDev) {
+      console.log("[SoilSathi] ✅ Soil analysis completed successfully");
+    }
+    
     res.json(payload);
   } catch (error) {
+    console.error("\n========== [SoilSathi] ANALYZE-SOIL ERROR ==========");
     console.error("[SoilSathi] Analysis failed:", error);
-    res.status(500).json({
+    console.error("[SoilSathi] Error type:", typeof error);
+    if (error instanceof Error) {
+      console.error("[SoilSathi] Error message:", error.message);
+      console.error("[SoilSathi] Error stack:", error.stack);
+    }
+    
+    // Check if it's a Gemini API error with status code
+    const statusCode = (error as Error & { statusCode?: number })?.statusCode;
+    const apiError = (error as Error & { apiError?: { code?: number; message?: string; status?: string } })?.apiError;
+    
+    if (statusCode === 503 || apiError?.status === "UNAVAILABLE") {
+      res.status(503).json({
+        error: "The model is overloaded. Please try again later.",
+        details: apiError?.message || "The Gemini API is currently unavailable. Please wait a moment and try again.",
+        code: apiError?.code || 503,
+        status: apiError?.status || "UNAVAILABLE",
+      });
+      return;
+    }
+
+    const httpStatus = (statusCode && statusCode >= 400 && statusCode < 600) ? statusCode : 500;
+    res.status(httpStatus).json({
       error: "Failed to generate soil analysis. Please try again later.",
       details:
         error instanceof Error
           ? error.message
           : "Unknown error occurred while contacting Gemini API.",
+      ...(apiError && { apiError }),
     });
   }
 });
@@ -754,18 +966,55 @@ app.post("/api/recommendations", async (req, res) => {
     res.json(payload);
   } catch (error) {
     console.error("[SoilSathi] Recommendations failed:", error);
-    res.status(500).json({
+    
+    // Check if it's a Gemini API error with status code
+    const statusCode = (error as Error & { statusCode?: number })?.statusCode;
+    const apiError = (error as Error & { apiError?: { code?: number; message?: string; status?: string } })?.apiError;
+    
+    if (statusCode === 503 || apiError?.status === "UNAVAILABLE") {
+      res.status(503).json({
+        error: "The model is overloaded. Please try again later.",
+        details: apiError?.message || "The Gemini API is currently unavailable. Please wait a moment and try again.",
+        code: apiError?.code || 503,
+        status: apiError?.status || "UNAVAILABLE",
+      });
+      return;
+    }
+
+    const httpStatus = statusCode && statusCode >= 400 && statusCode < 600 ? statusCode : 500;
+    res.status(httpStatus).json({
       error: "Failed to generate fertilizer recommendations. Please try again later.",
       details:
         error instanceof Error
           ? error.message
           : "Unknown error occurred while contacting Gemini API.",
+      ...(apiError && { apiError }),
     });
   }
 });
 
+// Health check endpoint
+app.get("/api/health", (_req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: new Date().toISOString(),
+    geminiConfigured: !!genAI,
+    model: MODEL_NAME,
+  });
+});
+
 app.post("/api/farmer-assist", async (req, res) => {
+  const isDev = env.nodeEnv === "development";
+  const startTime = Date.now();
+  
+  if (isDev) {
+    console.log("\n========== [SoilSathi] FARMER ASSIST REQUEST ==========");
+    console.log("[SoilSathi] Request received at:", new Date().toISOString());
+  }
+  
   if (!genAI) {
+    console.error("[SoilSathi] ❌ Gemini API client not initialized!");
+    console.error("[SoilSathi] GEMINI_API_KEY is missing or invalid");
     res.status(500).json({
       error: "Gemini API key missing. Please configure GEMINI_API_KEY.",
     });
@@ -773,8 +1022,12 @@ app.post("/api/farmer-assist", async (req, res) => {
   }
 
   const parsed = farmerAssistRequestSchema.safeParse(req.body);
-
+  
   if (!parsed.success) {
+    console.error("[SoilSathi] ❌ Validation failed!");
+    if (isDev) {
+      console.error("[SoilSathi] Validation errors:", JSON.stringify(parsed.error.errors, null, 2));
+    }
     handleValidationFailure(res, parsed.error);
     return;
   }
@@ -794,47 +1047,126 @@ app.post("/api/farmer-assist", async (req, res) => {
     history,
   } = parsed.data;
 
-  const detectedLanguage = language?.trim().toLowerCase() || detectLanguageFromText(question);
-
-  const knowledgeMatches = retrieveKnowledgeContext(question, {
-    limit: 4,
-    regionHint: region?.label ?? "Maharashtra",
-    preferredLanguages: [detectedLanguage, language ?? "", "mr", "hi", "en"].filter(Boolean),
-    tags: [
-      crop?.label,
-      region?.label,
-      soilType?.label,
-      farmingGoal?.label,
-      ...(challenges?.map((item) => item.label) ?? []),
-    ]
-      .filter(Boolean)
-      .map((token) => token.toLowerCase()),
-  });
-
-  const knowledgeContext = buildContextText(knowledgeMatches);
+  // Validate question
+  if (!question || typeof question !== "string" || question.trim().length === 0) {
+    res.status(400).json({
+      error: "Question is required and must not be empty.",
+    });
+    return;
+  }
 
   try {
-    const parts = buildFarmerAssistPrompt(detectedLanguage, {
-      question,
-      soilType,
-      region,
-      crop,
-      growthStage,
-      farmSize,
-      irrigation,
-      farmingGoal,
-      challenges,
-      notes,
-      history,
-    }, knowledgeContext);
+    if (isDev) {
+      console.log("[SoilSathi] Farmer assist request received", {
+        questionLength: question?.length,
+        questionPreview: question?.substring(0, 50),
+        language,
+        hasHistory: !!history?.length,
+      });
+    }
 
-    const payload = await generateJsonResponse<Record<string, unknown>>({
-      model: MODEL_NAME,
-      parts,
-      schema: farmerAssistSchema,
-    });
+    // Enhanced language detection with preferred language fallback
+    let detectedLanguage: "mr" | "hi" | "en";
+    try {
+      const languageCode = language?.trim()?.toLowerCase();
+      detectedLanguage = (languageCode || detectLanguageFromText(question, languageCode as "mr" | "hi" | "en" | undefined)) as "mr" | "hi" | "en";
+      
+      // Validate detected language
+      if (!["mr", "hi", "en"].includes(detectedLanguage)) {
+        console.error("[SoilSathi] Invalid detected language:", detectedLanguage);
+        detectedLanguage = "en"; // Fallback to English
+      }
+      if (isDev) {
+        console.log("[SoilSathi] Detected language:", detectedLanguage);
+      }
+    } catch (langError) {
+      console.error("[SoilSathi] Language detection failed:", langError);
+      detectedLanguage = "en"; // Fallback to English
+    }
 
-    res.json({
+    // Retrieve knowledge context with error handling (reduced limit for faster processing)
+    let knowledgeMatches: Array<{ id: string; title: string; summary: string; url?: string; updated: string; source: string; score: number }> = [];
+    try {
+      knowledgeMatches = retrieveKnowledgeContext(question, {
+        limit: 2, // Reduced from 4 to 2 for faster processing
+        regionHint: region?.label ?? "Maharashtra",
+        preferredLanguages: [detectedLanguage, language ?? "", "mr", "hi", "en"].filter(Boolean),
+        tags: [
+          crop?.label,
+          region?.label,
+          soilType?.label,
+          farmingGoal?.label,
+          ...(challenges?.map((item) => item.label) ?? []),
+        ]
+          .filter(Boolean)
+          .map((token) => token.toLowerCase()),
+      });
+      if (isDev) {
+        console.log("[SoilSathi] Retrieved knowledge matches:", knowledgeMatches.length);
+      }
+    } catch (knowledgeError) {
+      console.error("[SoilSathi] Knowledge retrieval failed:", knowledgeError);
+      // Continue with empty knowledge matches
+      knowledgeMatches = [];
+    }
+
+    // Build context text with error handling
+    let knowledgeContext = "";
+    try {
+      knowledgeContext = buildContextText(knowledgeMatches);
+      if (isDev) {
+        console.log("[SoilSathi] Knowledge context length:", knowledgeContext.length);
+      }
+    } catch (contextError) {
+      console.error("[SoilSathi] Context building failed:", contextError);
+      knowledgeContext = "";
+    }
+
+    // Build prompt with error handling
+    let parts: Part[];
+    try {
+      parts = buildFarmerAssistPrompt(detectedLanguage, {
+        question,
+        soilType,
+        region,
+        crop,
+        growthStage,
+        farmSize,
+        irrigation,
+        farmingGoal,
+        challenges,
+        notes,
+        history,
+      }, knowledgeContext);
+      if (isDev) {
+        console.log("[SoilSathi] Prompt built successfully, parts:", parts.length);
+      }
+    } catch (promptError) {
+      console.error("[SoilSathi] Prompt building failed:", promptError);
+      throw new Error(`Failed to build prompt: ${promptError instanceof Error ? promptError.message : "Unknown error"}`);
+    }
+
+    // Generate response from Gemini
+    let payload: Record<string, unknown>;
+    try {
+      if (isDev) {
+        console.log("[SoilSathi] Calling Gemini API...");
+      }
+      payload = await generateJsonResponse<Record<string, unknown>>({
+        model: MODEL_NAME,
+        parts,
+        schema: farmerAssistSchema,
+      });
+      const duration = Date.now() - startTime;
+      if (isDev) {
+        console.log(`[SoilSathi] Gemini API response received in ${duration}ms`);
+      }
+    } catch (geminiError) {
+      console.error("[SoilSathi] Gemini API call failed:", geminiError);
+      throw geminiError; // Re-throw to be handled by outer catch
+    }
+
+    const response = {
       ...payload,
       detectedLanguage,
       references: knowledgeMatches.map((entry) => ({
@@ -846,13 +1178,104 @@ app.post("/api/farmer-assist", async (req, res) => {
         source: entry.source,
         score: entry.score,
       })),
+    };
+    
+    console.log("[SoilSathi] ✅ Success! Sending response");
+    console.log("[SoilSathi] Response preview:", {
+      hasAnswer: !!payload.answer,
+      answerLength: typeof payload.answer === "string" ? payload.answer.length : 0,
+      detectedLanguage,
+      referencesCount: response.references.length,
     });
+    console.log("==================================================\n");
+    
+    res.json(response);
   } catch (error) {
-    console.error("[SoilSathi] Farmer assist failed:", error);
-    res.status(500).json({
+    // Comprehensive error logging
+    console.error("\n========== [SoilSathi] FARMER ASSIST ERROR ==========");
+    console.error("[SoilSathi] Timestamp:", new Date().toISOString());
+    console.error("[SoilSathi] Request details:", {
+      question: question?.substring(0, 100),
+      questionLength: question?.length,
+      language,
+      hasHistory: !!history?.length,
+      historyLength: history?.length,
+    });
+    
+    // Log full error object
+    console.error("[SoilSathi] Error object:", error);
+    console.error("[SoilSathi] Error type:", typeof error);
+    console.error("[SoilSathi] Error constructor:", error?.constructor?.name);
+    
+    if (error instanceof Error) {
+      console.error("[SoilSathi] Error name:", error.name);
+      console.error("[SoilSathi] Error message:", error.message);
+      console.error("[SoilSathi] Error stack:", error.stack);
+      
+      // Log all error properties
+      const errorKeys = Object.keys(error);
+      console.error("[SoilSathi] Error properties:", errorKeys);
+      errorKeys.forEach((key) => {
+        try {
+          const value = (error as Record<string, unknown>)[key];
+          console.error(`[SoilSathi] Error.${key}:`, value);
+        } catch (e) {
+          console.error(`[SoilSathi] Error.${key}: [Cannot access]`);
+        }
+      });
+      
+      // Check for statusCode
+      if ("statusCode" in error) {
+        const statusCode = (error as Error & { statusCode?: number }).statusCode;
+        console.error("[SoilSathi] Error statusCode:", statusCode);
+      }
+      
+      // Check for apiError
+      if ("apiError" in error) {
+        const apiError = (error as Error & { apiError?: unknown }).apiError;
+        console.error("[SoilSathi] Error apiError:", JSON.stringify(apiError, null, 2));
+      }
+      
+      // Check for cause
+      if ("cause" in error) {
+        console.error("[SoilSathi] Error cause:", error.cause);
+      }
+    } else {
+      // Non-Error object
+      console.error("[SoilSathi] Non-Error object details:", JSON.stringify(error, null, 2));
+      try {
+        console.error("[SoilSathi] Stringified error:", String(error));
+      } catch (e) {
+        console.error("[SoilSathi] Cannot stringify error");
+      }
+    }
+    
+    console.error("==================================================\n");
+    
+    // Check if it's a Gemini API error with status code
+    const statusCode = (error as Error & { statusCode?: number })?.statusCode;
+    const apiError = (error as Error & { apiError?: { code?: number; message?: string; status?: string } })?.apiError;
+    
+    if (statusCode === 503 || apiError?.status === "UNAVAILABLE") {
+      console.error("[SoilSathi] Returning 503 Service Unavailable response");
+      res.status(503).json({
+        error: "The model is overloaded. Please try again later.",
+        details: apiError?.message || "The Gemini API is currently unavailable. Please wait a moment and try again.",
+        code: apiError?.code || 503,
+        status: apiError?.status || "UNAVAILABLE",
+      });
+      return;
+    }
+
+    const httpStatus = (statusCode && statusCode >= 400 && statusCode < 600) ? statusCode : 500;
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred while contacting Gemini API.";
+    
+    console.error("[SoilSathi] Returning", httpStatus, "response with message:", errorMessage);
+    
+    res.status(httpStatus).json({
       error: "Failed to answer the farmer's question. Please try again later.",
-      details:
-        error instanceof Error ? error.message : "Unknown error occurred while contacting Gemini API.",
+      details: errorMessage,
+      ...(apiError && { apiError }),
     });
   }
 });
@@ -879,7 +1302,67 @@ if (env.nodeEnv === "production") {
   });
 }
 
-app.listen(port, () => {
-  console.log(`[SoilSathi] Analysis server running on http://localhost:${port}`);
+// Global error handler for unhandled errors
+process.on("uncaughtException", (error) => {
+  console.error("\n========== [SoilSathi] UNCAUGHT EXCEPTION ==========");
+  console.error("[SoilSathi] Error:", error);
+  console.error("[SoilSathi] Stack:", error.stack);
+  console.error("==================================================\n");
 });
+
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("\n========== [SoilSathi] UNHANDLED REJECTION ==========");
+  console.error("[SoilSathi] Reason:", reason);
+  console.error("[SoilSathi] Promise:", promise);
+  console.error("==================================================\n");
+});
+
+// Log server startup info
+console.log("\n========== [SoilSathi] SERVER STARTUP ==========");
+console.log("[SoilSathi] Environment:", env.nodeEnv);
+console.log("[SoilSathi] Port:", port);
+console.log("[SoilSathi] Model:", MODEL_NAME);
+console.log("[SoilSathi] Gemini API Key configured:", !!API_KEY);
+console.log("[SoilSathi] Gemini API Key length:", API_KEY?.length || 0);
+console.log("[SoilSathi] Gemini API Key preview:", API_KEY ? API_KEY.substring(0, 10) + "..." : "none");
+console.log("[SoilSathi] Allowed origins:", env.allowedOrigins.length > 0 ? env.allowedOrigins : "All origins allowed");
+console.log("[SoilSathi] Starting server on port", port, "...");
+console.log("==================================================\n");
+
+// Start server with error handling
+try {
+  const server = app.listen(port, () => {
+    console.log(`\n[SoilSathi] ✅✅✅ BACKEND SERVER STARTED SUCCESSFULLY ✅✅✅`);
+    console.log(`[SoilSathi] Server running on port ${port}`);
+    console.log(`[SoilSathi] Analysis server running on http://localhost:${port}`);
+    console.log(`[SoilSathi] Health check: http://localhost:${port}/api/health`);
+    console.log(`[SoilSathi] Ready to accept requests!\n`);
+    
+    // Verify server is actually listening
+    if (server.listening) {
+      console.log(`[SoilSathi] ✅ Server is listening and ready!\n`);
+    } else {
+      console.error(`[SoilSathi] ⚠️ Warning: Server may not be listening properly\n`);
+    }
+  }).on("error", (error: NodeJS.ErrnoException) => {
+    console.error("\n========== [SoilSathi] SERVER STARTUP ERROR ==========");
+    console.error("[SoilSathi] Failed to start server on port", port);
+    console.error("[SoilSathi] Error code:", error.code);
+    console.error("[SoilSathi] Error message:", error.message);
+    
+    if (error.code === "EADDRINUSE") {
+      console.error("[SoilSathi] ❌ Port", port, "is already in use!");
+      console.error("[SoilSathi] Solution: Stop the process using port", port, "or change PORT in .env");
+    } else {
+      console.error("[SoilSathi] Unexpected error:", error);
+    }
+    console.error("==================================================\n");
+    process.exit(1);
+  });
+} catch (error) {
+  console.error("\n========== [SoilSathi] FATAL STARTUP ERROR ==========");
+  console.error("[SoilSathi] Failed to initialize server:", error);
+  console.error("==================================================\n");
+  process.exit(1);
+}
 
