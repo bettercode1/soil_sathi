@@ -1,0 +1,27 @@
+# Netlify Configuration File
+# This configures Netlify to deploy your React frontend
+
+[build]
+  # Build command for frontend
+  command = "npm run build:client"
+  # Output directory where Vite builds the frontend
+  publish = "dist/client"
+
+# Redirect all non-API routes to index.html for React Router
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Proxy API requests to your backend server
+# Update this URL to match your Render backend URL
+[[redirects]]
+  from = "/api/*"
+  to = "https://soil-sathi.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# Environment variables (set these in Netlify dashboard)
+# [build.environment]
+#   NODE_VERSION = "22.16.0"
+
