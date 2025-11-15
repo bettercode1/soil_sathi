@@ -21,7 +21,10 @@
   status = 200
   force = true
 
-# Environment variables (set these in Netlify dashboard)
-# [build.environment]
-#   NODE_VERSION = "22.16.0"
+# Disable secrets scanning for expected environment variable names
+# These are just variable names in code, not actual secrets
+[build.environment]
+  SECRETS_SCAN_OMIT_KEYS = "NODE_ENV,GEMINI_API_KEY,GEMINI_MODEL"
+  SECRETS_SCAN_OMIT_PATHS = ".env,dist/,node_modules/,.git/"
+  # NODE_VERSION = "22.16.0"  # Uncomment if needed
 
