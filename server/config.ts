@@ -96,9 +96,18 @@ const {
   RATE_LIMIT_MAX_REQUESTS,
 } = parseResult.data;
 
+// Render provides PORT environment variable, use it if available
+// Otherwise default to 3001 for local development
+const getPort = () => {
+  if (PORT) return PORT;
+  // Render and other platforms set PORT env var
+  const renderPort = process.env.PORT ? Number.parseInt(process.env.PORT, 10) : null;
+  return renderPort || 3001;
+};
+
 export const env = {
-  nodeEnv: NODE_ENV ?? "development",
-  port: PORT ?? 3001,
+  nodeEnv: NODE_ENV ?? "production", // Default to production for Render
+  port: getPort(),
   geminiModel: GEMINI_MODEL ?? "gemini-2.5-flash",
   geminiEmbedModel: GEMINI_EMBED_MODEL ?? "text-embedding-004",
   geminiApiKey: GEMINI_API_KEY,

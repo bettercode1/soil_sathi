@@ -22,6 +22,7 @@ import {
   buildContextText,
   detectLanguageFromText,
   retrieveKnowledgeContext,
+  type RetrievedKnowledge,
 } from "./rag/service.js";
 console.log("[SoilSathi] RAG services imported");
 
@@ -1085,7 +1086,7 @@ app.post("/api/farmer-assist", async (req, res) => {
     }
 
     // Retrieve knowledge context with error handling (reduced limit for faster processing)
-    let knowledgeMatches: Array<{ id: string; title: string; summary: string; url?: string; updated: string; source: string; score: number }> = [];
+    let knowledgeMatches: RetrievedKnowledge[] = [];
     try {
       knowledgeMatches = retrieveKnowledgeContext(question, {
         limit: 2, // Reduced from 4 to 2 for faster processing
@@ -1217,7 +1218,7 @@ app.post("/api/farmer-assist", async (req, res) => {
       console.error("[SoilSathi] Error properties:", errorKeys);
       errorKeys.forEach((key) => {
         try {
-          const value = (error as Record<string, unknown>)[key];
+          const value = (error as unknown as Record<string, unknown>)[key];
           console.error(`[SoilSathi] Error.${key}:`, value);
         } catch (e) {
           console.error(`[SoilSathi] Error.${key}: [Cannot access]`);
@@ -1330,12 +1331,14 @@ console.log("[SoilSathi] Starting server on port", port, "...");
 console.log("==================================================\n");
 
 // Start server with error handling
+// Render requires binding to 0.0.0.0, not just localhost
 try {
-  const server = app.listen(port, () => {
+  const server = app.listen(port, "0.0.0.0", () => {
     console.log(`\n[SoilSathi] ✅✅✅ BACKEND SERVER STARTED SUCCESSFULLY ✅✅✅`);
     console.log(`[SoilSathi] Server running on port ${port}`);
-    console.log(`[SoilSathi] Analysis server running on http://localhost:${port}`);
-    console.log(`[SoilSathi] Health check: http://localhost:${port}/api/health`);
+    console.log(`[SoilSathi] Environment: ${env.nodeEnv}`);
+    console.log(`[SoilSathi] Server listening on 0.0.0.0:${port}`);
+    console.log(`[SoilSathi] Health check: http://0.0.0.0:${port}/api/health`);
     console.log(`[SoilSathi] Ready to accept requests!\n`);
     
     // Verify server is actually listening
