@@ -1099,7 +1099,7 @@ app.post("/api/farmer-assist", async (req, res) => {
           farmingGoal?.label,
           ...(challenges?.map((item) => item.label) ?? []),
         ]
-          .filter(Boolean)
+          .filter((token): token is string => Boolean(token))
           .map((token) => token.toLowerCase()),
       });
       if (isDev) {
@@ -1324,8 +1324,7 @@ console.log("[SoilSathi] Environment:", env.nodeEnv);
 console.log("[SoilSathi] Port:", port);
 console.log("[SoilSathi] Model:", MODEL_NAME);
 console.log("[SoilSathi] Gemini API Key configured:", !!API_KEY);
-console.log("[SoilSathi] Gemini API Key length:", API_KEY?.length || 0);
-console.log("[SoilSathi] Gemini API Key preview:", API_KEY ? API_KEY.substring(0, 10) + "..." : "none");
+// Removed API key length and preview logging for security
 console.log("[SoilSathi] Allowed origins:", env.allowedOrigins.length > 0 ? env.allowedOrigins : "All origins allowed");
 console.log("[SoilSathi] Starting server on port", port, "...");
 console.log("==================================================\n");
