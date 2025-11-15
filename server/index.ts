@@ -1001,6 +1001,9 @@ app.get("/api/health", (_req, res) => {
     timestamp: new Date().toISOString(),
     geminiConfigured: !!genAI,
     model: MODEL_NAME,
+    version: "0.0.1",
+    commit: "bedccf0",
+    deployedAt: new Date().toISOString(),
   });
 });
 
