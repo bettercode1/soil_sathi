@@ -38,7 +38,17 @@ console.log("[SoilSathi] Express app initialized, port:", port);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const clientBuildDir = path.resolve(__dirname, "../client");
-const clientIndexHtml = path.join(clientBuildDir, "index.html");
+const clientIndexHtml = path.resolve(clientBuildDir, "index.html");
+
+// Log paths for debugging in production
+if (process.env.NODE_ENV === "production") {
+  console.log("[SoilSathi] Path resolution:");
+  console.log("[SoilSathi]   __dirname:", __dirname);
+  console.log("[SoilSathi]   clientBuildDir:", clientBuildDir);
+  console.log("[SoilSathi]   clientIndexHtml:", clientIndexHtml);
+  console.log("[SoilSathi]   clientBuildDir exists:", fs.existsSync(clientBuildDir));
+  console.log("[SoilSathi]   index.html exists:", fs.existsSync(clientIndexHtml));
+}
 
 app.disable("x-powered-by");
 
@@ -1286,22 +1296,35 @@ app.post("/api/farmer-assist", async (req, res) => {
 
 if (env.nodeEnv === "production") {
   if (fs.existsSync(clientBuildDir)) {
-    app.use(express.static(clientBuildDir));
+    // Serve static files from client build directory
+    app.use(express.static(clientBuildDir, {
+      maxAge: "1y", // Cache static assets
+      etag: true,
+    }));
+    console.log("[SoilSathi] ✅ Static files middleware configured for:", clientBuildDir);
   } else {
-    console.warn("[SoilSathi] Client build directory not found at", clientBuildDir);
+    console.error("[SoilSathi] ❌ Client build directory not found at", clientBuildDir);
+    console.error("[SoilSathi] Current working directory:", process.cwd());
+    console.error("[SoilSathi] __dirname:", __dirname);
   }
 
+  // Catch-all handler: send back React app for all non-API routes
   app.get("*", (req, res, next) => {
+    // Skip API routes
     if (req.path.startsWith("/api/")) {
       next();
       return;
     }
 
+    // Send index.html for all other routes (React Router will handle routing)
     if (fs.existsSync(clientIndexHtml)) {
+      // Use absolute path for sendFile
       res.sendFile(clientIndexHtml);
       return;
     }
 
+    console.error("[SoilSathi] ❌ index.html not found at:", clientIndexHtml);
+    console.error("[SoilSathi] Requested path:", req.path);
     res.status(404).send("Client application not found. Please run the build step.");
   });
 }
