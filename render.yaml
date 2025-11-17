@@ -2,9 +2,14 @@ services:
   - type: web
     name: soil-sathi
     env: node
+    # Build both frontend and backend
     buildCommand: npm install && npm run build
+    # Start the Express server (serves both API and frontend)
     startCommand: npm start
+    # Health check endpoint
+    healthCheckPath: /api/health
     # Auto-deploy on push to main branch
+    plan: free  # Change to 'starter' or 'standard' for production
     envVars:
       - key: NODE_ENV
         value: production
@@ -14,9 +19,9 @@ services:
           name: soil-sathi
           property: port
       - key: GEMINI_API_KEY
-        sync: false
+        sync: false  # Set manually in Render dashboard
       - key: GEMINI_MODEL
         value: gemini-2.5-flash
       - key: ALLOWED_ORIGINS
-        sync: false
+        sync: false  # Set manually if needed (e.g., "https://yourdomain.com")
 
