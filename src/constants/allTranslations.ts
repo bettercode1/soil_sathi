@@ -3365,15 +3365,6 @@ export const commonTranslations: Record<string, TranslationSet> = {
     bn: "সম্ভাব্য সঞ্চয়",
     mr: "संभाव्य बचत"
   },
-  cropFarmInfo: {
-    en: "Crop & Farm Information",
-    hi: "फसल और खेत की जानकारी",
-    pa: "ਫਸਲ ਅਤੇ ਖੇਤ ਦੀ ਜਾਣਕਾਰੀ",
-    ta: "பயிர் மற்றும் பண்ணை தகவல்",
-    te: "పంట మరియు పొలం సమాచారం",
-    bn: "ফসল ও খামারের তথ্য",
-    mr: "पीक आणि शेत माहिती"
-  },
   fertilizers: {
     en: "Fertilizers",
     hi: "उर्वरक",
@@ -3581,14 +3572,5 @@ export const commonTranslations: Record<string, TranslationSet> = {
     te: "నిపుణులతో వీడియో సంప్రదింపులను బుక్ చేయండి",
     bn: "বিশেষজ্ঞদের সাথে ভিডিও পরামর্শ বুক করুন",
     mr: "तज्ञांसोबत व्हिडिओ सल्लागार बुक करा"
-  },
-  cropTypePlaceholder: {
-    en: "e.g., Vegetable, Cereal",
-    hi: "उदा., सब्जी, अनाज",
-    pa: "ਉਦਾਹਰਣ: ਸਬਜ਼ੀ, ਅਨਾਜ",
-    ta: "எ.கா., காய்கறி, தானியம்",
-    te: "ఉదా: కూరగాయలు, ధాన్యం",
-    bn: "যেমন: সবজি, শস্য",
-    mr: "उदा: भाजी, धान्य"
   }
 };

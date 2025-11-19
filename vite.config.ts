@@ -49,8 +49,12 @@ export default defineConfig(({ mode }) => ({
       'zod',
       'react-hook-form',
       '@hookform/resolvers',
+      'firebase/app',
+      'firebase/firestore',
+      'firebase/storage',
+      'firebase/analytics',
     ],
-    exclude: ['lovable-tagger', '@google/genai'], // Exclude @google/genai (backend only) and let Vite auto-detect Firebase
+    exclude: ['lovable-tagger', '@google/genai'], // Exclude @google/genai (backend only)
     esbuildOptions: {
       target: 'es2020',
     },
@@ -86,12 +90,19 @@ export default defineConfig(({ mode }) => ({
           ],
           'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
           'chart-vendor': ['recharts'],
-          'firebase-vendor': ['firebase'],
         },
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js',
         assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
       },
+      // Configure plugins to handle Firebase correctly
+      plugins: [],
+    },
+    commonjsOptions: {
+      // Don't transform Firebase modules - they're ESM-only
+      exclude: [/firebase/],
+      // Ensure Firebase is not processed by commonjs plugin
+      transformMixedEsModules: true,
     },
     chunkSizeWarningLimit: 1000,
   },
@@ -102,6 +113,8 @@ export default defineConfig(({ mode }) => ({
     },
     // Ensure Firebase modules resolve correctly
     dedupe: ['firebase'],
+    // Force ESM resolution for Firebase
+    mainFields: ['module', 'jsnext:main', 'jsnext'],
   },
 
   // Reduce logging overhead for faster dev server

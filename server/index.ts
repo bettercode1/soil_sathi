@@ -37,7 +37,11 @@ console.log("[SoilSathi] Express app initialized, port:", port);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const clientBuildDir = path.resolve(__dirname, "../client");
+// In production, server is in dist/server, client is in dist/client
+// In development, we need to handle both cases
+const clientBuildDir = process.env.NODE_ENV === "production" 
+  ? path.resolve(__dirname, "../client")
+  : path.resolve(__dirname, "../dist/client");
 const clientIndexHtml = path.resolve(clientBuildDir, "index.html");
 
 // Log paths for debugging in production
