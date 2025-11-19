@@ -620,30 +620,30 @@ const OrganicFarming = () => {
 
   return (
     <Layout>
-      <section className="relative isolate overflow-hidden py-16 md:py-20">
+      <section className="relative isolate overflow-hidden py-12 sm:py-16 animate-fade-in">
         <img
           src={organicFarmingHeroNew}
           alt="Close-up of organic crop rows in fertile soil"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-slate-900/70" aria-hidden="true" />
-        <div className="container relative mx-auto px-4">
+        <div className="container relative mx-auto px-2">
           <div className="max-w-3xl mx-auto text-center text-white">
             <div className="flex justify-center mb-4">
               <Leaf className="h-10 w-10 text-plant" />
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-3xl font-bold mb-4">
               {t(translations.title)}
             </h1>
-            <p className="text-white/90 mb-6">
+            <p className="text-white/90 mb-6 text-base sm:text-[17px]">
               {t(translations.subtitle)}
             </p>
           </div>
         </div>
       </section>
 
-      <section className="py-8 md:py-12">
-        <div className="container mx-auto px-4">
+      <section className="py-12 sm:py-16">
+        <div className="container mx-auto px-2">
           <div className="max-w-4xl mx-auto">
             <Tabs defaultValue="nutrients">
               <TabsList className="grid w-full grid-cols-3 mb-6 md:mb-8 h-auto">

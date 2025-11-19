@@ -216,235 +216,235 @@ const helpDeskText: Record<
     en: "Realtime guidance on Maharashtra schemes, loans, weather and crop care.",
     hi: "महाराष्ट्र के किसानों के लिए योजनाओं, ऋण, मौसम और फसल देखभाल पर तुरंत मार्गदर्शन।",
     mr: "महाराष्ट्रातील शेतकऱ्यांसाठी योजना, कर्ज, हवामान व पिक व्यवस्थापन यावर तत्काळ मार्गदर्शन.",
-    pa: "Realtime guidance on Maharashtra schemes, loans, weather and crop care.",
-    ta: "Realtime guidance on Maharashtra schemes, loans, weather and crop care.",
-    te: "Realtime guidance on Maharashtra schemes, loans, weather and crop care.",
-    bn: "Realtime guidance on Maharashtra schemes, loans, weather and crop care.",
+    pa: "ਮਹਾਰਾਸ਼ਟਰ ਯੋਜਨਾਵਾਂ, ਕਰਜ਼ੇ, ਮੌਸਮ ਅਤੇ ਫਸਲ ਦੇਖਭਾਲ ਬਾਰੇ ਰੀਅਲਟਾਈਮ ਮਾਰਗਦਰਸ਼ਨ।",
+    ta: "மகாராஷ்டிரா திட்டங்கள், கடன்கள், வானிலை மற்றும் பயிர் பராமரிப்பு குறித்த நேரடி வழிகாட்டுதல்.",
+    te: "మహారాష్ట్ర పథకాలు, రుణాలు, వాతావరణం మరియు పంట సంరక్షణపై రియల్‌టైమ్ మార్గదర్శకత్వం.",
+    bn: "মহারাষ্ট্রের প্রকল্প, ঋণ, আবহাওয়া এবং ফসলের যত্ন সম্পর্কে রিয়েলটাইম নির্দেশনা।",
   },
   autoSpeakLabel: {
     en: "Auto speak replies",
     hi: "उत्तर स्वचालित सुनाएँ",
     mr: "उत्तरे आपोआप वाचा",
-    pa: "Auto speak replies",
-    ta: "Auto speak replies",
-    te: "Auto speak replies",
-    bn: "Auto speak replies",
+    pa: "ਜਵਾਬ ਆਪਣੇ ਆਪ ਬੋਲੋ",
+    ta: "பதில்களை தானாக பேசு",
+    te: "సమాధానాలను స్వయంచాలకంగా మాట్లాడండి",
+    bn: "স্বয়ংক্রিয়ভাবে উত্তর বলুন",
   },
   autoSpeakHelper: {
     en: "Hear the Live Voice Assistant's guidance aloud.",
     hi: "Live Voice Assistant की सलाह सुनें।",
     mr: "Live Voice Assistant चे सल्ले ऐका.",
-    pa: "Hear the Live Voice Assistant's guidance aloud.",
-    ta: "Hear the Live Voice Assistant's guidance aloud.",
-    te: "Hear the Live Voice Assistant's guidance aloud.",
-    bn: "Hear the Live Voice Assistant's guidance aloud.",
+    pa: "ਲਾਈਵ ਵੌਇਸ ਅਸਿਸਟੈਂਟ ਦੀ ਸਲਾਹ ਜ਼ੋਰ ਨਾਲ ਸੁਣੋ।",
+    ta: "நேரடி குரல் உதவியாளரின் வழிகாட்டுதலை சத்தமாக கேளுங்கள்.",
+    te: "లైవ్ వాయిస్ అసిస్టెంట్ యొక్క మార్గదర్శకత్వాన్ని బిగ్గరగా వినండి.",
+    bn: "লাইভ ভয়েস অ্যাসিস্ট্যান্টের নির্দেশনা জোরে শুনুন।",
   },
   autoListenLabel: {
     en: "Auto listen",
     hi: "स्वचालित सुनना",
     mr: "ऐकणे आपोआप",
-    pa: "Auto listen",
-    ta: "Auto listen",
-    te: "Auto listen",
-    bn: "Auto listen",
+    pa: "ਆਪਣੇ ਆਪ ਸੁਣੋ",
+    ta: "தானாக கேள்",
+    te: "స్వయంచాలకంగా వినండి",
+    bn: "স্বয়ংক্রিয়ভাবে শুনুন",
   },
   autoListenHelper: {
     en: "Keep the mic ready so you can speak without tapping again.",
     hi: "माइक्रोफोन को तैयार रखता है ताकि बिना टैप किए बोल सकें।",
     mr: "मायक्रोफोन तयार ठेवतो जेणेकरून पुन्हा टॅप न करता बोलू शकता.",
-    pa: "Keep the mic ready so you can speak without tapping again.",
-    ta: "Keep the mic ready so you can speak without tapping again.",
-    te: "Keep the mic ready so you can speak without tapping again.",
-    bn: "Keep the mic ready so you can speak without tapping again.",
+    pa: "ਮਾਈਕ ਨੂੰ ਤਿਆਰ ਰੱਖੋ ਤਾਂ ਜੋ ਤੁਸੀਂ ਦੁਬਾਰਾ ਟੈਪ ਕੀਤੇ ਬਿਨਾਂ ਬੋਲ ਸਕੋ।",
+    ta: "மீண்டும் தட்டாமல் பேச முடியும் வகையில் மைக்ரோஃபோனை தயாராக வைத்திருங்கள்.",
+    te: "మీరు మళ్లీ ట్యాప్ చేయకుండా మాట్లాడగలిగేలా మైక్‌ను సిద్ధంగా ఉంచండి.",
+    bn: "মাইকটি প্রস্তুত রাখুন যাতে আপনি আবার ট্যাপ না করে কথা বলতে পারেন।",
   },
   voiceUnsupported: {
     en: "Voice features are not supported in this browser. Please type your question.",
     hi: "यह ब्राउज़र वॉइस सुविधा का समर्थन नहीं करता। कृपया अपना प्रश्न टाइप करें।",
     mr: "हा ब्राउझर आवाज सुविधा समर्थित करत नाही. कृपया तुमचा प्रश्न टाइप करा.",
-    pa: "Voice features are not supported in this browser. Please type your question.",
-    ta: "Voice features are not supported in this browser. Please type your question.",
-    te: "Voice features are not supported in this browser. Please type your question.",
-    bn: "Voice features are not supported in this browser. Please type your question.",
+    pa: "ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਵੌਇਸ ਫੀਚਰ ਸਮਰਥਿਤ ਨਹੀਂ ਹਨ। ਕਿਰਪਾ ਕਰਕੇ ਆਪਣਾ ਸਵਾਲ ਟਾਈਪ ਕਰੋ।",
+    ta: "இந்த உலாவியில் குரல் அம்சங்கள் ஆதரிக்கப்படவில்லை. தயவுசெய்து உங்கள் கேள்வியை தட்டச்சு செய்யவும்.",
+    te: "ఈ బ్రౌజర్‌లో వాయిస్ ఫీచర్‌లు మద్దతు లేవు. దయచేసి మీ ప్రశ్నను టైప్ చేయండి.",
+    bn: "এই ব্রাউজারে ভয়েস বৈশিষ্ট্যগুলি সমর্থিত নয়। অনুগ্রহ করে আপনার প্রশ্ন টাইপ করুন।",
   },
   listening: {
     en: "Listening…",
     hi: "सुन रहा है…",
     mr: "ऐकत आहे…",
-    pa: "Listening…",
-    ta: "Listening…",
-    te: "Listening…",
-    bn: "Listening…",
+    pa: "ਸੁਣ ਰਿਹਾ ਹੈ…",
+    ta: "கேட்கிறது…",
+    te: "వింటోంది…",
+    bn: "শুনছে…",
   },
   micHint: {
     en: "Tap the mic to speak",
     hi: "बोलने के लिए माइक्रोफोन टैप करें",
     mr: "बोलण्यासाठी मायक्रोफोन टॅप करा",
-    pa: "Tap the mic to speak",
-    ta: "Tap the mic to speak",
-    te: "Tap the mic to speak",
-    bn: "Tap the mic to speak",
+    pa: "ਬੋਲਣ ਲਈ ਮਾਈਕ ਟੈਪ ਕਰੋ",
+    ta: "பேச மைக்ரோஃபோனைத் தட்டவும்",
+    te: "మాట్లాడడానికి మైక్‌ను ట్యాప్ చేయండి",
+    bn: "কথা বলতে মাইক ট্যাপ করুন",
   },
   micStop: {
     en: "Stop listening",
     hi: "सुनना बंद करें",
     mr: "ऐकणे थांबवा",
-    pa: "Stop listening",
-    ta: "Stop listening",
-    te: "Stop listening",
-    bn: "Stop listening",
+    pa: "ਸੁਣਨਾ ਬੰਦ ਕਰੋ",
+    ta: "கேட்பதை நிறுத்து",
+    te: "వినడం ఆపండి",
+    bn: "শোনা বন্ধ করুন",
   },
   detectedLanguage: {
     en: "Detected language",
     hi: "पहचानी गई भाषा",
     mr: "ओळखलेली भाषा",
-    pa: "Detected language",
-    ta: "Detected language",
-    te: "Detected language",
-    bn: "Detected language",
+    pa: "ਖੋਜੀ ਗਈ ਭਾਸ਼ਾ",
+    ta: "கண்டறியப்பட்ட மொழி",
+    te: "గుర్తించిన భాష",
+    bn: "সনাক্তকৃত ভাষা",
   },
   referencesHeading: {
     en: "Verified references",
     hi: "सत्यापित संदर्भ",
     mr: "प्रमाणित संदर्भ",
-    pa: "Verified references",
-    ta: "Verified references",
-    te: "Verified references",
-    bn: "Verified references",
+    pa: "ਪ੍ਰਮਾਣਿਤ ਹਵਾਲੇ",
+    ta: "சரிபார்க்கப்பட்ட குறிப்புகள்",
+    te: "ధృవీకరించిన సూచనలు",
+    bn: "যাচাইকৃত রেফারেন্স",
   },
   referencesEmpty: {
     en: "Ask about a specific crop, scheme, or loan to view matching references.",
     hi: "किसी विशेष फसल, योजना या ऋण के बारे में पूछें ताकि संबंधित संदर्भ दिखें।",
     mr: "विशिष्ट पीक, योजना किंवा कर्जाबद्दल विचारल्यास संबंधित संदर्भ पाहू शकता.",
-    pa: "Ask about a specific crop, scheme, or loan to view matching references.",
-    ta: "Ask about a specific crop, scheme, or loan to view matching references.",
-    te: "Ask about a specific crop, scheme, or loan to view matching references.",
-    bn: "Ask about a specific crop, scheme, or loan to view matching references.",
+    pa: "ਮੇਲ ਖਾਂਦੇ ਹਵਾਲੇ ਦੇਖਣ ਲਈ ਕਿਸੇ ਖਾਸ ਫਸਲ, ਯੋਜਨਾ ਜਾਂ ਕਰਜ਼ੇ ਬਾਰੇ ਪੁੱਛੋ।",
+    ta: "பொருந்தக்கூடிய குறிப்புகளைப் பார்க்க ஒரு குறிப்பிட்ட பயிர், திட்டம் அல்லது கடன் பற்றி கேளுங்கள்.",
+    te: "సరిపోలే సూచనలను చూడటానికి నిర్దిష్ట పంట, పథకం లేదా రుణం గురించి అడగండి.",
+    bn: "মিলে যাওয়া রেফারেন্স দেখতে একটি নির্দিষ্ট ফসল, প্রকল্প বা ঋণ সম্পর্কে জিজ্ঞাসা করুন।",
   },
   clarifyingHeading: {
     en: "Clarifying questions",
     hi: "अतिरिक्त जानकारी के प्रश्न",
     mr: "स्पष्ट करणारे प्रश्न",
-    pa: "Clarifying questions",
-    ta: "Clarifying questions",
-    te: "Clarifying questions",
-    bn: "Clarifying questions",
+    pa: "ਸਪੱਸ਼ਟੀਕਰਨ ਪ੍ਰਸ਼ਨ",
+    ta: "தெளிவுபடுத்தும் கேள்விகள்",
+    te: "స్పష్టీకరణ ప్రశ్నలు",
+    bn: "স্পষ্টীকরণ প্রশ্ন",
   },
   safetyHeading: {
     en: "Safety note",
     hi: "सुरक्षा सूचना",
     mr: "सुरक्षा सूचना",
-    pa: "Safety note",
-    ta: "Safety note",
-    te: "Safety note",
-    bn: "Safety note",
+    pa: "ਸੁਰੱਖਿਆ ਨੋਟ",
+    ta: "பாதுகாப்பு குறிப்பு",
+    te: "భద్రతా గమనిక",
+    bn: "নিরাপত্তা নোট",
   },
   voiceError: {
     en: "Voice error",
     hi: "वॉइस त्रुटि",
     mr: "आवाज त्रुटी",
-    pa: "Voice error",
-    ta: "Voice error",
-    te: "Voice error",
-    bn: "Voice error",
+    pa: "ਵੌਇਸ ਗਲਤੀ",
+    ta: "குரல் பிழை",
+    te: "వాయిస్ లోపం",
+    bn: "ভয়েস ত্রুটি",
   },
   speakDisabled: {
     en: "Turn on audio permissions to hear replies.",
     hi: "उत्तर सुनने के लिए ब्राउज़र में ऑडियो अनुमति चालू करें।",
     mr: "उत्तरे ऐकण्यासाठी ब्राउझरमध्ये ऑडिओ परवानग्या सक्रिय करा.",
-    pa: "Turn on audio permissions to hear replies.",
-    ta: "Turn on audio permissions to hear replies.",
-    te: "Turn on audio permissions to hear replies.",
-    bn: "Turn on audio permissions to hear replies.",
+    pa: "ਜਵਾਬ ਸੁਣਨ ਲਈ ਆਡੀਓ ਇਜਾਜ਼ਤਾਂ ਚਾਲੂ ਕਰੋ।",
+    ta: "பதில்களைக் கேட்க ஆடியோ அனுமதிகளை இயக்கவும்.",
+    te: "సమాధానాలను వినడానికి ఆడియో అనుమతులను ఆన్ చేయండి.",
+    bn: "উত্তর শুনতে অডিও অনুমতি চালু করুন।",
   },
   liveChatHeading: {
     en: "Live Voice Assistant Chat",
     hi: "लाइव वॉइस असिस्टेंट चैट",
     mr: "लाईव्ह व्हॉइस असिस्टंट चॅट",
-    pa: "Live Voice Assistant Chat",
-    ta: "Live Voice Assistant Chat",
-    te: "Live Voice Assistant Chat",
-    bn: "Live Voice Assistant Chat",
+    pa: "ਲਾਈਵ ਵੌਇਸ ਅਸਿਸਟੈਂਟ ਚੈਟ",
+    ta: "நேரடி குரல் உதவியாளர் அரட்டை",
+    te: "లైవ్ వాయిస్ అసిస్టెంట్ చాట్",
+    bn: "লাইভ ভয়েস অ্যাসিস্ট্যান্ট চ্যাট",
   },
   activePillLabel: {
     en: "Live Voice Assistant Active",
     hi: "सक्रिय Live Voice Assistant",
     mr: "Live Voice Assistant सक्रिय",
-    pa: "Live Voice Assistant Active",
-    ta: "Live Voice Assistant Active",
-    te: "Live Voice Assistant Active",
-    bn: "Live Voice Assistant Active",
+    pa: "ਲਾਈਵ ਵੌਇਸ ਅਸਿਸਟੈਂਟ ਸਰਗਰਮ",
+    ta: "நேரடி குரல் உதவியாளர் செயலில்",
+    te: "లైవ్ వాయిస్ అసిస్టెంట్ సక్రియం",
+    bn: "লাইভ ভয়েস অ্যাসিস্ট্যান্ট সক্রিয়",
   },
   assistantName: {
     en: "Live Voice Assistant",
     hi: "लाइव वॉइस असिस्टेंट",
     mr: "लाईव्ह व्हॉइस असिस्टंट",
-    pa: "Live Voice Assistant",
-    ta: "Live Voice Assistant",
-    te: "Live Voice Assistant",
-    bn: "Live Voice Assistant",
+    pa: "ਲਾਈਵ ਵੌਇਸ ਅਸਿਸਟੈਂਟ",
+    ta: "நேரடி குரல் உதவியாளர்",
+    te: "లైవ్ వాయిస్ అసిస్టెంట్",
+    bn: "লাইভ ভয়েস অ্যাসিস্ট্যান্ট",
   },
   playVoiceLabel: {
     en: "Play reply again",
     hi: "उत्तर दोबारा सुनें",
     mr: "उत्तर पुन्हा ऐका",
-    pa: "Play reply again",
-    ta: "Play reply again",
-    te: "Play reply again",
-    bn: "Play reply again",
+    pa: "ਜਵਾਬ ਦੁਬਾਰਾ ਚਲਾਓ",
+    ta: "பதிலை மீண்டும் இயக்கவும்",
+    te: "సమాధానాన్ని మళ్లీ ప్లే చేయండి",
+    bn: "উত্তর আবার চালান",
   },
   sendMessageLabel: {
     en: "Send",
     hi: "भेजें",
     mr: "पाठवा",
-    pa: "Send",
-    ta: "Send",
-    te: "Send",
-    bn: "Send",
+    pa: "ਭੇਜੋ",
+    ta: "அனுப்பு",
+    te: "పంపండి",
+    bn: "পাঠান",
   },
   voiceOnlyActive: {
     en: "Listening… Speak your question and we will reply aloud automatically.",
     hi: "सुन रहा है… बस बोलें, जवाब अपने आप सुनाई देगा।",
     mr: "ऐकत आहे… तुमचा प्रश्न बोला, उत्तर आपोआप ऐकू येईल.",
-    pa: "Listening… Speak your question and we will reply aloud automatically.",
-    ta: "Listening… Speak your question and we will reply aloud automatically.",
-    te: "Listening… Speak your question and we will reply aloud automatically.",
-    bn: "Listening… Speak your question and we will reply aloud automatically.",
+    pa: "ਸੁਣ ਰਿਹਾ ਹੈ… ਆਪਣਾ ਸਵਾਲ ਬੋਲੋ ਅਤੇ ਅਸੀਂ ਆਪਣੇ ਆਪ ਜ਼ੋਰ ਨਾਲ ਜਵਾਬ ਦੇਵਾਂਗੇ।",
+    ta: "கேட்கிறது… உங்கள் கேள்வியைப் பேசுங்கள், நாங்கள் தானாக சத்தமாக பதிலளிப்போம்.",
+    te: "వింటోంది… మీ ప్రశ్నను మాట్లాడండి మరియు మేము స్వయంచాలకంగా బిగ్గరగా సమాధానం ఇస్తాము.",
+    bn: "শুনছে… আপনার প্রশ্ন বলুন এবং আমরা স্বয়ংক্রিয়ভাবে জোরে উত্তর দেব।",
   },
   typeFallbackHint: {
     en: "Typing is available when voice support is unavailable.",
     hi: "जब वॉइस सुविधा उपलब्ध नहीं हो, तब आप टाइप कर सकते हैं।",
     mr: "आवाज उपलब्ध नसेल तेव्हा तुम्ही टाइप करू शकता.",
-    pa: "Typing is available when voice support is unavailable.",
-    ta: "Typing is available when voice support is unavailable.",
-    te: "Typing is available when voice support is unavailable.",
-    bn: "Typing is available when voice support is unavailable.",
+    pa: "ਜਦੋਂ ਵੌਇਸ ਸਹਾਇਤਾ ਉਪਲਬਧ ਨਹੀਂ ਹੁੰਦੀ ਤਾਂ ਟਾਈਪਿੰਗ ਉਪਲਬਧ ਹੈ।",
+    ta: "குரல் ஆதரவு கிடைக்காதபோது தட்டச்சு கிடைக்கிறது.",
+    te: "వాయిస్ మద్దతు అందుబాటులో లేనప్పుడు టైప్ చేయడం అందుబాటులో ఉంది.",
+    bn: "ভয়েস সমর্থন অনুপলব্ধ হলে টাইপিং উপলব্ধ।",
   },
   thinkingMessage: {
     en: "Live Voice Assistant is thinking…",
     hi: "Live Voice Assistant सोच रहा है…",
     mr: "Live Voice Assistant विचार करत आहे…",
-    pa: "Live Voice Assistant is thinking…",
-    ta: "Live Voice Assistant is thinking…",
-    te: "Live Voice Assistant is thinking…",
-    bn: "Live Voice Assistant is thinking…",
+    pa: "ਲਾਈਵ ਵੌਇਸ ਅਸਿਸਟੈਂਟ ਸੋਚ ਰਿਹਾ ਹੈ…",
+    ta: "நேரடி குரல் உதவியாளர் சிந்திக்கிறார்…",
+    te: "లైవ్ వాయిస్ అసిస్టెంట్ ఆలోచిస్తోంది…",
+    bn: "লাইভ ভয়েস অ্যাসিস্ট্যান্ট ভাবছে…",
   },
   typingMessage: {
     en: "Live Voice Assistant is typing…",
     hi: "Live Voice Assistant टाइप कर रहा है…",
     mr: "Live Voice Assistant टाइप करत आहे…",
-    pa: "Live Voice Assistant is typing…",
-    ta: "Live Voice Assistant is typing…",
-    te: "Live Voice Assistant is typing…",
-    bn: "Live Voice Assistant is typing…",
+    pa: "ਲਾਈਵ ਵੌਇਸ ਅਸਿਸਟੈਂਟ ਟਾਈਪ ਕਰ ਰਿਹਾ ਹੈ…",
+    ta: "நேரடி குரல் உதவியாளர் தட்டச்சு செய்கிறார்…",
+    te: "లైవ్ వాయిస్ అసిస్టెంట్ టైప్ చేస్తోంది…",
+    bn: "লাইভ ভয়েস অ্যাসিস্ট্যান্ট টাইপ করছে…",
   },
   speakingMessage: {
     en: "Speaking your answer…",
     hi: "आपके उत्तर को आवाज़ में सुनाया जा रहा है…",
     mr: "आपला उत्तर आवाजेत सांगत आहे…",
-    pa: "Speaking your answer…",
-    ta: "Speaking your answer…",
-    te: "Speaking your answer…",
-    bn: "Speaking your answer…",
+    pa: "ਤੁਹਾਡਾ ਜਵਾਬ ਬੋਲ ਰਿਹਾ ਹੈ…",
+    ta: "உங்கள் பதிலைப் பேசுகிறது…",
+    te: "మీ సమాధానాన్ని మాట్లాడుతోంది…",
+    bn: "আপনার উত্তর বলছে…",
   },
   muteMessageLabel: {
     en: "Mute this message",
@@ -497,217 +497,217 @@ const landingCopy: Record<
     en: "Live Voice Assistant",
     hi: "लाइव वॉइस असिस्टेंट",
     mr: "लाईव्ह व्हॉइस असिस्टंट",
-    pa: "Live Voice Assistant",
-    ta: "Live Voice Assistant",
-    te: "Live Voice Assistant",
-    bn: "Live Voice Assistant",
+    pa: "ਲਾਈਵ ਵੌਇਸ ਅਸਿਸਟੈਂਟ",
+    ta: "நேரடி குரல் உதவியாளர்",
+    te: "లైవ్ వాయిస్ అసిస్టెంట్",
+    bn: "লাইভ ভয়েস অ্যাসিস্ট্যান্ট",
   },
   heroDescription: {
     en: "Instant support on Maharashtra schemes, credit, soil care and crop management.",
     hi: "महाराष्ट्र की योजनाओं, ऋण, मिट्टी और फसल प्रबंधन पर त्वरित सहायता।",
     mr: "महाराष्ट्रातील योजना, कर्ज, माती आणि पिक व्यवस्थापनावर तत्काळ सहाय्य.",
-    pa: "Instant support on Maharashtra schemes, credit, soil care and crop management.",
-    ta: "Instant support on Maharashtra schemes, credit, soil care and crop management.",
-    te: "Instant support on Maharashtra schemes, credit, soil care and crop management.",
-    bn: "Instant support on Maharashtra schemes, credit, soil care and crop management.",
+    pa: "ਮਹਾਰਾਸ਼ਟਰ ਯੋਜਨਾਵਾਂ, ਕਰਜ਼ੇ, ਮਿੱਟੀ ਦੇਖਭਾਲ ਅਤੇ ਫਸਲ ਪ੍ਰਬੰਧਨ 'ਤੇ ਤੁਰੰਤ ਸਹਾਇਤਾ।",
+    ta: "மகாராஷ்டிரா திட்டங்கள், கடன், மண் பராமரிப்பு மற்றும் பயிர் மேலாண்மை குறித்த உடனடி ஆதரவு.",
+    te: "మహారాష్ట్ర పథకాలు, రుణం, నేల సంరక్షణ మరియు పంట నిర్వహణపై తక్షణ మద్దతు.",
+    bn: "মহারাষ্ট্রের প্রকল্প, ঋণ, মাটি যত্ন এবং ফসল ব্যবস্থাপনায় তাৎক্ষণিক সহায়তা।",
   },
   badgeMarathi: {
     en: "Marathi",
     hi: "मराठी",
     mr: "मराठी",
-    pa: "Marathi",
-    ta: "Marathi",
-    te: "Marathi",
-    bn: "Marathi",
+    pa: "ਮਰਾਠੀ",
+    ta: "மராத்தி",
+    te: "మరాఠీ",
+    bn: "মারাঠি",
   },
   badgeHindi: {
     en: "Hindi",
     hi: "हिन्दी",
     mr: "हिंदी",
-    pa: "Hindi",
-    ta: "Hindi",
-    te: "Hindi",
-    bn: "Hindi",
+    pa: "ਹਿੰਦੀ",
+    ta: "இந்தி",
+    te: "హిందీ",
+    bn: "হিন্দি",
   },
   badgeEnglish: {
     en: "English",
     hi: "अंग्रेज़ी",
     mr: "English",
-    pa: "English",
-    ta: "English",
-    te: "English",
-    bn: "English",
+    pa: "ਅੰਗਰੇਜ਼ੀ",
+    ta: "ஆங்கிலம்",
+    te: "ఆంగ్లం",
+    bn: "ইংরেজি",
   },
   featureRagTitle: {
     en: "Realtime RAG Support",
     hi: "रीयलटाइम RAG सहायता",
     mr: "रिअलटाइम RAG सहाय्य",
-    pa: "Realtime RAG Support",
-    ta: "Realtime RAG Support",
-    te: "Realtime RAG Support",
-    bn: "Realtime RAG Support",
+    pa: "ਰੀਅਲਟਾਈਮ RAG ਸਹਾਇਤਾ",
+    ta: "நேரடி RAG ஆதரவு",
+    te: "రియల్‌టైమ్ RAG మద్దతు",
+    bn: "রিয়েলটাইম RAG সমর্থন",
   },
   featureRagDescription: {
     en: "Verified schemes, weather updates, and crop care insights within seconds.",
     hi: "कुछ ही सेकंड में सत्यापित योजनाएँ, मौसम अपडेट और फसल देखभाल सुझाव।",
     mr: "सेकंदात योजना, हवामान आणि पीक व्यवस्थापन माहिती.",
-    pa: "Verified schemes, weather updates, and crop care insights within seconds.",
-    ta: "Verified schemes, weather updates, and crop care insights within seconds.",
-    te: "Verified schemes, weather updates, and crop care insights within seconds.",
-    bn: "Verified schemes, weather updates, and crop care insights within seconds.",
+    pa: "ਕੁਝ ਸਕਿੰਟਾਂ ਵਿੱਚ ਪ੍ਰਮਾਣਿਤ ਯੋਜਨਾਵਾਂ, ਮੌਸਮ ਅਪਡੇਟ ਅਤੇ ਫਸਲ ਦੇਖਭਾਲ ਦੀ ਜਾਣਕਾਰੀ।",
+    ta: "சில வினாடிகளில் சரிபார்க்கப்பட்ட திட்டங்கள், வானிலை புதுப்பிப்புகள் மற்றும் பயிர் பராமரிப்பு நுண்ணறிவுகள்.",
+    te: "కొన్ని సెకన్లలో ధృవీకరించిన పథకాలు, వాతావరణ నవీకరణలు మరియు పంట సంరక్షణ అంతర్దృష్టులు.",
+    bn: "কয়েক সেকেন্ডের মধ্যে যাচাইকৃত প্রকল্প, আবহাওয়া আপডেট এবং ফসলের যত্নের অন্তর্দৃষ্টি।",
   },
   featureVoiceTitle: {
     en: "Voice + Chat Assist",
     hi: "आवाज़ और चैट सहायता",
     mr: "आवाज + चॅट सहाय्य",
-    pa: "Voice + Chat Assist",
-    ta: "Voice + Chat Assist",
-    te: "Voice + Chat Assist",
-    bn: "Voice + Chat Assist",
+    pa: "ਵੌਇਸ + ਚੈਟ ਸਹਾਇਤਾ",
+    ta: "குரல் + அரட்டை உதவி",
+    te: "వాయిస్ + చాట్ అసిస్ట్",
+    bn: "ভয়েস + চ্যাট সহায়তা",
   },
   featureVoiceDescription: {
     en: "Farmers can speak or type in Marathi, Hindi, or English anytime.",
     hi: "किसान कभी भी मराठी, हिंदी या अंग्रेज़ी में बोल या टाइप कर सकते हैं।",
     mr: "शेतकरी कोणत्याही वेळी मराठी, हिंदी किंवा इंग्रजीत बोलू अथवा लिहू शकतात.",
-    pa: "Farmers can speak or type in Marathi, Hindi, or English anytime.",
-    ta: "Farmers can speak or type in Marathi, Hindi, or English anytime.",
-    te: "Farmers can speak or type in Marathi, Hindi, or English anytime.",
-    bn: "Farmers can speak or type in Marathi, Hindi, or English anytime.",
+    pa: "ਕਿਸਾਨ ਕਿਸੇ ਵੀ ਸਮੇਂ ਮਰਾਠੀ, ਹਿੰਦੀ ਜਾਂ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਬੋਲ ਸਕਦੇ ਹਨ ਜਾਂ ਟਾਈਪ ਕਰ ਸਕਦੇ ਹਨ।",
+    ta: "விவசாயிகள் எந்த நேரத்திலும் மராத்தி, இந்தி அல்லது ஆங்கிலத்தில் பேசலாம் அல்லது தட்டச்சு செய்யலாம்.",
+    te: "రైతులు ఎప్పుడైనా మరాఠీ, హిందీ లేదా ఇంగ్లీష్‌లో మాట్లాడవచ్చు లేదా టైప్ చేయవచ్చు.",
+    bn: "কৃষকরা যেকোনো সময় মারাঠি, হিন্দি বা ইংরেজিতে কথা বলতে বা টাইপ করতে পারেন।",
   },
   activationTitle: {
     en: "Activate Live Voice Assistant",
     hi: "Live Voice Assistant सक्रिय करें",
     mr: "Live Voice Assistant सक्रिय करा",
-    pa: "Activate Live Voice Assistant",
-    ta: "Activate Live Voice Assistant",
-    te: "Activate Live Voice Assistant",
-    bn: "Activate Live Voice Assistant",
+    pa: "ਲਾਈਵ ਵੌਇਸ ਅਸਿਸਟੈਂਟ ਸਰਗਰਮ ਕਰੋ",
+    ta: "நேரடி குரல் உதவியாளரை செயல்படுத்தவும்",
+    te: "లైవ్ వాయిస్ అసిస్టెంట్‌ను సక్రియం చేయండి",
+    bn: "লাইভ ভয়েস অ্যাসিস্ট্যান্ট সক্রিয় করুন",
   },
   activationTag: {
     en: "Farmer-first conversational support",
     hi: "किसान-केंद्रित संवाद सहायता",
     mr: "शेतकरी-केंद्रित संवाद सहाय्य",
-    pa: "Farmer-first conversational support",
-    ta: "Farmer-first conversational support",
-    te: "Farmer-first conversational support",
-    bn: "Farmer-first conversational support",
+    pa: "ਕਿਸਾਨ-ਪਹਿਲਾਂ ਸੰਵਾਦ ਸਹਾਇਤਾ",
+    ta: "விவசாயி-முதல் உரையாடல் ஆதரவு",
+    te: "రైతు-మొదటి సంభాషణ మద్దతు",
+    bn: "কৃষক-প্রথম কথোপকথন সহায়তা",
   },
   activationDescription: {
     en: "Launch a multilingual assistant that greets farmers naturally and guides them through schemes, credit, soil health, weather, and crop care using verified datasets.",
     hi: "एक बहुभाषी सहायक शुरू करें जो किसानों का स्वाभाविक स्वागत करे और योजनाओं, ऋण, मिट्टी, मौसम और फसल देखभाल में मार्गदर्शन दे।",
     mr: "बहुभाषिक सहाय्यक सक्रिय करा जो शेतकऱ्यांना योजना, कर्ज, माती, हवामान आणि पीक व्यवस्थापनासाठी मार्गदर्शन करतो.",
-    pa: "Launch a multilingual assistant that greets farmers naturally and guides them through schemes, credit, soil health, weather, and crop care using verified datasets.",
-    ta: "Launch a multilingual assistant that greets farmers naturally and guides them through schemes, credit, soil health, weather, and crop care using verified datasets.",
-    te: "Launch a multilingual assistant that greets farmers naturally and guides them through schemes, credit, soil health, weather, and crop care using verified datasets.",
-    bn: "Launch a multilingual assistant that greets farmers naturally and guides them through schemes, credit, soil health, weather, and crop care using verified datasets.",
+    pa: "ਇੱਕ ਬਹੁਭਾਸ਼ੀ ਸਹਾਇਕ ਲਾਂਚ ਕਰੋ ਜੋ ਕਿਸਾਨਾਂ ਦਾ ਸੁਭਾਵਿਕ ਤੌਰ 'ਤੇ ਸਵਾਗਤ ਕਰਦਾ ਹੈ ਅਤੇ ਪ੍ਰਮਾਣਿਤ ਡੇਟਾਸੈੱਟਾਂ ਦੀ ਵਰਤੋਂ ਕਰਕੇ ਯੋਜਨਾਵਾਂ, ਕਰਜ਼ੇ, ਮਿੱਟੀ ਦੀ ਸਿਹਤ, ਮੌਸਮ ਅਤੇ ਫਸਲ ਦੇਖਭਾਲ ਵਿੱਚ ਮਾਰਗਦਰਸ਼ਨ ਕਰਦਾ ਹੈ।",
+    ta: "விவசாயிகளை இயற்கையாக வரவேற்கும் மற்றும் சரிபார்க்கப்பட்ட தரவுத்தொகுப்புகளைப் பயன்படுத்தி திட்டங்கள், கடன், மண் ஆரோக்கியம், வானிலை மற்றும் பயிர் பராமரிப்பு வழியாக வழிநடத்தும் பலமொழி உதவியாளரைத் தொடங்கவும்.",
+    te: "రైతులను సహజంగా స్వాగతించే మరియు ధృవీకరించిన డేటాసెట్‌లను ఉపయోగించి పథకాలు, రుణం, నేల ఆరోగ్యం, వాతావరణం మరియు పంట సంరక్షణ ద్వారా మార్గనిర్దేశం చేసే బహుభాషా అసిస్టెంట్‌ను ప్రారంభించండి.",
+    bn: "একটি বহুভাষিক সহায়ক চালু করুন যা কৃষকদের স্বাভাবিকভাবে স্বাগত জানায় এবং যাচাইকৃত ডেটাসেট ব্যবহার করে প্রকল্প, ঋণ, মাটি স্বাস্থ্য, আবহাওয়া এবং ফসলের যত্নের মাধ্যমে তাদের নির্দেশনা দেয়।",
   },
   activationBulletOne: {
     en: "Hands-free voice questions with automatic speech replies for field situations.",
     hi: "हाथों से मुक्त आवाज़ इनपुट और स्वचालित उत्तर जिससे खेत में भी सलाह मिले।",
     mr: "हँड्स-फ्री आवाज प्रश्न आणि स्वयंचलित उत्तर, शेतातही सल्ला उपलब्ध.",
-    pa: "Hands-free voice questions with automatic speech replies for field situations.",
-    ta: "Hands-free voice questions with automatic speech replies for field situations.",
-    te: "Hands-free voice questions with automatic speech replies for field situations.",
-    bn: "Hands-free voice questions with automatic speech replies for field situations.",
+    pa: "ਖੇਤ ਦੀਆਂ ਸਥਿਤੀਆਂ ਲਈ ਸਵੈਚਾਲਿਤ ਬੋਲਣ ਵਾਲੇ ਜਵਾਬਾਂ ਦੇ ਨਾਲ ਹੈਂਡਸ-ਫ੍ਰੀ ਵੌਇਸ ਸਵਾਲ।",
+    ta: "கள சூழ்நிலைகளுக்கான தானியங்கி பேச்சு பதில்களுடன் கைகளில்லா குரல் கேள்விகள்.",
+    te: "క్షేత్ర పరిస్థితుల కోసం స్వయంచాలక ప్రసంగ సమాధానాలతో హ్యాండ్స్-ఫ్రీ వాయిస్ ప్రశ్నలు.",
+    bn: "ক্ষেত্রের পরিস্থিতির জন্য স্বয়ংক্রিয় বক্তৃতা উত্তর সহ হ্যান্ডস-ফ্রি ভয়েস প্রশ্ন।",
   },
   activationBulletTwo: {
     en: "Clarifying prompts before the final plan so every recommendation fits the farm.",
     hi: "अंतिम सुझाव से पहले स्पष्टीकरण पूछे जाते हैं ताकि सलाह खेत के अनुरूप हो।",
     mr: "अंतिम सल्ल्यापूर्वी स्पष्ट करणारे प्रश्न, जेणेकरून सुचना शेताशी जुळतील.",
-    pa: "Clarifying prompts before the final plan so every recommendation fits the farm.",
-    ta: "Clarifying prompts before the final plan so every recommendation fits the farm.",
-    te: "Clarifying prompts before the final plan so every recommendation fits the farm.",
-    bn: "Clarifying prompts before the final plan so every recommendation fits the farm.",
+    pa: "ਅੰਤਿਮ ਯੋਜਨਾ ਤੋਂ ਪਹਿਲਾਂ ਸਪੱਸ਼ਟੀਕਰਨ ਪ੍ਰੋਮਪਟਸ ਤਾਂ ਜੋ ਹਰ ਸਿਫਾਰਸ਼ ਖੇਤ ਨਾਲ ਮੇਲ ਖਾਂਦੀ ਹੋਵੇ।",
+    ta: "இறுதி திட்டத்திற்கு முன் தெளிவுபடுத்தும் கேள்விகள், இதனால் ஒவ்வொரு பரிந்துரையும் பண்ணைக்கு பொருந்தும்.",
+    te: "చివరి ప్రణాళికకు ముందు స్పష్టీకరణ ప్రాంప్ట్‌లు తద్వారా ప్రతి సిఫార్సు పొలానికి సరిపోతుంది.",
+    bn: "চূড়ান্ত পরিকল্পনার আগে স্পষ্টীকরণ প্রম্পট যাতে প্রতিটি সুপারিশ খামারের সাথে মানানসই হয়।",
   },
   activationBulletThree: {
     en: "Trusted answers grounded in Maharashtra schemes, NABARD, PM-KISAN, and IMD data.",
     hi: "विश्वसनीय उत्तर जो महाराष्ट्र योजनाओं, NABARD, PM-KISAN और IMD डेटा पर आधारित हैं।",
     mr: "महाराष्ट्र योजना, NABARD, PM-KISAN आणि IMD डेटावर आधारित विश्वासार्ह माहिती.",
-    pa: "Trusted answers grounded in Maharashtra schemes, NABARD, PM-KISAN, and IMD data.",
-    ta: "Trusted answers grounded in Maharashtra schemes, NABARD, PM-KISAN, and IMD data.",
-    te: "Trusted answers grounded in Maharashtra schemes, NABARD, PM-KISAN, and IMD data.",
-    bn: "Trusted answers grounded in Maharashtra schemes, NABARD, PM-KISAN, and IMD data.",
+    pa: "ਮਹਾਰਾਸ਼ਟਰ ਯੋਜਨਾਵਾਂ, NABARD, PM-KISAN, ਅਤੇ IMD ਡੇਟਾ 'ਤੇ ਅਧਾਰਿਤ ਭਰੋਸੇਮੰਦ ਜਵਾਬ।",
+    ta: "மகாராஷ்டிரா திட்டங்கள், NABARD, PM-KISAN மற்றும் IMD தரவுகளின் அடிப்படையில் நம்பகமான பதில்கள்.",
+    te: "మహారాష్ట్ర పథకాలు, NABARD, PM-KISAN మరియు IMD డేటా ఆధారంగా విశ్వసనీయమైన సమాధానాలు.",
+    bn: "মহারাষ্ট্রের প্রকল্প, NABARD, PM-KISAN এবং IMD ডেটার উপর ভিত্তি করে বিশ্বস্ত উত্তর।",
   },
   activationButton: {
     en: "Activate Live Voice Assistant",
     hi: "Live Voice Assistant सक्रिय करें",
     mr: "Live Voice Assistant सक्रिय करा",
-    pa: "Activate Live Voice Assistant",
-    ta: "Activate Live Voice Assistant",
-    te: "Activate Live Voice Assistant",
-    bn: "Activate Live Voice Assistant",
+    pa: "ਲਾਈਵ ਵੌਇਸ ਅਸਿਸਟੈਂਟ ਸਰਗਰਮ ਕਰੋ",
+    ta: "நேரடி குரல் உதவியாளரை செயல்படுத்தவும்",
+    te: "లైవ్ వాయిస్ అసిస్టెంట్‌ను సక్రియం చేయండి",
+    bn: "লাইভ ভয়েস অ্যাসিস্ট্যান্ট সক্রিয় করুন",
   },
   whatHappensTitle: {
     en: "What happens after activation?",
     hi: "सक्रिय करने के बाद क्या होगा?",
     mr: "सक्रिय केल्यावर काय घडते?",
-    pa: "What happens after activation?",
-    ta: "What happens after activation?",
-    te: "What happens after activation?",
-    bn: "What happens after activation?",
+    pa: "ਸਰਗਰਮੀ ਤੋਂ ਬਾਅਦ ਕੀ ਹੁੰਦਾ ਹੈ?",
+    ta: "செயல்படுத்திய பிறகு என்ன நடக்கும்?",
+    te: "సక్రియం తర్వాత ఏమి జరుగుతుంది?",
+    bn: "সক্রিয় করার পর কী হবে?",
   },
   whatHappensIntro: {
     en: "• Smart greeting in Marathi, Hindi, or English based on farmer preference and time of day.",
     hi: "• किसान की पसंद और समय के अनुसार मराठी, हिंदी या अंग्रेज़ी में अभिवादन।",
     mr: "• शेतकऱ्यांच्या पसंती आणि वेळेनुसार मराठी, हिंदी किंवा इंग्रजीत स्वागत.",
-    pa: "• Smart greeting in Marathi, Hindi, or English based on farmer preference and time of day.",
-    ta: "• Smart greeting in Marathi, Hindi, or English based on farmer preference and time of day.",
-    te: "• Smart greeting in Marathi, Hindi, or English based on farmer preference and time of day.",
-    bn: "• Smart greeting in Marathi, Hindi, or English based on farmer preference and time of day.",
+    pa: "• ਕਿਸਾਨ ਦੀ ਪਸੰਦ ਅਤੇ ਦਿਨ ਦੇ ਸਮੇਂ ਦੇ ਅਧਾਰ 'ਤੇ ਮਰਾਠੀ, ਹਿੰਦੀ ਜਾਂ ਅੰਗਰੇਜ਼ੀ ਵਿੱਚ ਸਮਾਰਟ ਸਵਾਗਤ।",
+    ta: "• விவசாயியின் விருப்பம் மற்றும் நாளின் நேரத்தின் அடிப்படையில் மராத்தி, இந்தி அல்லது ஆங்கிலத்தில் புத்திசாலித்தனமான வாழ்த்து.",
+    te: "• రైతు ప్రాధాన్యత మరియు రోజు సమయం ఆధారంగా మరాఠీ, హిందీ లేదా ఇంగ్లీష్‌లో స్మార్ట్ గ్రీటింగ్.",
+    bn: "• কৃষকের পছন্দ এবং দিনের সময়ের উপর ভিত্তি করে মারাঠি, হিন্দি বা ইংরেজিতে স্মার্ট অভিবাদন।",
   },
   whatHappensBulletOne: {
     en: "• Live chat timeline with voice playback, clarifying questions, and suggested follow-ups.",
     hi: "• वॉइस प्लेबैक, स्पष्ट सवाल और सुझाए गए फॉलो-अप के साथ लाइव चैट।",
     mr: "• आवाज प्लेबॅक, स्पष्ट करणारे प्रश्न आणि अनुशंसित पुढील प्रश्नांसह लाईव्ह चॅट.",
-    pa: "• Live chat timeline with voice playback, clarifying questions, and suggested follow-ups.",
-    ta: "• Live chat timeline with voice playback, clarifying questions, and suggested follow-ups.",
-    te: "• Live chat timeline with voice playback, clarifying questions, and suggested follow-ups.",
-    bn: "• Live chat timeline with voice playback, clarifying questions, and suggested follow-ups.",
+    pa: "• ਵੌਇਸ ਪਲੇਬੈਕ, ਸਪੱਸ਼ਟੀਕਰਨ ਪ੍ਰਸ਼ਨ ਅਤੇ ਸੁਝਾਏ ਗਏ ਫਾਲੋ-ਅਪਸ ਦੇ ਨਾਲ ਲਾਈਵ ਚੈਟ ਟਾਈਮਲਾਈਨ।",
+    ta: "• குரல் இயக்கத்துடன் நேரடி அரட்டை காலக்கோடு, தெளிவுபடுத்தும் கேள்விகள் மற்றும் பரிந்துரைக்கப்பட்ட தொடர்ந்த கேள்விகள்.",
+    te: "• వాయిస్ ప్లేబ్యాక్, స్పష్టీకరణ ప్రశ్నలు మరియు సూచించిన ఫాలో-అప్‌లతో లైవ్ చాట్ టైమ్‌లైన్.",
+    bn: "• ভয়েস প্লেব্যাক, স্পষ্টীকরণ প্রশ্ন এবং প্রস্তাবিত ফলো-আপ সহ লাইভ চ্যাট টাইমলাইন।",
   },
   whatHappensBulletTwo: {
     en: "• Dedicated panel showing verified government references and advisory sources for every answer.",
     hi: "• प्रत्येक उत्तर के लिए सत्यापित सरकारी संदर्भ और सलाह स्रोत दिखाने वाला पैनल।",
     mr: "• प्रत्येक उत्तरासाठी प्रमाणित सरकारी संदर्भ दाखवणारा स्वतंत्र पॅनेल.",
-    pa: "• Dedicated panel showing verified government references and advisory sources for every answer.",
-    ta: "• Dedicated panel showing verified government references and advisory sources for every answer.",
-    te: "• Dedicated panel showing verified government references and advisory sources for every answer.",
-    bn: "• Dedicated panel showing verified government references and advisory sources for every answer.",
+    pa: "• ਹਰ ਜਵਾਬ ਲਈ ਪ੍ਰਮਾਣਿਤ ਸਰਕਾਰੀ ਹਵਾਲੇ ਅਤੇ ਸਲਾਹਕਾਰ ਸਰੋਤਾਂ ਨੂੰ ਦਿਖਾਉਣ ਵਾਲਾ ਸਮਰਪਿਤ ਪੈਨਲ।",
+    ta: "• ஒவ்வொரு பதிலுக்கும் சரிபார்க்கப்பட்ட அரசு குறிப்புகள் மற்றும் ஆலோசனை ஆதாரங்களைக் காட்டும் அர்ப்பணிக்கப்பட்ட பேனல்.",
+    te: "• ప్రతి సమాధానం కోసం ధృవీకరించిన ప్రభుత్వ సూచనలు మరియు సలహా మూలాలను చూపించే ప్రత్యేక ప్యానెల్.",
+    bn: "• প্রতিটি উত্তরের জন্য যাচাইকৃত সরকারী রেফারেন্স এবং পরামর্শদাতা উৎস দেখানো একটি নিবেদিত প্যানেল।",
   },
   whatHappensBulletThree: {
     en: "• Pro tip: Set the preferred language first. Live Voice Assistant will remember it throughout the session.",
     hi: "• सुझाव: पहले भाषा चुनें. Live Voice Assistant पूरे सत्र में उसी भाषा में उत्तर देगा।",
     mr: "• टिप: आधी पसंतीची भाषा निवडा. Live Voice Assistant संपूर्ण संवादात त्याच भाषेत उत्तर देईल.",
-    pa: "• Pro tip: Set the preferred language first. Live Voice Assistant will remember it throughout the session.",
-    ta: "• Pro tip: Set the preferred language first. Live Voice Assistant will remember it throughout the session.",
-    te: "• Pro tip: Set the preferred language first. Live Voice Assistant will remember it throughout the session.",
-    bn: "• Pro tip: Set the preferred language first. Live Voice Assistant will remember it throughout the session.",
+    pa: "• ਪ੍ਰੋ ਟਿਪ: ਪਹਿਲਾਂ ਪਸੰਦੀਦਾ ਭਾਸ਼ਾ ਸੈੱਟ ਕਰੋ। ਲਾਈਵ ਵੌਇਸ ਅਸਿਸਟੈਂਟ ਸੈਸ਼ਨ ਦੌਰਾਨ ਇਸਨੂੰ ਯਾਦ ਰੱਖੇਗਾ।",
+    ta: "• தொழில்முறை உதவிக்குறிப்பு: முதலில் விருப்பமான மொழியை அமைக்கவும். நேரடி குரல் உதவியாளர் அமர்வு முழுவதும் அதை நினைவில் வைத்திருக்கும்.",
+    te: "• ప్రో టిప్: మొదట ప్రాధాన్య భాషను సెట్ చేయండి. లైవ్ వాయిస్ అసిస్టెంట్ సెషన్ అంతటా దాన్ని గుర్తుంచుకుంటుంది.",
+    bn: "• প্রো টিপ: প্রথমে পছন্দের ভাষা সেট করুন। লাইভ ভয়েস অ্যাসিস্ট্যান্ট সেশনের পুরো সময় এটি মনে রাখবে।",
   },
   proTip: {
     en: "Set the preferred language first. Live Voice Assistant will remember it and respond in the same language throughout the session.",
     hi: "सबसे पहले पसंदीदा भाषा चुनें. Live Voice Assistant पूरी बातचीत में उसी भाषा में जवाब देगा.",
     mr: "प्रथम पसंतीची भाषा निवडा. Live Voice Assistant संपूर्ण संवादात त्याच भाषेत उत्तर देईल.",
-    pa: "Set the preferred language first. Live Voice Assistant will remember it and respond in the same language throughout the session.",
-    ta: "Set the preferred language first. Live Voice Assistant will remember it and respond in the same language throughout the session.",
-    te: "Set the preferred language first. Live Voice Assistant will remember it and respond in the same language throughout the session.",
-    bn: "Set the preferred language first. Live Voice Assistant will remember it and respond in the same language throughout the session.",
+    pa: "ਪਹਿਲਾਂ ਪਸੰਦੀਦਾ ਭਾਸ਼ਾ ਸੈੱਟ ਕਰੋ। ਲਾਈਵ ਵੌਇਸ ਅਸਿਸਟੈਂਟ ਇਸਨੂੰ ਯਾਦ ਰੱਖੇਗਾ ਅਤੇ ਸੈਸ਼ਨ ਦੌਰਾਨ ਉਸੇ ਭਾਸ਼ਾ ਵਿੱਚ ਜਵਾਬ ਦੇਵੇਗਾ।",
+    ta: "முதலில் விருப்பமான மொழியை அமைக்கவும். நேரடி குரல் உதவியாளர் அதை நினைவில் வைத்திருக்கும் மற்றும் அமர்வு முழுவதும் அதே மொழியில் பதிலளிக்கும்.",
+    te: "మొదట ప్రాధాన్య భాషను సెట్ చేయండి. లైవ్ వాయిస్ అసిస్టెంట్ దాన్ని గుర్తుంచుకుంటుంది మరియు సెషన్ అంతటా అదే భాషలో సమాధానం ఇస్తుంది.",
+    bn: "প্রথমে পছন্দের ভাষা সেট করুন। লাইভ ভয়েস অ্যাসিস্ট্যান্ট এটি মনে রাখবে এবং সেশনের পুরো সময় একই ভাষায় উত্তর দেবে।",
   },
   voiceModeLabel: {
     en: "Voice mode",
     hi: "वॉइस मोड",
     mr: "व्हॉईस मोड",
-    pa: "Voice mode",
-    ta: "Voice mode",
-    te: "Voice mode",
-    bn: "Voice mode",
+    pa: "ਵੌਇਸ ਮੋਡ",
+    ta: "குரல் முறை",
+    te: "వాయిస్ మోడ్",
+    bn: "ভয়েস মোড",
   },
   voiceModeDescription: {
     en: "Switch between spoken responses and text-only guidance whenever you need.",
     hi: "आवश्यकतानुसार बोलकर जवाब और केवल-पाठ मार्गदर्शन के बीच स्विच करें।",
     mr: "आवश्यकतेनुसार बोलून उत्तर आणि केवळ मजकूर मार्गदर्शन यामध्ये बदला.",
-    pa: "Switch between spoken responses and text-only guidance whenever you need.",
-    ta: "Switch between spoken responses and text-only guidance whenever you need.",
-    te: "Switch between spoken responses and text-only guidance whenever you need.",
-    bn: "Switch between spoken responses and text-only guidance whenever you need.",
+    pa: "ਜਦੋਂ ਵੀ ਤੁਹਾਨੂੰ ਲੋੜ ਹੋਵੇ, ਬੋਲਣ ਵਾਲੇ ਜਵਾਬਾਂ ਅਤੇ ਸਿਰਫ-ਟੈਕਸਟ ਮਾਰਗਦਰਸ਼ਨ ਵਿਚਕਾਰ ਬਦਲੋ।",
+    ta: "நீங்கள் தேவைப்படும்போது பேசும் பதில்கள் மற்றும் உரை-மட்டும் வழிகாட்டுதலுக்கு இடையில் மாறவும்.",
+    te: "మీకు అవసరమైనప్పుడు మాట్లాడే సమాధానాలు మరియు టెక్స్ట్-మాత్రమే మార్గదర్శకత్వం మధ్య మారండి.",
+    bn: "আপনার প্রয়োজন হলে কথ্য উত্তর এবং শুধুমাত্র পাঠ্য নির্দেশনার মধ্যে স্যুইচ করুন।",
   },
 };
 
@@ -1037,6 +1037,7 @@ const FarmerHelpDesk = () => {
   const activationLanguageRef = useRef<LanguageCode>("en");
   const pendingSpeechSubmitRef = useRef(false);
   const animationIntervalsRef = useRef<Record<string, number>>({});
+  const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const handleSubmitQuestionRef = useRef<((event?: React.FormEvent<HTMLFormElement>, questionOverride?: string) => Promise<void>) | null>(
     null,
   );
@@ -1342,6 +1343,7 @@ const FarmerHelpDesk = () => {
         if (finalTranscript.length > 0 && !isProcessingVoice) {
           // Stop speech synthesis when user speaks
           if (typeof window !== "undefined" && window.speechSynthesis) {
+            currentUtteranceRef.current = null;
             window.speechSynthesis.cancel();
             setIsSpeaking(false);
           }
@@ -1862,6 +1864,11 @@ const FarmerHelpDesk = () => {
       const speechStartTimeRef = { value: null as number | null };
       
       utterance.onstart = () => {
+        // Only handle onstart for the current active utterance
+        if (currentUtteranceRef.current !== utterance) {
+          return;
+        }
+        
         speechStartTimeRef.value = Date.now();
         setIsSpeaking(true);
         setVoiceError(null); // Clear any previous errors
@@ -1893,6 +1900,7 @@ const FarmerHelpDesk = () => {
             console.error("[Speech Debug] Cancelling speech immediately to prevent silent failure");
             
             // Cancel immediately
+            currentUtteranceRef.current = null;
             window.speechSynthesis.cancel();
             setIsSpeaking(false);
             spokenIdsRef.current.delete(latest.id);
@@ -1912,7 +1920,13 @@ const FarmerHelpDesk = () => {
       };
 
       utterance.onend = () => {
+        // Only handle onend for the current active utterance
+        if (currentUtteranceRef.current !== utterance) {
+          return;
+        }
+        
         setIsSpeaking(false);
+        currentUtteranceRef.current = null;
         console.log("[Speech Debug] ✅ Speech ENDED successfully");
         
         // Check if speech actually played
@@ -1943,6 +1957,23 @@ const FarmerHelpDesk = () => {
       };
 
       utterance.onerror = (error) => {
+        // Ignore errors from cancelled utterances (not the current active one)
+        if (currentUtteranceRef.current !== utterance) {
+          // This is a cancelled utterance, ignore the error
+          return;
+        }
+        
+        const errorMsg = error.error || "unknown";
+        
+        // "interrupted" errors are expected when cancelling speech - ignore them silently
+        if (errorMsg === "interrupted") {
+          // This is normal when cancelling, don't log or show error
+          setIsSpeaking(false);
+          currentUtteranceRef.current = null;
+          return;
+        }
+        
+        // Only log and handle errors for the active utterance
         console.error("[Speech Debug] ❌ Speech synthesis ERROR:", error, error.error);
         console.error("[Speech Debug] Error details:", {
           errorType: error.error,
@@ -1950,25 +1981,23 @@ const FarmerHelpDesk = () => {
           charLength: error.charLength,
           utterance: error.utterance?.text?.substring(0, 50),
         });
+        
         setIsSpeaking(false);
+        currentUtteranceRef.current = null;
         // Remove from spoken set on error so it can be retried
         spokenIdsRef.current.delete(latest.id);
         
         // Provide helpful error messages
-        const errorMsg = error.error || "unknown";
         if (errorMsg === "not-allowed") {
           setVoiceError("Speech synthesis not allowed. Please check browser permissions.");
         } else if (errorMsg === "synthesis-failed") {
           setVoiceError("Failed to synthesize speech. Please try again.");
-        } else if (errorMsg === "interrupted") {
-          // This is normal when cancelling, don't show error
-          console.log("Speech interrupted (normal)");
         } else {
           setVoiceError("Failed to speak response. Text is still available.");
         }
         
         // Auto-resume listening even on error if autoListen is enabled
-        if (!micManuallyOpened && autoListen && errorMsg !== "interrupted") {
+        if (!micManuallyOpened && autoListen) {
           setTimeout(() => {
             if (!isSpeaking && !micManuallyOpened) {
               const restarted = resumeAutoListening();
@@ -1999,6 +2028,8 @@ const FarmerHelpDesk = () => {
 
           // Cancel any ongoing speech first, but wait for it to complete
           if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+            // Clear the current utterance ref so cancelled utterance errors are ignored
+            currentUtteranceRef.current = null;
             window.speechSynthesis.cancel();
             // Wait a bit longer to ensure cancellation completes
             setTimeout(() => {
@@ -2007,6 +2038,8 @@ const FarmerHelpDesk = () => {
                   // Double-check speech synthesis is still available
                   if (window.speechSynthesis.speak) {
                     console.log("[Speech Debug] 🎤 Calling speechSynthesis.speak() (after cancellation)");
+                    // Set the new utterance as current before speaking
+                    currentUtteranceRef.current = utterance;
                     window.speechSynthesis.speak(utterance);
                     // Optimistically set speaking state (will be confirmed by onstart event)
                     setIsSpeaking(true);
@@ -2050,13 +2083,19 @@ const FarmerHelpDesk = () => {
                 
                 // Cancel any pending speech first
                 if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+                  // Clear the current utterance ref so cancelled utterance errors are ignored
+                  currentUtteranceRef.current = null;
                   window.speechSynthesis.cancel();
                   // Wait a moment for cancellation
                   setTimeout(() => {
+                    // Set the new utterance as current before speaking
+                    currentUtteranceRef.current = utterance;
                     window.speechSynthesis.speak(utterance);
                     setIsSpeaking(true);
                   }, 50);
                 } else {
+                  // Set the new utterance as current before speaking
+                  currentUtteranceRef.current = utterance;
                   window.speechSynthesis.speak(utterance);
                 }
                 
@@ -2077,8 +2116,10 @@ const FarmerHelpDesk = () => {
                     console.warn("[Speech Debug] ⚠️ Speech may not have started - trying again...");
                     // Try once more
                     try {
+                      currentUtteranceRef.current = null;
                       window.speechSynthesis.cancel();
                       setTimeout(() => {
+                        currentUtteranceRef.current = utterance;
                         window.speechSynthesis.speak(utterance);
                       }, 100);
                     } catch (retryError) {
@@ -2292,6 +2333,7 @@ const FarmerHelpDesk = () => {
       try {
         // Stop speech synthesis first
         if (typeof window !== "undefined" && window.speechSynthesis) {
+          currentUtteranceRef.current = null;
           window.speechSynthesis.cancel();
           setIsSpeaking(false);
         }
@@ -2338,6 +2380,7 @@ const FarmerHelpDesk = () => {
     try {
       // Stop any ongoing speech
       if (typeof window !== "undefined" && window.speechSynthesis) {
+        currentUtteranceRef.current = null;
         window.speechSynthesis.cancel();
         setIsSpeaking(false);
       }
@@ -2519,6 +2562,7 @@ const FarmerHelpDesk = () => {
 
           // Cancel any ongoing speech first, but wait for it to complete
           if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+            currentUtteranceRef.current = null;
             window.speechSynthesis.cancel();
             // Wait a bit longer to ensure cancellation completes
             setTimeout(() => {
@@ -2526,6 +2570,8 @@ const FarmerHelpDesk = () => {
                 if (window.speechSynthesis && !mutedMessageIds.has(message.id)) {
                   // Double-check speech synthesis is still available
                   if (window.speechSynthesis.speak) {
+                    // Set the new utterance as current before speaking
+                    currentUtteranceRef.current = utterance;
                     window.speechSynthesis.speak(utterance);
                     console.log("Manual speech queued successfully");
                   } else {
@@ -2546,6 +2592,8 @@ const FarmerHelpDesk = () => {
             // No ongoing speech, start immediately
             try {
               if (window.speechSynthesis.speak) {
+                // Set the new utterance as current before speaking
+                currentUtteranceRef.current = utterance;
                 window.speechSynthesis.speak(utterance);
                 console.log("Manual speech started immediately");
               } else {
@@ -2580,6 +2628,7 @@ const FarmerHelpDesk = () => {
           newSet.delete(messageId);
           // If unmuting and currently speaking this message, stop and restart
           if (typeof window !== "undefined" && window.speechSynthesis && window.speechSynthesis.speaking) {
+            currentUtteranceRef.current = null;
             window.speechSynthesis.cancel();
             setIsSpeaking(false);
           }
@@ -2587,6 +2636,7 @@ const FarmerHelpDesk = () => {
           newSet.add(messageId);
           // Stop speaking if this message is currently being spoken
           if (typeof window !== "undefined" && window.speechSynthesis && window.speechSynthesis.speaking) {
+            currentUtteranceRef.current = null;
             window.speechSynthesis.cancel();
             setIsSpeaking(false);
           }
@@ -2915,7 +2965,7 @@ const FarmerHelpDesk = () => {
         <div className="pointer-events-none absolute -left-24 top-24 h-56 w-56 rounded-full bg-emerald-200/40 blur-3xl sm:h-72 sm:w-72" />
         <div className="pointer-events-none absolute -right-24 bottom-16 h-64 w-64 rounded-full bg-amber-200/35 blur-3xl sm:h-80 sm:w-80" />
 
-        <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="relative mx-auto w-full max-w-7xl px-2">
           <div className="flex flex-col gap-8">
             <header className="grid gap-6 rounded-[32px] border border-emerald-100/70 bg-white/90 p-6 shadow-xl shadow-emerald-200/40 backdrop-blur sm:p-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
               <div className="space-y-5">

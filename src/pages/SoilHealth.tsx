@@ -206,39 +206,39 @@ const SoilHealth = () => {
 
   return (
     <Layout>
-      <section className="relative isolate overflow-hidden py-16 md:py-20">
+      <section className="relative isolate overflow-hidden py-12 sm:py-16 animate-fade-in">
         <img
           src={soilHealthHero}
           alt="Farmer surveying healthy crop rows during sunrise"
           className="absolute inset-0 h-full w-full object-cover object-center md:object-top"
         />
         <div className="absolute inset-0 bg-slate-900/70" aria-hidden="true" />
-        <div className="container relative mx-auto px-4">
+        <div className="container relative mx-auto px-2">
           <div className="max-w-3xl mx-auto text-center text-white">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-3xl font-bold mb-4">
               {t(soilHealthTranslations.title)}
             </h1>
-            <p className="text-white/90 mb-6">
+            <p className="text-white/90 mb-6 text-base sm:text-[17px]">
               {t(soilHealthTranslations.subtitle)}
             </p>
           </div>
         </div>
       </section>
 
-      <section className="py-12">
-        <div className="container mx-auto px-4">
+      <section className="py-12 sm:py-16">
+        <div className="container mx-auto px-2">
           <div className="max-w-6xl mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              <Card className="lg:col-span-2">
+              <Card className="lg:col-span-2 rounded-lg animate-fade-in-up">
                 <CardHeader>
-                  <CardTitle>{t(soilHealthTranslations.soilHealthOverview)}</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-xl sm:text-2xl">{t(soilHealthTranslations.soilHealthOverview)}</CardTitle>
+                  <CardDescription className="text-base">
                     {t(soilHealthTranslations.currentStatus)}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="p-4 bg-muted rounded-md">
+                    <div className="p-4 bg-muted rounded-lg smooth-transition">
                       <h3 className="font-semibold">{t(soilAnalyzerTranslations.soilPH)}</h3>
                       <div className="flex justify-between items-center mt-2">
                         <span className="text-2xl font-bold">{latestSoilData.ph}</span>
@@ -248,7 +248,7 @@ const SoilHealth = () => {
                       </div>
                     </div>
                     
-                    <div className="p-4 bg-muted rounded-md">
+                    <div className="p-4 bg-muted rounded-lg smooth-transition">
                       <h3 className="font-semibold">{t(soilAnalyzerTranslations.nitrogen)}</h3>
                       <div className="flex justify-between items-center mt-2">
                         <span className="text-2xl font-bold">{latestSoilData.nitrogen}</span>
@@ -259,7 +259,7 @@ const SoilHealth = () => {
                       <p className="text-xs text-muted-foreground mt-1">{kgPerHectareLabel}</p>
                     </div>
                     
-                    <div className="p-4 bg-muted rounded-md">
+                    <div className="p-4 bg-muted rounded-lg smooth-transition">
                       <h3 className="font-semibold">{t(soilAnalyzerTranslations.phosphorus)}</h3>
                       <div className="flex justify-between items-center mt-2">
                         <span className="text-2xl font-bold">{latestSoilData.phosphorus}</span>
@@ -270,7 +270,7 @@ const SoilHealth = () => {
                       <p className="text-xs text-muted-foreground mt-1">{kgPerHectareLabel}</p>
                     </div>
                     
-                    <div className="p-4 bg-muted rounded-md">
+                    <div className="p-4 bg-muted rounded-lg smooth-transition">
                       <h3 className="font-semibold">{t(soilAnalyzerTranslations.potassium)}</h3>
                       <div className="flex justify-between items-center mt-2">
                         <span className="text-2xl font-bold">{latestSoilData.potassium}</span>
@@ -281,7 +281,7 @@ const SoilHealth = () => {
                       <p className="text-xs text-muted-foreground mt-1">{kgPerHectareLabel}</p>
                     </div>
                     
-                    <div className="p-4 bg-muted rounded-md">
+                    <div className="p-4 bg-muted rounded-lg smooth-transition">
                       <h3 className="font-semibold">{t(soilAnalyzerTranslations.organicMatter)}</h3>
                       <div className="flex justify-between items-center mt-2">
                         <span className="text-2xl font-bold">{latestSoilData.organic}%</span>
@@ -294,10 +294,10 @@ const SoilHealth = () => {
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="rounded-lg animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
                 <CardHeader>
-                  <CardTitle>{t(soilHealthTranslations.actions)}</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-xl sm:text-2xl">{t(soilHealthTranslations.actions)}</CardTitle>
+                  <CardDescription className="text-base">
                     {t(soilHealthTranslations.manageData)}
                   </CardDescription>
                 </CardHeader>
@@ -317,10 +317,10 @@ const SoilHealth = () => {
               </Card>
             </div>
 
-            <Card className="mb-8">
+            <Card className="mb-8 rounded-lg animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               <CardHeader>
-                <CardTitle>{t(soilHealthTranslations.nutrientTrends)}</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xl sm:text-2xl">{t(soilHealthTranslations.nutrientTrends)}</CardTitle>
+                <CardDescription className="text-base">
                   {t(soilHealthTranslations.trackChanges)}
                 </CardDescription>
               </CardHeader>

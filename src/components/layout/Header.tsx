@@ -27,6 +27,16 @@ import {
   HeartPulse,
   Sprout,
   LifeBuoy,
+  Bug,
+  Cloud,
+  TrendingUp,
+  DollarSign,
+  Droplets,
+  Calendar,
+  Calculator,
+  AlertTriangle,
+  MessageCircle,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -136,6 +146,19 @@ const Header = () => {
     { key: "helpDesk", href: "/farmer-help-desk", icon: LifeBuoy },
   ];
 
+  const newFeatureItems: Array<{ key: string; href: string; icon: LucideIcon }> = [
+    { key: "cropDisease", href: "/crop-disease", icon: Bug },
+    { key: "weatherAlerts", href: "/weather-alerts", icon: Cloud },
+    { key: "cropGrowth", href: "/crop-growth", icon: TrendingUp },
+    { key: "marketPrices", href: "/market-prices", icon: DollarSign },
+    { key: "irrigation", href: "/irrigation-scheduler", icon: Droplets },
+    { key: "farmingCalendar", href: "/farming-calendar", icon: Calendar },
+    { key: "fertilizerCost", href: "/fertilizer-cost", icon: Calculator },
+    { key: "soilPrediction", href: "/soil-health-prediction", icon: AlertTriangle },
+    { key: "farmerCommunity", href: "/farmer-community", icon: MessageCircle },
+    { key: "expertConsultation", href: "/expert-consultation", icon: Users },
+  ];
+
   const getLabel = (key: NavKey) =>
     t({
       en: translations.en[key],
@@ -200,13 +223,12 @@ const Header = () => {
   return (
     <header
       className={cn(
-        "sticky top-0 z-20 border-b transition-all duration-300",
+        "sticky top-0 z-20 border-b transition-colors duration-200",
         "supports-[backdrop-filter]:backdrop-blur-xl bg-background/40 border-border/20",
-        "shadow-none",
-        isScrolled && "bg-background/70 border-border/40 shadow-sm"
+        isScrolled && "bg-background/70 border-border/40"
       )}
     >
-      <div className="container mx-auto flex items-center justify-between gap-x-4 gap-y-3 px-4 py-3 md:gap-x-6 lg:py-4 overflow-hidden">
+      <div className="container mx-auto flex items-center justify-between gap-x-4 gap-y-3 px-2 py-3 md:gap-x-6 lg:py-4 overflow-hidden">
         <div className="flex items-center gap-2 md:gap-3 lg:gap-4 shrink-0 min-w-0">
           <Link to="/" className="flex items-center gap-1.5 md:gap-2">
             <Leaf className="h-5 w-5 md:h-6 md:w-6 text-plant-dark shrink-0" />
@@ -256,6 +278,19 @@ const Header = () => {
                       <span className="text-base font-medium text-foreground">{getLabel(key)}</span>
                     </Link>
                   ))}
+                  <div className="border-t my-2 pt-2">
+                    <p className="text-xs font-semibold text-muted-foreground mb-2 px-2">New AI Features</p>
+                    {newFeatureItems.map(({ key, href, icon: Icon }) => (
+                      <Link
+                        key={key}
+                        to={href}
+                        className="flex items-center gap-3 rounded-md px-2 py-3 transition-colors hover:bg-accent"
+                      >
+                        <Icon className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                        <span className="text-sm text-foreground">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test - Analyze Soil</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 10px 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            min-height: 100px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            color: #4CAF50;
+        }
+        .error {
+            color: #f44336;
+        }
+        .info {
+            color: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 API Test - Analyze Soil Endpoint</h1>
+        <p>Use these buttons to test the API endpoints:</p>
+        
+        <button onclick="testHealth()">1. Test Health Endpoint (GET)</button>
+        <button onclick="testPost()">2. Test POST Endpoint</button>
+        <button onclick="testAnalyzeSoil()">3. Test Analyze Soil (POST)</button>
+        <button onclick="clearResults()">Clear Results</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            results.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            console.log(`[${timestamp}]`, message);
+        }
+
+        function clearResults() {
+            results.innerHTML = '';
+        }
+
+        async function testHealth() {
+            log('🔍 Testing GET /api/health...', 'info');
+            try {
+                const response = await fetch('http://localhost:8080/api/health');
+                const data = await response.json();
+                log('✅ Health check SUCCESS:', 'success');
+                log(JSON.stringify(data, null, 2), 'info');
+            } catch (error) {
+                log('❌ Health check FAILED: ' + error.message, 'error');
+            }
+        }
+
+        async function testPost() {
+            log('🔍 Testing POST /api/test-post...', 'info');
+            try {
+                const response = await fetch('http://localhost:8080/api/test-post', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        test: 'data', 
+                        timestamp: new Date().toISOString() 
+                    })
+                });
+                const data = await response.json();
+                log('✅ Test POST SUCCESS:', 'success');
+                log(JSON.stringify(data, null, 2), 'info');
+            } catch (error) {
+                log('❌ Test POST FAILED: ' + error.message, 'error');
+            }
+        }
+
+        async function testAnalyzeSoil() {
+            log('🔍 Testing POST /api/analyze-soil...', 'info');
+            log('Sending request with sample data...', 'info');
+            
+            const requestBody = {
+                language: 'en',
+                manualValues: {
+                    ph: '7.0',
+                    nitrogen: '50',
+                    phosphorus: '30',
+                    potassium: '200'
+                }
+            };
+            
+            log('Request body: ' + JSON.stringify(requestBody, null, 2), 'info');
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch('http://localhost:8080/api/analyze-soil', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                const duration = Date.now() - startTime;
+                log(`Response received in ${duration}ms`, 'info');
+                log(`Status: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                log(`Headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`, 'info');
+                
+                const responseText = await response.text();
+                log(`Response body (first 500 chars): ${responseText.substring(0, 500)}`, 'info');
+                
+                if (!response.ok) {
+                    log('❌ Analyze Soil FAILED with status ' + response.status, 'error');
+                    try {
+                        const errorData = JSON.parse(responseText);
+                        log('Error details: ' + JSON.stringify(errorData, null, 2), 'error');
+                    } catch {
+                        log('Error response (not JSON): ' + responseText, 'error');
+                    }
+                } else {
+                    try {
+                        const data = JSON.parse(responseText);
+                        log('✅ Analyze Soil SUCCESS!', 'success');
+                        log('Response keys: ' + Object.keys(data).join(', '), 'success');
+                        log('Full response: ' + JSON.stringify(data, null, 2).substring(0, 1000), 'info');
+                    } catch (parseError) {
+                        log('⚠️ Response is not valid JSON: ' + responseText.substring(0, 200), 'error');
+                    }
+                }
+            } catch (error) {
+                log('❌ Analyze Soil FAILED: ' + error.message, 'error');
+                log('Error stack: ' + (error.stack || 'No stack trace'), 'error');
+            }
+        }
+    </script>
+</body>
+</html>
+

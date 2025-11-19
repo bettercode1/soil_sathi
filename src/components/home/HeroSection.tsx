@@ -10,17 +10,19 @@ const HeroSection: React.FC = () => {
   const { t } = useLanguage();
   
   return (
-    <section className="relative overflow-hidden bg-neutral-950 text-white">
+    <section className="relative overflow-hidden bg-neutral-950 text-white gradient-mesh-overlay">
       <div className="absolute inset-0">
         <img
           src={heroImage}
           alt="Soil testing equipment on farmland"
-          className="h-full w-full scale-105 object-cover opacity-55 blur-sm"
+          className="h-full w-full scale-105 object-cover opacity-40 blur-[2px]"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-black/85 via-neutral-950/80 to-emerald-950/70 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-gradient-to-br from-black/75 via-emerald-950/60 to-neutral-950/80 backdrop-blur-[1px]" />
+        {/* Gradient Mesh Overlay */}
+        <div className="absolute inset-0 gradient-mesh-nature opacity-30 mix-blend-overlay" />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 py-10 md:py-14">
+      <div className="relative z-10 container mx-auto px-2 py-10 md:py-14">
         <div className="grid gap-12 md:grid-cols-[1.05fr,0.95fr] md:items-center">
           <div className="max-w-2xl text-center md:text-left">
             <span className="mb-5 inline-flex items-center rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-medium uppercase tracking-wide text-emerald-200 ring-1 ring-inset ring-emerald-400/40 md:px-4 md:text-sm">
@@ -35,7 +37,7 @@ const HeroSection: React.FC = () => {
               })}
             </span>
 
-            <h1 className="mb-5 text-3xl font-bold leading-tight sm:text-[2.5rem] md:text-5xl">
+            <h1 className="mb-5 text-3xl font-extrabold leading-tight sm:text-4xl md:text-5xl expressive-heading high-contrast-text">
             {t({
               en: "Smart Soil Helper for Farmers",
               hi: "किसानों के लिए स्मार्ट मिट्टी सहायक",
@@ -63,10 +65,10 @@ const HeroSection: React.FC = () => {
               <Button
                 asChild
                 size="lg"
-                className="w-full gap-2 py-4 text-base shadow-lg shadow-emerald-500/30 sm:w-auto sm:py-5 sm:text-lg"
+                className="w-full gap-2 py-4 text-base sm:w-auto sm:py-5 sm:text-lg btn-modern pulse-glow"
               >
                 <Link to="/soil-analyzer">
-                  <FlaskConical className="h-6 w-6 mr-2" />
+                  <FlaskConical className="h-6 w-6 mr-2 icon-modern" />
                   {t({
                     en: "Check Your Soil",
                     hi: "अपनी मिट्टी जांचें",
@@ -83,7 +85,7 @@ const HeroSection: React.FC = () => {
                 asChild
                 variant="outline"
                 size="lg"
-                className="w-full border-emerald-400/40 bg-white/[0.03] text-white hover:bg-emerald-400/20 hover:border-emerald-400/60 hover:text-white py-4 text-base sm:w-auto sm:py-5 sm:text-lg"
+                className="w-full border-emerald-400/40 glass-card text-white hover:bg-emerald-400/20 hover:border-emerald-400/60 hover:text-white py-4 text-base sm:w-auto sm:py-5 sm:text-lg btn-modern"
               >
                 <a
                   href="https://sparkly-alpaca-b9997d.netlify.app/"
@@ -92,17 +94,17 @@ const HeroSection: React.FC = () => {
                   className="flex items-center gap-2"
                 >
                   <span>Krushi Mitra</span>
-                  <ExternalLink className="h-4 w-4" />
+                  <ExternalLink className="h-4 w-4 icon-modern" />
                 </a>
               </Button>
               <Button
                 asChild
                 variant="outline"
                 size="lg"
-                className="w-full border border-white/25 bg-white/5 py-4 text-base text-white backdrop-blur-sm transition hover:bg-white/10 sm:w-auto sm:py-5 sm:text-lg"
+                className="w-full border border-white/25 glass-card py-4 text-base text-white transition hover:bg-white/10 sm:w-auto sm:py-5 sm:text-lg btn-modern"
               >
                 <Link to="/recommendations">
-                  <Sprout className="mr-2 h-6 w-6 text-emerald-200" />
+                  <Sprout className="mr-2 h-6 w-6 text-emerald-200 icon-modern" />
                   {t({
                     en: "Grow Better Crops",
                     hi: "बेहतर फसल उगाएं",
@@ -118,13 +120,14 @@ const HeroSection: React.FC = () => {
           </div>
 
           <div className="relative flex items-center justify-center">
-            <div className="relative w-full max-w-xs overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_24px_60px_-35px_rgba(16,185,129,0.65)] sm:max-w-sm md:max-w-xl md:rounded-[2.5rem] md:shadow-[0_40px_80px_-40px_rgba(16,185,129,0.65)]">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+            <div className="relative w-full max-w-xs overflow-hidden rounded-2xl border border-white/20 glass-card-dark sm:max-w-sm md:max-w-xl card-hover">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-10" />
               <img
                 src={heroImage}
                 alt="Soil testing equipment"
                 className="h-full w-full object-cover"
               />
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent z-0" />
             </div>
           </div>
         </div>

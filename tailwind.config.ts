@@ -63,20 +63,70 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
+				// Nature-inspired color palette
 				soil: {
 					light: '#e4d4c2',
 					DEFAULT: '#9b7653',
-					dark: '#654321'
+					dark: '#654321',
+					'50': '#f5f0e8',
+					'100': '#e8dcc8',
+					'200': '#d4c0a0',
+					'300': '#b89d75',
+					'400': '#9b7653',
+					'500': '#8a6547',
+					'600': '#6d4f35',
+					'700': '#563d2a',
+					'800': '#453023',
+					'900': '#3a2720'
 				},
 				plant: {
 					light: '#c1e1c1',
 					DEFAULT: '#4CAF50',
-					dark: '#2e7d32'
+					dark: '#2e7d32',
+					'50': '#e8f5e9',
+					'100': '#c8e6c9',
+					'200': '#a5d6a7',
+					'300': '#81c784',
+					'400': '#66bb6a',
+					'500': '#4caf50',
+					'600': '#43a047',
+					'700': '#388e3c',
+					'800': '#2e7d32',
+					'900': '#1b5e20'
 				},
 				earth: {
 					clay: '#a7613b',
 					loam: '#8f784b',
-					sand: '#c2b280'
+					sand: '#c2b280',
+					brown: '#8b6f47',
+					tan: '#d2b48c',
+					'50': '#faf8f5',
+					'100': '#f0ebe3',
+					'200': '#ddd4c4',
+					'300': '#c2b280',
+					'400': '#a8936a',
+					'500': '#8f784b',
+					'600': '#7a6540',
+					'700': '#655237',
+					'800': '#564730',
+					'900': '#4a3d2a'
+				},
+				nature: {
+					green: {
+						light: '#a5d6a7',
+						DEFAULT: '#66bb6a',
+						dark: '#388e3c'
+					},
+					brown: {
+						light: '#d4c0a0',
+						DEFAULT: '#9b7653',
+						dark: '#6d4f35'
+					},
+					earth: {
+						light: '#e8dcc8',
+						DEFAULT: '#b89d75',
+						dark: '#8a6547'
+					}
 				}
 			},
 			borderRadius: {

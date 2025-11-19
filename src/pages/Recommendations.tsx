@@ -21,6 +21,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { recommendationsTranslations, soilAnalyzerTranslations } from "@/constants/allTranslations";
 import { buildApiUrl, parseJsonResponse } from "@/lib/api";
 import fertilizerHero from "@/assets/fertilizer-hero.jpg";
+import FertilizerComparisonChart from "@/components/reports/FertilizerComparisonChart";
 
 type LanguageCode = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
 type LocalizedString = Record<LanguageCode, string>;
@@ -299,32 +300,32 @@ const Recommendations = () => {
 
   return (
     <Layout>
-      <section className="relative isolate overflow-hidden py-16 md:py-20">
+      <section className="relative isolate overflow-hidden py-12 sm:py-16 animate-fade-in">
         <img
           src={fertilizerHero}
           alt="Tractor spraying fertilizer on farmland"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-slate-900/65" aria-hidden="true" />
-        <div className="container relative mx-auto px-4">
+        <div className="container relative mx-auto px-2">
           <div className="max-w-3xl mx-auto text-center text-white">
-            <h1 className="text-3xl md:text-4xl font-bold mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-3xl font-bold mb-4">
               {t(recommendationsTranslations.title)}
             </h1>
-            <p className="text-white/90 mb-6">
+            <p className="text-white/90 mb-6 text-base sm:text-[17px]">
               {t(recommendationsTranslations.subtitle)}
             </p>
           </div>
         </div>
       </section>
 
-      <section className="py-12">
-        <div className="container mx-auto px-4">
+      <section className="py-12 sm:py-16">
+        <div className="container mx-auto px-2">
           <div className="max-w-4xl mx-auto">
-            <Card>
+            <Card className="rounded-lg animate-fade-in-up">
               <CardHeader>
-                <CardTitle>{t(recommendationsTranslations.customRecommendations)}</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xl sm:text-2xl">{t(recommendationsTranslations.customRecommendations)}</CardTitle>
+                <CardDescription className="text-base">
                   {t(recommendationsTranslations.selectDetails)}
                 </CardDescription>
               </CardHeader>
@@ -571,6 +572,20 @@ const Recommendations = () => {
             {recommendations && (
               <div className="mt-12 animate-grow">
                 <h2 className="text-2xl font-bold mb-6">{t(recommendationsTranslations.yourRecommendations)}</h2>
+
+                {/* Visual Chart - Quick Overview */}
+                <div className="mb-6">
+                  <FertilizerComparisonChart
+                    organic={[
+                      ...recommendations.organic.primary,
+                      ...recommendations.organic.secondary
+                    ]}
+                    chemical={[
+                      ...recommendations.chemical.primary,
+                      ...recommendations.chemical.secondary
+                    ]}
+                  />
+                </div>
 
                 {recommendations.summary && (
                   <Card className="mb-6">

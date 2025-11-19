@@ -25,13 +25,21 @@ const normalizeErrorMessage = (
   return `${statusPrefix}: ${fallback}`.trim();
 };
 
-export const parseJsonResponse = async <T>(response: Response): Promise<T> => {
+/**
+ * Parse JSON response, allowing error responses to be parsed
+ * @param response - The fetch Response object
+ * @param allowErrorResponse - If true, will parse JSON even if response.ok is false
+ */
+export const parseJsonResponse = async <T>(
+  response: Response,
+  allowErrorResponse: boolean = false
+): Promise<T> => {
   const contentType = response.headers.get("content-type") ?? "";
   const rawBody = await response.text();
   const trimmedBody = rawBody.trim();
 
   const ensureOk = (message: string) => {
-    if (!response.ok) {
+    if (!response.ok && !allowErrorResponse) {
       throw new Error(normalizeErrorMessage(response, message));
     }
   };
@@ -58,33 +66,75 @@ export const parseJsonResponse = async <T>(response: Response): Promise<T> => {
         ensureOk("Received a non-JSON response from the server.");
         return parsedJson;
       } catch {
-        logNonJsonResponse();
+        // If parsing fails, log but don't throw if allowErrorResponse is true
+        if (!allowErrorResponse) {
+          logNonJsonResponse();
+        }
       }
     } else {
-      logNonJsonResponse();
+      if (!allowErrorResponse) {
+        logNonJsonResponse();
+      }
     }
 
-    ensureOk(trimmedBody || "Received a non-JSON response from the server.");
-    throw new Error(trimmedBody || "Received a non-JSON response from the server.");
+    if (!allowErrorResponse) {
+      ensureOk(trimmedBody || "Received a non-JSON response from the server.");
+      throw new Error(trimmedBody || "Received a non-JSON response from the server.");
+    }
+    // If allowErrorResponse is true and we can't parse, return empty object
+    return {} as T;
   }
 
   if (!trimmedBody) {
-    ensureOk("Received an empty JSON response from the server.");
-    throw new Error("Received an empty JSON response from the server.");
+    if (!allowErrorResponse) {
+      ensureOk("Received an empty JSON response from the server.");
+      throw new Error("Received an empty JSON response from the server.");
+    }
+    return {} as T;
   }
 
   try {
     return JSON.parse(trimmedBody) as T;
   } catch (error) {
-    ensureOk(
-      error instanceof Error ? error.message : "Failed to parse server response."
-    );
-    throw new Error(
-      normalizeErrorMessage(
-        response,
+    if (!allowErrorResponse) {
+      ensureOk(
         error instanceof Error ? error.message : "Failed to parse server response."
-      )
-    );
+      );
+      throw new Error(
+        normalizeErrorMessage(
+          response,
+          error instanceof Error ? error.message : "Failed to parse server response."
+        )
+      );
+    }
+    throw error;
+  }
+};
+
+/**
+ * Parse error response from API
+ * Extracts error message from JSON error response
+ */
+export const parseErrorResponse = async (response: Response): Promise<{
+  error?: string;
+  details?: string;
+  code?: number;
+  status?: string;
+}> => {
+  try {
+    const errorData = await parseJsonResponse<{
+      error?: string;
+      details?: string;
+      code?: number;
+      status?: string;
+    }>(response, true);
+    return errorData;
+  } catch {
+    return {
+      error: `Server responded with ${response.status}`,
+      details: response.statusText,
+      code: response.status,
+    };
   }
 };
 

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    <button onclick="testHealth()">Test Health Endpoint</button>
+    <button onclick="testPost()">Test POST Endpoint</button>
+    <button onclick="testAnalyzeSoil()">Test Analyze Soil POST</button>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+        
+        function log(message) {
+            results.innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+
+        async function testHealth() {
+            log('Testing GET /api/health...');
+            try {
+                const response = await fetch('http://localhost:8080/api/health');
+                const data = await response.json();
+                log('✅ Health check: ' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                log('❌ Health check failed: ' + error.message);
+            }
+        }
+
+        async function testPost() {
+            log('Testing POST /api/test-post...');
+            try {
+                const response = await fetch('http://localhost:8080/api/test-post', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ test: 'data', timestamp: new Date().toISOString() })
+                });
+                const data = await response.json();
+                log('✅ Test POST: ' + JSON.stringify(data, null, 2));
+            } catch (error) {
+                log('❌ Test POST failed: ' + error.message);
+            }
+        }
+
+        async function testAnalyzeSoil() {
+            log('Testing POST /api/analyze-soil...');
+            try {
+                const response = await fetch('http://localhost:8080/api/analyze-soil', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        language: 'en',
+                        manualValues: {
+                            ph: '7.0',
+                            nitrogen: '50',
+                            phosphorus: '30',
+                            potassium: '200'
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log('❌ Analyze Soil failed: Status ' + response.status);
+                    log('Response: ' + errorText);
+                } else {
+                    const data = await response.json();
+                    log('✅ Analyze Soil: Success!');
+                    log('Response keys: ' + Object.keys(data).join(', '));
+                }
+            } catch (error) {
+                log('❌ Analyze Soil failed: ' + error.message);
+                log('Error stack: ' + error.stack);
+            }
+        }
+    </script>
+</body>
+</html>
+

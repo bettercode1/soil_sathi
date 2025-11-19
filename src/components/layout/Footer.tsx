@@ -54,7 +54,7 @@ const Footer = () => {
                   href="https://facebook.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:-translate-y-0.5 hover:bg-emerald-400/20"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:bg-emerald-400/20"
                 >
                   <Facebook className="h-4 w-4" />
                 </a>
@@ -63,7 +63,7 @@ const Footer = () => {
                   href="https://youtube.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:-translate-y-0.5 hover:bg-emerald-400/20"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:bg-emerald-400/20"
                 >
                   <Youtube className="h-4 w-4" />
                 </a>
@@ -72,7 +72,7 @@ const Footer = () => {
                   href="https://linkedin.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:-translate-y-0.5 hover:bg-emerald-400/20"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition-colors hover:bg-emerald-400/20"
                 >
                   <Linkedin className="h-4 w-4" />
                 </a>
@@ -225,7 +225,7 @@ const Footer = () => {
               </h3>
               <div className="flex w-full flex-col gap-3">
                 {/* Email Card */}
-                <div className="flex w-full items-center gap-4 rounded-xl border border-emerald-400/40 bg-white/[0.03] p-4 transition-all hover:border-emerald-400/60 hover:bg-white/[0.06]">
+                <div className="flex w-full items-center gap-4 rounded-lg border border-emerald-400/40 bg-white/[0.03] p-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-2 border-emerald-400/40 bg-transparent">
                     <Mail className="h-5 w-5 text-white" strokeWidth={2} />
                   </div>
@@ -238,7 +238,7 @@ const Footer = () => {
                 </div>
 
                 {/* Phone Card */}
-                <div className="flex w-full items-start gap-4 rounded-xl border border-emerald-400/40 bg-white/[0.03] p-4 transition-all hover:border-emerald-400/60 hover:bg-white/[0.06]">
+                <div className="flex w-full items-start gap-4 rounded-lg border border-emerald-400/40 bg-white/[0.03] p-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border-2 border-emerald-400/40 bg-transparent">
                     <Phone className="h-5 w-5 text-white" strokeWidth={2} />
                   </div>
