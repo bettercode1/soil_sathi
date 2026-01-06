@@ -1,14 +1,11 @@
-
 import React from "react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { soilAnalyzerTranslations, soilHealthTranslations } from "@/constants/allTranslations";
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Timer, Plus } from "lucide-react";
+import { Timer, Plus, ArrowUpRight, ArrowDownRight, Minus, FlaskConical, Leaf, Sprout } from "lucide-react";
 import soilHealthHero from "@/assets/soil-health-hero.jpg";
 
 type LanguageCode = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
@@ -45,21 +42,12 @@ const unitLabels = {
   kgPerHa: localized("kg/ha", "किग्रा/हे.", "ਕਿਲੋ/ਹੈ.", "கிலோ/ஹெ.", "కిలో/హె.", "কেজি/হা", "किलो/हे."),
 };
 
-const chartTabLabels = {
-  npk: localized("NPK Levels", "NPK स्तर", "NPK ਪੱਧਰ", "NPK நிலைகள்", "NPK స్థాయిలు", "NPK স্তর", "NPK स्तर"),
-  phOrganic: localized("pH & Organic Matter", "pH और जैविक पदार्थ", "pH ਅਤੇ ਜੈਵਿਕ ਪਦਾਰਥ", "pH மற்றும் இயற்கை பொருள்", "pH మరియు సేంద్రీయ పదార్థం", "pH ও জৈব পদার্থ", "pH आणि सेंद्रिय पदार्थ"),
-};
-
-const chartTitleLabels = {
-  phLevel: localized("pH Level", "pH स्तर", "pH ਪੱਧਰ", "pH நிலை", "pH స్థాయి", "pH স্তর", "pH स्तर"),
-};
-
 const tableHeaderLabels = {
   date: localized("Date", "तारीख़", "ਤਾਰੀਖ਼", "தேதி", "తేదీ", "তারিখ", "दिनांक"),
 };
 
 const toastMessages = {
-  comingSoonTitle: localized("Coming soon!", "जल्द आ रहा है!", "ਜਲਦੀ ਹੀ ਆ ਰਿਹਾ ਹੈ!", "விரைவில் வருகிறது!", "త్వరలో రాబోతోంది!", "শীঘ্রই আসছে!", "लवकरच येत आहे!"),
+  comingSoonTitle: localized("Coming soon!", "जल्द आ रहा है!", "ਜਲਦੀ ही आ ਰਿਹਾ ਹੈ!", "விரைவில் வருகிறது!", "త్వరలో రాబోతోంది!", "শীঘ্রই আসছে!", "लवकरच येत आहे!"),
   comingSoonDescription: localized(
     "This feature will allow you to add new soil test readings.",
     "यह सुविधा आपको नई मिट्टी परीक्षण रीडिंग जोड़ने देगी।",
@@ -160,16 +148,22 @@ const getNutrientStatus = (value: number, nutrient: keyof typeof nutrientStandar
 const getStatusColor = (status: NutrientStatusKey) => {
   switch (status) {
     case "veryLow":
-      return "text-red-600";
+      return "text-red-600 bg-red-50 border-red-100";
     case "low":
-      return "text-yellow-600";
+      return "text-yellow-600 bg-yellow-50 border-yellow-100";
     case "optimal":
-      return "text-green-600";
+      return "text-emerald-600 bg-emerald-50 border-emerald-100";
     case "high":
-      return "text-blue-600";
+      return "text-blue-600 bg-blue-50 border-blue-100";
     default:
-      return "text-foreground";
+      return "text-slate-600 bg-slate-50 border-slate-100";
   }
+};
+
+const getTrendIcon = (current: number, previous: number) => {
+  if (current > previous) return <ArrowUpRight className="h-4 w-4 text-emerald-500" />;
+  if (current < previous) return <ArrowDownRight className="h-4 w-4 text-red-500" />;
+  return <Minus className="h-4 w-4 text-slate-400" />;
 };
 
 const SoilHealth = () => {
@@ -178,6 +172,7 @@ const SoilHealth = () => {
   
   // Latest soil data is the most recent entry
   const latestSoilData = mockSoilHistoryData[mockSoilHistoryData.length - 1];
+  const previousSoilData = mockSoilHistoryData[mockSoilHistoryData.length - 2];
 
   const handleAddNewReading = () => {
     toast({
@@ -193,16 +188,46 @@ const SoilHealth = () => {
     });
   };
 
-  const legendLabels = {
-    nitrogen: t(soilAnalyzerTranslations.nitrogen),
-    phosphorus: t(soilAnalyzerTranslations.phosphorus),
-    potassium: t(soilAnalyzerTranslations.potassium),
-    ph: t(chartTitleLabels.phLevel),
-    organic: t(soilAnalyzerTranslations.organicMatter),
-  };
-
   const kgPerHectareLabel = t(unitLabels.kgPerHectare);
   const kgPerHaLabel = t(unitLabels.kgPerHa);
+
+  const NutrientCard = ({ 
+    title, 
+    value, 
+    unit, 
+    status, 
+    trend, 
+    icon: Icon 
+  }: { 
+    title: string, 
+    value: string | number, 
+    unit?: string, 
+    status: NutrientStatusKey,
+    trend: React.ReactNode,
+    icon: any 
+  }) => (
+    <div className={`p-5 rounded-xl border transition-all hover:shadow-md ${getStatusColor(status)}`}>
+      <div className="flex justify-between items-start mb-2">
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-white rounded-full shadow-sm">
+            <Icon className="h-4 w-4" />
+          </div>
+          <h3 className="font-semibold text-lg">{title}</h3>
+        </div>
+        <span className="text-xs font-bold px-2 py-1 bg-white rounded-full shadow-sm border border-current opacity-80">
+          {t(statusLabels[status])}
+        </span>
+      </div>
+      <div className="flex items-end gap-2 mt-3">
+        <span className="text-3xl font-bold">{value}</span>
+        {unit && <span className="text-sm font-medium mb-1 opacity-80">{unit}</span>}
+      </div>
+      <div className="flex items-center gap-1 mt-2 text-sm font-medium opacity-80 bg-white/50 w-fit px-2 py-1 rounded">
+        {trend}
+        <span>Vs Last Test</span>
+      </div>
+    </div>
+  );
 
   return (
     <Layout>
@@ -228,187 +253,98 @@ const SoilHealth = () => {
       <section className="py-12 sm:py-16">
         <div className="container mx-auto px-2">
           <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              <Card className="lg:col-span-2 rounded-lg animate-fade-in-up">
-                <CardHeader>
-                  <CardTitle className="text-xl sm:text-2xl">{t(soilHealthTranslations.soilHealthOverview)}</CardTitle>
-                  <CardDescription className="text-base">
-                    {t(soilHealthTranslations.currentStatus)}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                    <div className="p-4 bg-muted rounded-lg smooth-transition">
-                      <h3 className="font-semibold">{t(soilAnalyzerTranslations.soilPH)}</h3>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="text-2xl font-bold">{latestSoilData.ph}</span>
-                        <span className={`${getStatusColor(getNutrientStatus(latestSoilData.ph, "ph"))} text-sm font-medium`}>
-                          {t(statusLabels[getNutrientStatus(latestSoilData.ph, "ph")])}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="p-4 bg-muted rounded-lg smooth-transition">
-                      <h3 className="font-semibold">{t(soilAnalyzerTranslations.nitrogen)}</h3>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="text-2xl font-bold">{latestSoilData.nitrogen}</span>
-                        <span className={`${getStatusColor(getNutrientStatus(latestSoilData.nitrogen, "nitrogen"))} text-sm font-medium`}>
-                          {t(statusLabels[getNutrientStatus(latestSoilData.nitrogen, "nitrogen")])}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{kgPerHectareLabel}</p>
-                    </div>
-                    
-                    <div className="p-4 bg-muted rounded-lg smooth-transition">
-                      <h3 className="font-semibold">{t(soilAnalyzerTranslations.phosphorus)}</h3>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="text-2xl font-bold">{latestSoilData.phosphorus}</span>
-                        <span className={`${getStatusColor(getNutrientStatus(latestSoilData.phosphorus, "phosphorus"))} text-sm font-medium`}>
-                          {t(statusLabels[getNutrientStatus(latestSoilData.phosphorus, "phosphorus")])}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{kgPerHectareLabel}</p>
-                    </div>
-                    
-                    <div className="p-4 bg-muted rounded-lg smooth-transition">
-                      <h3 className="font-semibold">{t(soilAnalyzerTranslations.potassium)}</h3>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="text-2xl font-bold">{latestSoilData.potassium}</span>
-                        <span className={`${getStatusColor(getNutrientStatus(latestSoilData.potassium, "potassium"))} text-sm font-medium`}>
-                          {t(statusLabels[getNutrientStatus(latestSoilData.potassium, "potassium")])}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">{kgPerHectareLabel}</p>
-                    </div>
-                    
-                    <div className="p-4 bg-muted rounded-lg smooth-transition">
-                      <h3 className="font-semibold">{t(soilAnalyzerTranslations.organicMatter)}</h3>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="text-2xl font-bold">{latestSoilData.organic}%</span>
-                        <span className={`${getStatusColor(getNutrientStatus(latestSoilData.organic, "organic"))} text-sm font-medium`}>
-                          {t(statusLabels[getNutrientStatus(latestSoilData.organic, "organic")])}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="rounded-lg animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                <CardHeader>
-                  <CardTitle className="text-xl sm:text-2xl">{t(soilHealthTranslations.actions)}</CardTitle>
-                  <CardDescription className="text-base">
-                    {t(soilHealthTranslations.manageData)}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <Button onClick={handleAddNewReading} className="w-full flex items-center gap-2">
-                      <Plus className="h-4 w-4" />
-                      <span>{t(soilHealthTranslations.addNewTest)}</span>
-                    </Button>
-                    
-                    <Button variant="outline" onClick={handleSetReminder} className="w-full flex items-center gap-2">
-                      <Timer className="h-4 w-4" />
-                      <span>{t(soilHealthTranslations.setReminder)}</span>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800">{t(soilHealthTranslations.soilHealthOverview)}</h2>
+                <p className="text-slate-500">{t(soilHealthTranslations.currentStatus)}</p>
+              </div>
+              <div className="flex gap-3">
+                <Button onClick={handleAddNewReading} className="bg-emerald-600 hover:bg-emerald-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t(soilHealthTranslations.addNewTest)}
+                </Button>
+                <Button variant="outline" onClick={handleSetReminder}>
+                  <Timer className="h-4 w-4 mr-2" />
+                  {t(soilHealthTranslations.setReminder)}
+                </Button>
+              </div>
             </div>
 
-            <Card className="mb-8 rounded-lg animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-              <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl">{t(soilHealthTranslations.nutrientTrends)}</CardTitle>
-                <CardDescription className="text-base">
-                  {t(soilHealthTranslations.trackChanges)}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="npk">
-                  <TabsList className="mb-6">
-                    <TabsTrigger value="npk">{t(chartTabLabels.npk)}</TabsTrigger>
-                    <TabsTrigger value="ph">{t(chartTabLabels.phOrganic)}</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="npk">
-                    <ResponsiveContainer width="100%" height={350}>
-                      <LineChart data={mockSoilHistoryData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="nitrogen" stroke="#4CAF50" name={legendLabels.nitrogen} activeDot={{ r: 8 }} />
-                        <Line type="monotone" dataKey="phosphorus" stroke="#2196F3" name={legendLabels.phosphorus} />
-                        <Line type="monotone" dataKey="potassium" stroke="#FF9800" name={legendLabels.potassium} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </TabsContent>
-                  
-                  <TabsContent value="ph">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                      <div>
-                        <h3 className="text-center font-medium mb-4">{t(chartTitleLabels.phLevel)}</h3>
-                        <ResponsiveContainer width="100%" height={250}>
-                          <LineChart data={mockSoilHistoryData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" />
-                            <YAxis domain={[5, 8]} />
-                            <Tooltip />
-                            <Legend />
-                            <Line type="monotone" dataKey="ph" stroke="#9C27B0" name={legendLabels.ph} activeDot={{ r: 8 }} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div>
-                        <h3 className="text-center font-medium mb-4">{t(soilAnalyzerTranslations.organicMatter)}</h3>
-                        <ResponsiveContainer width="100%" height={250}>
-                          <BarChart data={mockSoilHistoryData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" />
-                            <YAxis domain={[0, 5]} />
-                            <Tooltip />
-                            <Legend />
-                            <Bar dataKey="organic" fill="#8B4513" name={legendLabels.organic} />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 animate-fade-in-up">
+              <NutrientCard 
+                title={t(soilAnalyzerTranslations.soilPH)} 
+                value={latestSoilData.ph}
+                status={getNutrientStatus(latestSoilData.ph, "ph")}
+                trend={getTrendIcon(latestSoilData.ph, previousSoilData.ph)}
+                icon={FlaskConical}
+              />
+              <NutrientCard 
+                title={t(soilAnalyzerTranslations.nitrogen)} 
+                value={latestSoilData.nitrogen}
+                unit={kgPerHaLabel}
+                status={getNutrientStatus(latestSoilData.nitrogen, "nitrogen")}
+                trend={getTrendIcon(latestSoilData.nitrogen, previousSoilData.nitrogen)}
+                icon={Leaf}
+              />
+              <NutrientCard 
+                title={t(soilAnalyzerTranslations.phosphorus)} 
+                value={latestSoilData.phosphorus}
+                unit={kgPerHaLabel}
+                status={getNutrientStatus(latestSoilData.phosphorus, "phosphorus")}
+                trend={getTrendIcon(latestSoilData.phosphorus, previousSoilData.phosphorus)}
+                icon={Sprout}
+              />
+              <NutrientCard 
+                title={t(soilAnalyzerTranslations.potassium)} 
+                value={latestSoilData.potassium}
+                unit={kgPerHaLabel}
+                status={getNutrientStatus(latestSoilData.potassium, "potassium")}
+                trend={getTrendIcon(latestSoilData.potassium, previousSoilData.potassium)}
+                icon={Sprout}
+              />
+              <NutrientCard 
+                title={t(soilAnalyzerTranslations.organicMatter)} 
+                value={latestSoilData.organic}
+                unit="%"
+                status={getNutrientStatus(latestSoilData.organic, "organic")}
+                trend={getTrendIcon(latestSoilData.organic, previousSoilData.organic)}
+                icon={Leaf}
+              />
+            </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>{t(soilHealthTranslations.testHistory)}</CardTitle>
+            <Card className="rounded-xl shadow-sm border border-slate-200">
+              <CardHeader className="bg-slate-50/50 border-b border-slate-100">
+                <CardTitle className="text-xl">{t(soilHealthTranslations.testHistory)}</CardTitle>
                 <CardDescription>
                   {t(soilHealthTranslations.completeRecord)}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
+                  <table className="w-full">
                     <thead>
-                      <tr className="border-b">
-                          <th className="text-left py-3 px-4">{t(tableHeaderLabels.date)}</th>
-                          <th className="text-left py-3 px-4">{t(soilAnalyzerTranslations.soilPH)}</th>
-                          <th className="text-left py-3 px-4">{t(soilAnalyzerTranslations.nitrogen)}</th>
-                          <th className="text-left py-3 px-4">{t(soilAnalyzerTranslations.phosphorus)}</th>
-                          <th className="text-left py-3 px-4">{t(soilAnalyzerTranslations.potassium)}</th>
-                          <th className="text-left py-3 px-4">{t(soilAnalyzerTranslations.organicMatter)}</th>
+                      <tr className="bg-slate-50 text-left text-sm font-semibold text-slate-600">
+                          <th className="py-4 px-6">{t(tableHeaderLabels.date)}</th>
+                          <th className="py-4 px-6">{t(soilAnalyzerTranslations.soilPH)}</th>
+                          <th className="py-4 px-6">{t(soilAnalyzerTranslations.nitrogen)}</th>
+                          <th className="py-4 px-6">{t(soilAnalyzerTranslations.phosphorus)}</th>
+                          <th className="py-4 px-6">{t(soilAnalyzerTranslations.potassium)}</th>
+                          <th className="py-4 px-6">{t(soilAnalyzerTranslations.organicMatter)}</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-100">
                       {mockSoilHistoryData.slice().reverse().map((item, index) => (
-                        <tr key={index} className="border-b hover:bg-muted/50">
-                          <td className="py-3 px-4">{item.date}</td>
-                          <td className="py-3 px-4">{item.ph}</td>
-                            <td className="py-3 px-4">{item.nitrogen} {kgPerHaLabel}</td>
-                            <td className="py-3 px-4">{item.phosphorus} {kgPerHaLabel}</td>
-                            <td className="py-3 px-4">{item.potassium} {kgPerHaLabel}</td>
-                          <td className="py-3 px-4">{item.organic}%</td>
+                        <tr key={index} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="py-4 px-6 font-medium text-slate-900">{item.date}</td>
+                          <td className="py-4 px-6">
+                            <span className={`px-2 py-1 rounded text-xs font-bold ${getStatusColor(getNutrientStatus(item.ph, "ph")).split(' ')[1].replace('50', '100')} ${getStatusColor(getNutrientStatus(item.ph, "ph")).split(' ')[0]}`}>
+                              {item.ph}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 text-slate-600">{item.nitrogen} {kgPerHaLabel}</td>
+                          <td className="py-4 px-6 text-slate-600">{item.phosphorus} {kgPerHaLabel}</td>
+                          <td className="py-4 px-6 text-slate-600">{item.potassium} {kgPerHaLabel}</td>
+                          <td className="py-4 px-6 text-slate-600">{item.organic}%</td>
                         </tr>
                       ))}
                     </tbody>

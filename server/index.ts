@@ -88,11 +88,13 @@ const API_KEY = env.geminiApiKey;
 // Removed unavailable models: gemini-2.5-flash-tts (404), learnlm-2.0-flash-experimental (404), gemini-2.0-flash-exp (429 quota)
 // Tries models in parallel - whichever responds fastest wins
 const FALLBACK_MODELS = [
-  "gemini-2.5-flash-lite", // Fastest - prioritize this first (~9s response time)
-  MODEL_NAME, // Primary configured model (usually gemini-2.5-flash)
-  "gemini-2.5-flash", // Standard flash model (~22s response time)
-  "gemini-2.5-pro", // Pro model (slower but more accurate, use as last resort)
-].filter((model, index, self) => model && self.indexOf(model) === index); // Remove duplicates and empty values
+  "gemini-1.5-flash", // Stable, fast, production-ready
+  "gemini-1.5-pro",   // High reasoning, stable
+  "gemini-2.0-flash", // New stable flash
+  "gemini-2.5-flash-lite", // Experimental/New
+  MODEL_NAME, 
+  "gemini-2.5-flash", 
+].filter((model, index, self) => model && self.indexOf(model) === index);
 
 // Initialize Gemini client - automatically reads GEMINI_API_KEY from environment
 // Per official docs: https://ai.google.dev/gemini-api/docs/quickstart
@@ -2045,25 +2047,39 @@ const generateDemoAnalysis = (
     },
     nutrientAnalysis: [
       {
-        parameter: isMarathi ? "नायट्रोजन (N)" : "Nitrogen (N)",
+        parameter: isMarathi ? "सामू (pH)" : "pH Level",
+        value: ph,
+        status: isMarathi ? "मध्यम" : "Moderate",
+        impact: isMarathi ? "पोषक तत्वांच्या उपलब्धतेवर परिणाम होतो" : "Affects nutrient availability",
+        recommendation: isMarathi ? "चुना किंवा गंधक वापरून सुधारणा करा" : "Amend with lime or sulfur if needed",
+      },
+      {
+        parameter: isMarathi ? "नायट्रोजन (Nitrogen)" : "Nitrogen (N)",
         value: `${nitrogen} kg/ha`,
         status: isMarathi ? "मध्यम" : "Moderate",
         impact: isMarathi ? "पिकाच्या वाढीसाठी आवश्यक" : "Essential for crop growth",
         recommendation: isMarathi ? "नायट्रोजनयुक्त खत वापरा" : "Apply nitrogen-rich fertilizer",
       },
       {
-        parameter: isMarathi ? "फॉस्फरस (P)" : "Phosphorus (P)",
+        parameter: isMarathi ? "फॉस्फरस (Phosphorus)" : "Phosphorus (P)",
         value: `${phosphorus} kg/ha`,
         status: isMarathi ? "कमी" : "Low",
         impact: isMarathi ? "मुळांच्या वाढीसाठी महत्वाचे" : "Important for root development",
         recommendation: isMarathi ? "फॉस्फरसयुक्त खत वापरा" : "Apply phosphorus-rich fertilizer",
       },
       {
-        parameter: isMarathi ? "पोटॅशियम (K)" : "Potassium (K)",
+        parameter: isMarathi ? "पोटॅशियम (Potassium)" : "Potassium (K)",
         value: `${potassium} kg/ha`,
         status: isMarathi ? "चांगले" : "Good",
         impact: isMarathi ? "पिकाच्या आरोग्यासाठी आवश्यक" : "Essential for crop health",
         recommendation: isMarathi ? "वर्तमान पातळी राखा" : "Maintain current levels",
+      },
+      {
+        parameter: isMarathi ? "सेंद्रिय कर्ब (Organic Matter)" : "Organic Matter",
+        value: "0.5 %",
+        status: isMarathi ? "कमी" : "Low",
+        impact: isMarathi ? "मातीची सुपीकता आणि पाणी धरून ठेवण्याची क्षमता" : "Soil fertility and water retention",
+        recommendation: isMarathi ? "कंपोस्ट आणि हिरवळीचे खत वापरा" : "Add compost and green manure",
       },
     ],
     fertilizerRecommendations: {
@@ -2254,6 +2270,9 @@ const buildPrompt = (
         "- Provide localized section titles inside the sectionTitles object.",
         "- Populate every array with at least one item; if data is missing, infer from typical agronomy knowledge but note assumptions.",
         "- When writing text content, ensure all quotes are escaped: use \\\" instead of \"",
+        "- CRITICAL: Extract soil parameters from the image or text. Look for: pH, Nitrogen (N), Phosphorus (P), Potassium (K), Organic Matter (OC/OM), EC, Zinc, Iron, etc.",
+        "- If values are found, put them in the nutrientAnalysis array with their exact value (e.g., \"6.5\", \"240 kg/ha\").",
+        "- If values are NOT found, do NOT return N/A. Instead, infer typical values based on the soil quality summary or mark as \"Not Available\" only if absolutely unknown.",
         "",
         "Manual soil metrics:",
         formattedManual,
@@ -2654,64 +2673,62 @@ const tryMultipleModels = async (
     }
   });
   
-  // Race all models - first success wins!
-  // Use Promise.allSettled to wait for all, but return first success
-  const results = await Promise.allSettled(modelPromises);
-  
-  // Find the first successful result
-  for (const result of results) {
-    if (result.status === 'fulfilled' && result.value.success) {
-      const winner = result.value;
-      console.log(`[SoilSathi] 🏆 Winner: ${winner.model} - returning result!`);
-      return winner.result;
-    }
-  }
-  
-  // All models failed - collect errors and create a user-friendly error
-  const errors: Array<{ model: string; error: Error; statusCode?: number }> = [];
-  for (const result of results) {
-    if (result.status === 'fulfilled' && !result.value.success) {
-      errors.push({
-        model: result.value.model,
-        error: result.value.error,
-        statusCode: result.value.statusCode
+  // Race all models - first SUCCESS wins!
+  return new Promise((resolve, reject) => {
+    let failureCount = 0;
+    const errors: Array<{ model: string; error: Error; statusCode?: number }> = [];
+
+    modelPromises.forEach(p => {
+      p.then(result => {
+        if (result.success) {
+          console.log(`[SoilSathi] 🏆 Winner: ${result.model} - returning result!`);
+          resolve(result.result as Record<string, unknown>);
+        } else {
+          failureCount++;
+          if (result.error) {
+            errors.push({
+              model: result.model,
+              error: result.error,
+              statusCode: result.statusCode
+            });
+          }
+          
+          // If all models failed, reject
+          if (failureCount === validModels.length) {
+            console.error(`[SoilSathi] ❌ All ${validModels.length} models failed:`);
+            errors.forEach(({ model, statusCode, error }) => {
+              console.error(`  - ${model}: ${statusCode || 'unknown'} - ${error.message.substring(0, 100)}`);
+            });
+
+            const all503 = errors.every(e => e.statusCode === 503);
+            const all429 = errors.every(e => e.statusCode === 429);
+            const all404 = errors.every(e => e.statusCode === 404);
+            
+            const userFriendlyError = new Error(
+              all503 
+                ? "All AI models are currently busy. Please try again in a few moments."
+                : all429
+                ? "API quota limit reached. Please wait a moment and try again."
+                : all404
+                ? "AI models are not available. Please check your configuration."
+                : "Unable to process request at this time. Please try again later."
+            ) as Error & { statusCode?: number; apiError?: unknown };
+            
+            userFriendlyError.statusCode = 500;
+            userFriendlyError.apiError = {
+              code: 500,
+              message: userFriendlyError.message,
+              status: "SERVICE_UNAVAILABLE",
+              allModelsFailed: true,
+              attemptedModels: validModels
+            };
+            
+            reject(userFriendlyError);
+          }
+        }
       });
-    }
-  }
-  
-  // Log all failures
-  console.error(`[SoilSathi] ❌ All ${validModels.length} models failed:`);
-  errors.forEach(({ model, statusCode, error }) => {
-    console.error(`  - ${model}: ${statusCode || 'unknown'} - ${error.message.substring(0, 100)}`);
+    });
   });
-  
-  // Create a user-friendly error that doesn't expose 503 status
-  // This ensures users get a helpful message instead of "service unavailable"
-  const all503 = errors.every(e => e.statusCode === 503);
-  const all429 = errors.every(e => e.statusCode === 429);
-  const all404 = errors.every(e => e.statusCode === 404);
-  
-  const userFriendlyError = new Error(
-    all503 
-      ? "All AI models are currently busy. Please try again in a few moments."
-      : all429
-      ? "API quota limit reached. Please wait a moment and try again."
-      : all404
-      ? "AI models are not available. Please check your configuration."
-      : "Unable to process request at this time. Please try again later."
-  ) as Error & { statusCode?: number; apiError?: unknown };
-  
-  // Don't expose 503 to users - return as 500 with friendly message
-  userFriendlyError.statusCode = 500;
-  userFriendlyError.apiError = {
-    code: 500,
-    message: userFriendlyError.message,
-    status: "SERVICE_UNAVAILABLE",
-    allModelsFailed: true,
-    attemptedModels: validModels
-  };
-  
-  throw userFriendlyError;
 };
 
 // Main POST handler for analyze-soil endpoint
@@ -3813,9 +3830,9 @@ const buildCropDiseasePrompt = (
   return [
     {
       text: [
-        "You are SoilSathi AI, an expert agricultural pathologist and entomologist specializing in Indian crops.",
+        "You are SoilSathi AI, an expert agricultural pathologist and entomologist with 15 years of experience in Indian farming, specializing in crop diseases, pests, and nutrient deficiencies.",
         `Respond in ${language.toUpperCase()} (the user's selected language).`,
-        "Analyze the provided crop image to identify any diseases, pests, or nutrient deficiencies.",
+        "Analyze the provided crop image to identify any diseases, pests, or nutrient deficiencies with farmer-friendly explanations.",
         "Output strictly as JSON that matches the provided schema.",
         "",
         "Context:",
@@ -3823,19 +3840,21 @@ const buildCropDiseasePrompt = (
         cropType ? `Crop type: ${cropType}` : "",
         region ? `Region: ${region}` : "",
         "",
-        "Guidelines:",
-        "- Identify the specific disease, pest, or nutrient deficiency visible in the image.",
-        "- Assess severity based on visible symptoms (low, medium, high, critical).",
-        "- Provide confidence score (0-100) based on image clarity and symptom visibility.",
-        "- List all visible symptoms clearly.",
-        "- Identify likely causes (environmental, management, or biological factors).",
-        "- Recommend both organic and chemical treatments with specific methods and timing.",
-        "- Include safety warnings for chemical treatments.",
-        "- Provide practical prevention tips to avoid recurrence.",
-        "- If multiple issues are present, focus on the most critical one but mention others.",
-        "- If image quality is poor or symptoms are unclear, indicate lower confidence and suggest clearer photos.",
-        "- Use localized crop and disease names appropriate for the region.",
-        "- Never refer to this as AI output; speak as an expert advisor.",
+        "IMPORTANT GUIDELINES FOR FARMERS:",
+        "- Identify the specific disease, pest, or nutrient deficiency visible in the image using common local names.",
+        "- Assess severity based on visible symptoms: low (minor, can wait), medium (needs attention soon), high (urgent action needed), critical (immediate treatment required).",
+        "- Provide confidence score (0-100) based on image clarity and symptom visibility. Lower confidence means you need clearer photos.",
+        "- List all visible symptoms in simple terms farmers can understand (e.g., 'yellow spots on leaves', 'wilting plants', 'holes in leaves').",
+        "- Identify likely causes: weather conditions (too much rain, drought), soil issues (nutrient deficiency, pH problems), management practices (overwatering, wrong fertilizer), or biological factors (fungus, bacteria, insects).",
+        "- Recommend BOTH organic treatments (cow urine, neem oil, organic pesticides) AND chemical treatments (with specific product names if possible).",
+        "- For each treatment, specify: exact method (spray, drench, dust), timing (morning/evening, before/after rain), frequency (how many times, how often).",
+        "- Include safety warnings for chemical treatments: waiting period before harvest, protective gear needed, environmental precautions.",
+        "- Provide practical prevention tips: crop rotation, proper spacing, timely irrigation, balanced fertilization, resistant varieties.",
+        "- If multiple issues are present, focus on the most critical one but mention others in the description.",
+        "- If image quality is poor or symptoms are unclear, indicate lower confidence and suggest what clearer photos should show.",
+        "- Use localized crop and disease names appropriate for the region (e.g., 'तांबेरा' for blight, 'किडा' for pest).",
+        "- Explain in simple terms what the disease/pest does to the crop and why it's happening.",
+        "- Never refer to this as AI output; speak as an experienced farming advisor.",
       ]
         .filter(Boolean)
         .join("\n"),
@@ -3924,15 +3943,15 @@ app.post("/api/identify-disease", async (req, res) => {
       console.log("[SoilSathi] Calling Gemini API for disease identification...");
     }
 
-    // Optimized timeout for image analysis (45 seconds, reduced from 90s)
-    const payload = await generateJsonResponse<Record<string, unknown>>({
-      model: MODEL_NAME,
+    // Use parallel model execution with fallbacks for reliability
+    const payload = await tryMultipleModels(
+      FALLBACK_MODELS,
       parts,
-      schema: cropDiseaseSchema,
-      timeoutMs: 30000, // 30 seconds for image analysis (optimized for faster responses)
-      useCache: false, // Disable cache for image requests
-      maxOutputTokens: 2048, // Limit tokens for faster generation
-    });
+      cropDiseaseSchema,
+      30000, // 30 seconds base timeout for image analysis
+      2048, // Limit tokens for faster generation
+      false // Disable cache for image requests
+    ) as Record<string, unknown>;
 
     if (isDev) {
       console.log("[SoilSathi] ✅ Disease identification completed successfully");
@@ -4079,28 +4098,28 @@ const buildWeatherAlertsPrompt = (
 
   // Build prompt parts safely
   const promptParts: string[] = [
-    "You are SoilSathi AI, an expert agricultural advisor specializing in weather-based farming recommendations for Indian farmers.",
+    "You are SoilSathi AI, an expert agricultural meteorologist with 15 years of experience helping Indian farmers make weather-based decisions.",
     `Respond in ${validLanguage.toUpperCase()} (the user's selected language).`,
-    "Analyze the provided weather data and generate personalized farming alerts and recommendations.",
+    "Analyze the provided weather data and generate personalized, actionable farming alerts and recommendations.",
     "Output strictly as JSON that matches the provided schema.",
     "",
-    "Weather Data:",
+    "Current Weather Conditions:",
     `Temperature: ${weatherData.temperature ?? 0}°C`,
     `Humidity: ${weatherData.humidity ?? 0}%`,
   ];
 
   if (weatherData.precipitation !== undefined && weatherData.precipitation !== null) {
-    promptParts.push(`Precipitation: ${weatherData.precipitation}mm`);
+    promptParts.push(`Rainfall: ${weatherData.precipitation}mm`);
   }
 
   if (weatherData.windSpeed !== undefined && weatherData.windSpeed !== null) {
     promptParts.push(`Wind Speed: ${weatherData.windSpeed} km/h`);
   }
 
-  promptParts.push(`Condition: ${weatherData.condition || "Unknown"}`);
+  promptParts.push(`Weather Condition: ${weatherData.condition || "Unknown"}`);
 
   if (weatherData.forecast) {
-    promptParts.push(`Forecast: ${weatherData.forecast}`);
+    promptParts.push(`Weather Forecast: ${weatherData.forecast}`);
   }
 
   promptParts.push("");
@@ -4110,19 +4129,39 @@ const buildWeatherAlertsPrompt = (
   }
 
   if (cropStage) {
-    promptParts.push(`Crop Stage: ${cropStage}`);
+    promptParts.push(`Crop Growth Stage: ${cropStage}`);
   }
 
   promptParts.push(
     "",
-    "Guidelines:",
-    "- Generate 2-4 relevant alerts based on weather conditions and crop context.",
-    "- Alert types: irrigation, spraying, harvest, sowing, fertilizer, general",
-    "- Severity levels: info (informational), warning (action needed), critical (urgent action)",
-    "- Provide actionable recommendations for each alert.",
-    "- Consider Indian farming practices and regional conditions.",
-    "- Use localized terminology appropriate for the region.",
-    "- Never refer to this as AI output; speak as an expert advisor."
+    "IMPORTANT GUIDELINES FOR FARMERS:",
+    "- Generate 3-5 relevant, actionable alerts based on weather conditions and crop context.",
+    "- Alert types: irrigation (when to water, when to stop), spraying (pesticide/fertilizer application timing), harvest (best time to harvest), sowing (when to plant), fertilizer (when to apply), general (other weather-related advice).",
+    "- Severity levels:",
+    "  * info = Informational (good to know, no immediate action)",
+    "  * warning = Action needed soon (within 1-2 days)",
+    "  * critical = Urgent action required (today or tomorrow)",
+    "- For each alert, provide specific, actionable recommendations:",
+    "  * What to do (e.g., 'Reduce irrigation by 30%', 'Apply fungicide before rain')",
+    "  * When to do it (e.g., 'Today morning before 10 AM', 'Wait until rain stops')",
+    "  * Why it's important (e.g., 'Prevents waterlogging', 'Avoids disease spread')",
+    "- Consider Indian farming practices:",
+    "  * Monsoon season: focus on drainage, disease prevention, delayed irrigation",
+    "  * Summer: focus on irrigation timing, heat stress, water conservation",
+    "  * Winter: focus on frost protection, reduced irrigation, crop protection",
+    "- Consider crop-specific needs:",
+    "  * Rice: needs standing water, sensitive to drought",
+    "  * Wheat: needs moderate water, sensitive to waterlogging",
+    "  * Vegetables: need regular irrigation, sensitive to extreme temperatures",
+    "  * Cotton: needs good drainage, sensitive to excess moisture",
+    "- Consider growth stage:",
+    "  * Sowing: needs good soil moisture, avoid heavy rain",
+    "  * Vegetative: needs regular irrigation, watch for disease",
+    "  * Flowering: critical stage, needs careful water management",
+    "  * Harvest: needs dry weather, avoid rain during harvest",
+    "- Use localized terminology appropriate for the region (e.g., 'सिंचन' for irrigation, 'खत' for fertilizer).",
+    "- Explain weather impact in simple terms farmers understand.",
+    "- Never refer to this as AI output; speak as an experienced farming advisor."
   );
 
   return [
@@ -4171,16 +4210,26 @@ app.post("/api/weather-alerts", async (req, res) => {
       });
     }
 
-    // In a real implementation, you would fetch weather data from OpenWeatherMap API
-    // For now, we'll use mock data structure - replace with actual API call
-    // Ensure all values are properly defined to avoid undefined errors
+    // Generate realistic weather data based on region and season
+    // In production, integrate with OpenWeatherMap API or Indian Meteorological Department API
+    // For now, use AI to generate contextually appropriate weather data
+    const currentMonth = new Date().getMonth() + 1; // 1-12
+    const isMonsoon = currentMonth >= 6 && currentMonth <= 9; // June-September
+    const isWinter = currentMonth >= 11 || currentMonth <= 2; // Nov-Feb
+    const isSummer = currentMonth >= 3 && currentMonth <= 5; // Mar-May
+    
+    // Generate realistic weather based on Indian climate patterns
     const weatherData = {
-      temperature: 28,
-      humidity: 65,
-      precipitation: 0,
-      windSpeed: 15,
-      condition: "Partly Cloudy",
-      forecast: "Clear skies expected for next 3 days",
+      temperature: isWinter ? 20 + Math.floor(Math.random() * 10) : isSummer ? 35 + Math.floor(Math.random() * 8) : 28 + Math.floor(Math.random() * 6),
+      humidity: isMonsoon ? 75 + Math.floor(Math.random() * 15) : isSummer ? 40 + Math.floor(Math.random() * 20) : 55 + Math.floor(Math.random() * 15),
+      precipitation: isMonsoon ? Math.floor(Math.random() * 50) : isWinter ? Math.floor(Math.random() * 10) : 0,
+      windSpeed: 10 + Math.floor(Math.random() * 15),
+      condition: isMonsoon ? "Cloudy with Rain" : isSummer ? "Clear and Hot" : isWinter ? "Partly Cloudy" : "Clear",
+      forecast: isMonsoon 
+        ? "Heavy rainfall expected in next 2-3 days. Avoid field work during heavy rain."
+        : isSummer
+        ? "Hot and dry conditions expected. Ensure adequate irrigation."
+        : "Moderate weather conditions expected for next 3-4 days.",
     };
 
     // Validate weather data before building prompt
@@ -4207,15 +4256,15 @@ app.post("/api/weather-alerts", async (req, res) => {
       console.log("[SoilSathi] Calling Gemini API for weather alerts...");
     }
 
-    // Optimized timeout: 30 seconds (reduced from default 60s)
-    const payload = await generateJsonResponse<Record<string, unknown>>({
-      model: MODEL_NAME,
+    // Use parallel model execution with fallbacks for reliability
+    const payload = await tryMultipleModels(
+      FALLBACK_MODELS,
       parts,
-      schema: weatherAlertSchema,
-      timeoutMs: 15000, // 15 seconds - optimized for faster response
-      useCache: true, // Enable caching for same requests
-      maxOutputTokens: 1024, // Limit tokens for faster generation
-    });
+      weatherAlertSchema,
+      15000, // 15 seconds base timeout - optimized for faster response
+      1024, // Limit tokens for faster generation
+      true // Enable caching for same requests
+    ) as Record<string, unknown>;
 
     if (isDev) {
       console.log("[SoilSathi] ✅ Weather alerts generated successfully");
@@ -4310,9 +4359,9 @@ const buildCropGrowthPrompt = (
   return [
     {
       text: [
-        "You are SoilSathi AI, an expert agronomist specializing in crop growth monitoring and yield prediction for Indian farmers.",
+        "You are SoilSathi AI, an expert agronomist with 15 years of experience in crop growth monitoring and yield prediction for Indian farmers.",
         `Respond in ${language.toUpperCase()} (the user's selected language).`,
-        "Analyze the provided crop image to determine growth stage, health status, and provide yield predictions.",
+        "Analyze the provided crop image to determine growth stage, health status, and provide realistic yield predictions with farmer-friendly explanations.",
         "Output strictly as JSON that matches the provided schema.",
         "",
         "Context:",
@@ -4321,16 +4370,42 @@ const buildCropGrowthPrompt = (
         region ? `Region: ${region}` : "",
         previousGrowthStage ? `Previous growth stage: ${previousGrowthStage}` : "",
         "",
-        "Guidelines:",
-        "- Identify the current growth stage (e.g., seedling, vegetative, flowering, fruiting, maturity).",
-        "- Provide confidence score (0-100) for growth stage identification.",
-        "- Assess crop health score (0-100) based on visual indicators.",
-        "- List key observations visible in the image.",
-        "- Provide detailed AI analysis of crop condition.",
-        "- If possible, predict yield based on current growth stage and health.",
-        "- Consider regional and seasonal factors.",
+        "IMPORTANT GUIDELINES FOR FARMERS:",
+        "- Identify the current growth stage using common terms farmers understand:",
+        "  * Seedling/सुरुवातीची वाढ = Just planted, small plants",
+        "  * Vegetative/वनस्पती वाढ = Active leaf and stem growth",
+        "  * Flowering/फुलणे = Flowers appearing",
+        "  * Fruiting/फळ येणे = Fruits/grains forming",
+        "  * Maturity/पिकणे = Ready for harvest",
+        "- Provide confidence score (0-100) for growth stage identification. Lower confidence means you need clearer photos or more context.",
+        "- Assess crop health score (0-100) based on visual indicators:",
+        "  * 80-100 = Excellent (healthy, green, no issues)",
+        "  * 60-79 = Good (minor issues, manageable)",
+        "  * 40-59 = Fair (needs attention, some problems visible)",
+        "  * 0-39 = Poor (serious issues, immediate action needed)",
+        "- List key observations in simple terms:",
+        "  * Plant color (green, yellow, brown)",
+        "  * Leaf condition (healthy, wilting, spots, holes)",
+        "  * Plant size and density",
+        "  * Signs of disease, pests, or nutrient deficiency",
+        "  * Overall crop appearance",
+        "- Provide detailed analysis explaining:",
+        "  * What stage the crop is in and what to expect next",
+        "  * What's good about the crop condition",
+        "  * What problems are visible and why they might be happening",
+        "  * What actions the farmer should take",
+        "- If possible, predict yield based on:",
+        "  * Current growth stage and health",
+        "  * Typical yields for this crop in this region",
+        "  * Visible factors affecting yield (plant density, health, stage)",
+        "  * Provide realistic estimates in common units (quintals/acre, kg/hectare)",
+        "  * Mention confidence level and factors affecting prediction",
+        "- Consider regional and seasonal factors:",
+        "  * Monsoon season: higher disease risk, need for drainage",
+        "  * Summer: heat stress, irrigation needs",
+        "  * Winter: frost risk, slower growth",
         "- Use localized terminology appropriate for the region.",
-        "- Never refer to this as AI output; speak as an expert advisor.",
+        "- Never refer to this as AI output; speak as an experienced farming advisor.",
       ]
         .filter(Boolean)
         .join("\n"),
@@ -4391,14 +4466,15 @@ app.post("/api/analyze-growth", async (req, res) => {
     };
     parts.push(imagePart);
 
-    const payload = await generateJsonResponse<Record<string, unknown>>({
-      model: MODEL_NAME,
+    // Use parallel model execution with fallbacks for reliability
+    const payload = await tryMultipleModels(
+      FALLBACK_MODELS,
       parts,
-      schema: cropGrowthSchema,
-      timeoutMs: 30000, // Optimized timeout: 30 seconds for faster responses
-      useCache: false, // Disable cache for image requests
-      maxOutputTokens: 2048, // Limit tokens for faster generation
-    });
+      cropGrowthSchema,
+      30000, // 30 seconds base timeout for image analysis
+      2048, // Limit tokens for faster generation
+      false // Disable cache for image requests
+    ) as Record<string, unknown>;
 
     res.json(payload);
   } catch (error) {
@@ -4505,9 +4581,9 @@ const buildMarketPricesPrompt = (
   return [
     {
       text: [
-        "You are SoilSathi AI, an expert agricultural market analyst specializing in Indian crop markets and price trends.",
+        "You are SoilSathi AI, an expert agricultural market analyst with 15 years of experience in Indian crop markets (APMC, eMandi, local mandis) and price trends.",
         `Respond in ${language.toUpperCase()} (the user's selected language).`,
-        "Analyze market prices and provide price predictions, best selling times, and regional comparisons.",
+        "Analyze market prices and provide realistic price predictions, best selling times, and regional comparisons with farmer-friendly explanations.",
         "Output strictly as JSON that matches the provided schema.",
         "",
         "Context:",
@@ -4515,15 +4591,42 @@ const buildMarketPricesPrompt = (
         region ? `Region: ${region}` : "",
         `Prediction period: ${days} days`,
         "",
-        "Guidelines:",
-        "- Provide realistic current market prices based on typical Indian agricultural markets (APMC/eMandi).",
-        "- Generate price history for the last 30 days with realistic fluctuations.",
-        "- Predict prices for the next 7-30 days based on seasonal trends and market patterns.",
-        "- Recommend the best time to sell based on predicted price trends.",
-        "- Compare prices across different regional markets (at least 3-4 markets).",
-        "- Include factors affecting price predictions (season, demand, supply, weather, etc.).",
-        "- Use localized market names and units (quintal, kg, etc.).",
-        "- Never refer to this as AI output; speak as an expert market analyst.",
+        "IMPORTANT GUIDELINES FOR FARMERS:",
+        "- Provide realistic current market prices based on typical Indian agricultural markets:",
+        "  * APMC (Agricultural Produce Market Committee) prices",
+        "  * eMandi (electronic mandi) prices",
+        "  * Local mandi prices",
+        "  * Use common units: quintal (100 kg), kg, or per unit as appropriate",
+        "- Generate price history for the last 30 days showing:",
+        "  * Realistic daily/weekly fluctuations (typically ±2-5% per week)",
+        "  * Seasonal patterns (higher during festivals, lower during harvest)",
+        "  * Market trends (increasing, decreasing, stable)",
+        "- Predict prices for the next 7-30 days considering:",
+        "  * Seasonal trends (festival demand, harvest season, off-season)",
+        "  * Supply and demand patterns",
+        "  * Weather impact on supply",
+        "  * Government policies and MSP (Minimum Support Price) if applicable",
+        "  * Export/import trends",
+        "- Recommend the best time to sell with clear reasoning:",
+        "  * Specific date or date range",
+        "  * Expected price at that time",
+        "  * Why that time is best (peak demand, low supply, festival season, etc.)",
+        "  * What to watch for (market signals, weather, government announcements)",
+        "- Compare prices across different regional markets (at least 3-4 markets):",
+        "  * Include market names (e.g., 'Pune APMC', 'Nashik Mandi', 'Mumbai Market')",
+        "  * Show price differences",
+        "  * Mention distance/transportation costs if significant",
+        "  * Suggest which market might be best for this farmer",
+        "- Include factors affecting price predictions:",
+        "  * Season (Kharif, Rabi, Zaid)",
+        "  * Demand (festival season, export demand, domestic consumption)",
+        "  * Supply (harvest season, crop condition, yield)",
+        "  * Weather (drought, floods affecting supply)",
+        "  * Government policies (MSP, export restrictions, subsidies)",
+        "  * Market sentiment and trends",
+        "- Use localized market names and units appropriate for the region.",
+        "- Explain price trends in simple terms farmers understand.",
+        "- Never refer to this as AI output; speak as an experienced market analyst.",
       ]
         .filter(Boolean)
         .join("\n"),
@@ -4561,13 +4664,15 @@ app.get("/api/market-prices", async (req, res) => {
   try {
     const parts = buildMarketPricesPrompt(language, cropName, region, days);
 
-    const payload = await generateJsonResponse<Record<string, unknown>>({
-      model: MODEL_NAME,
+    // Use parallel model execution with fallbacks for reliability
+    const payload = await tryMultipleModels(
+      FALLBACK_MODELS,
       parts,
-      schema: marketPricesSchema,
-      timeoutMs: 15000, // 15 seconds - optimized for faster response
-      maxOutputTokens: 1024, // Limit tokens for faster generation
-    });
+      marketPricesSchema,
+      15000, // 15 seconds base timeout - optimized for faster response
+      1024, // Limit tokens for faster generation
+      true // Enable caching for similar requests
+    ) as Record<string, unknown>;
 
     res.json(payload);
   } catch (error) {
@@ -4647,28 +4752,65 @@ const buildIrrigationSchedulePrompt = (
   return [
     {
       text: [
-        "You are SoilSathi AI, an expert irrigation specialist for Indian agriculture.",
+        "You are SoilSathi AI, an expert irrigation specialist with 15 years of experience in Indian agriculture, specializing in water-efficient farming practices.",
         `Respond in ${language.toUpperCase()} (the user's selected language).`,
-        "Generate an optimal irrigation schedule based on crop requirements, weather patterns, and water conservation principles.",
+        "Generate an optimal, practical irrigation schedule based on crop requirements, weather patterns, and water conservation principles with clear farmer-friendly instructions.",
         "Output strictly as JSON that matches the provided schema.",
         "",
         "Context:",
         `Crop name: ${cropName}`,
         `Region: ${region}`,
         `Farm size: ${farmSize.value} ${farmSize.unit}`,
-        irrigationMethod ? `Irrigation method: ${irrigationMethod}` : "",
-        soilMoisture !== undefined ? `Current soil moisture: ${soilMoisture}%` : "",
+        irrigationMethod ? `Irrigation method: ${irrigationMethod} (e.g., drip, sprinkler, flood, manual)` : "Irrigation method: Not specified",
+        soilMoisture !== undefined ? `Current soil moisture: ${soilMoisture}%` : "Current soil moisture: Not measured",
         "",
-        "Guidelines:",
-        "- Generate irrigation schedule for the next 30 days.",
-        "- Consider crop water requirements, growth stage, and regional weather patterns.",
-        "- Adjust schedule based on soil moisture levels if provided.",
-        "- Include weather-based adjustments when rainfall is expected.",
-        "- Provide water usage optimization tips.",
-        "- Use appropriate units (liters, mm, hours) based on irrigation method.",
-        "- Consider Indian farming practices and regional water availability.",
-        "- Use localized terminology appropriate for the region.",
-        "- Never refer to this as AI output; speak as an expert advisor.",
+        "IMPORTANT GUIDELINES FOR FARMERS:",
+        "- Generate irrigation schedule for the next 30 days with specific dates and times.",
+        "- For each irrigation event, specify:",
+        "  * Date (specific day)",
+        "  * Duration (how long to irrigate: hours for flood, minutes for drip/sprinkler)",
+        "  * Amount (water quantity: liters/hectare, mm, or hours based on method)",
+        "  * Method (drip, sprinkler, flood, manual watering)",
+        "  * Notes (why this timing, what to watch for, special instructions)",
+        "- Consider crop-specific water needs:",
+        "  * Rice: needs standing water, frequent irrigation",
+        "  * Wheat: moderate water, avoid waterlogging",
+        "  * Vegetables: regular, consistent irrigation",
+        "  * Cotton: needs good drainage, avoid excess water",
+        "  * Sugarcane: high water requirement, regular irrigation",
+        "- Consider growth stage:",
+        "  * Sowing/Planting: needs good soil moisture for germination",
+        "  * Vegetative: regular irrigation for growth",
+        "  * Flowering: critical stage, needs careful water management",
+        "  * Fruiting/Grain filling: adequate water for yield",
+        "  * Maturity: reduce irrigation before harvest",
+        "- Adjust schedule based on soil moisture levels:",
+        "  * If soil moisture < 30%: urgent irrigation needed",
+        "  * If soil moisture 30-50%: schedule irrigation soon",
+        "  * If soil moisture 50-70%: optimal, maintain",
+        "  * If soil moisture > 70%: reduce or skip irrigation",
+        "- Include weather-based adjustments:",
+        "  * If rain expected: reduce or skip irrigation",
+        "  * If hot/dry weather: increase frequency",
+        "  * If monsoon: focus on drainage, reduce irrigation",
+        "  * If winter: reduce frequency, avoid early morning (frost risk)",
+        "- Provide water usage optimization tips:",
+        "  * Best time to irrigate (early morning or evening to reduce evaporation)",
+        "  * Water-saving techniques (mulching, drip irrigation, proper scheduling)",
+        "  * Signs of over-irrigation (waterlogging, disease, nutrient leaching)",
+        "  * Signs of under-irrigation (wilting, stunted growth, yield loss)",
+        "- Use appropriate units based on irrigation method:",
+        "  * Drip/Sprinkler: liters per plant, mm per application",
+        "  * Flood: hours of irrigation, depth in cm",
+        "  * Manual: buckets/containers per plant",
+        "- Consider Indian farming practices:",
+        "  * Monsoon season: reduce irrigation, focus on drainage",
+        "  * Summer: increase frequency, early morning/evening timing",
+        "  * Winter: reduce frequency, avoid frost timing",
+        "  * Regional water availability (groundwater, canal, rainfed)",
+        "- Use localized terminology appropriate for the region (e.g., 'सिंचन' for irrigation, 'पाणी' for water).",
+        "- Explain irrigation timing and amounts in simple terms farmers understand.",
+        "- Never refer to this as AI output; speak as an experienced irrigation advisor.",
       ]
         .filter(Boolean)
         .join("\n"),
@@ -4712,13 +4854,15 @@ app.post("/api/irrigation-schedule", async (req, res) => {
       soilMoisture
     );
 
-    const payload = await generateJsonResponse<Record<string, unknown>>({
-      model: MODEL_NAME,
+    // Use parallel model execution with fallbacks for reliability
+    const payload = await tryMultipleModels(
+      FALLBACK_MODELS,
       parts,
-      schema: irrigationScheduleSchema,
-      timeoutMs: 20000, // 20 seconds - optimized for faster response
-      maxOutputTokens: 1536, // Limit tokens for faster generation
-    });
+      irrigationScheduleSchema,
+      20000, // 20 seconds base timeout - optimized for faster response
+      1536, // Limit tokens for faster generation
+      true // Enable caching for similar requests
+    ) as Record<string, unknown>;
 
     res.json(payload);
   } catch (error) {
@@ -4785,9 +4929,9 @@ const buildFarmingCalendarPrompt = (
   return [
     {
       text: [
-        "You are SoilSathi AI, an expert agricultural planner specializing in Indian farming calendars.",
+        "You are SoilSathi AI, an expert agricultural planner with 15 years of experience specializing in Indian farming calendars and crop management schedules.",
         `Respond in ${language.toUpperCase()} (the user's selected language).`,
-        "Generate a comprehensive farming calendar with tasks, priorities, and timing based on crop requirements and regional conditions.",
+        "Generate a comprehensive, practical farming calendar with tasks, priorities, and timing based on crop requirements and regional conditions with clear farmer-friendly instructions.",
         "Output strictly as JSON that matches the provided schema.",
         "",
         "Context:",
@@ -4795,17 +4939,54 @@ const buildFarmingCalendarPrompt = (
         cropType ? `Crop type: ${cropType}` : "",
         `Region: ${region}`,
         startDate ? `Start date: ${startDate}` : "Start from current date",
-        `Duration: ${duration} days`,
+        `Duration: ${duration} days (approximately ${Math.round(duration / 30)} months)`,
         "",
-        "Guidelines:",
-        "- Generate farming tasks for the specified duration covering all crop stages.",
-        "- Task types: sowing, irrigation, fertilizer, pest_control, harvest, soil_test, other",
-        "- Priority levels: low, medium, high, critical",
-        "- Schedule tasks at appropriate times based on crop growth stages and regional weather patterns.",
-        "- Include soil testing, fertilizer application, pest control, and irrigation tasks.",
-        "- Consider Indian farming seasons (Kharif, Rabi) and regional variations.",
+        "IMPORTANT GUIDELINES FOR FARMERS:",
+        "- Generate farming tasks for the specified duration covering ALL crop stages from sowing to harvest.",
+        "- Task types and what they mean:",
+        "  * sowing = Planting seeds or seedlings",
+        "  * irrigation = Watering the crop",
+        "  * fertilizer = Applying fertilizers (chemical or organic)",
+        "  * pest_control = Managing pests, diseases, and weeds",
+        "  * harvest = Harvesting the crop",
+        "  * soil_test = Testing soil for nutrients and pH",
+        "  * other = Other important tasks (land preparation, weeding, etc.)",
+        "- Priority levels and when to use them:",
+        "  * critical = Must do on time, crop will be affected if missed (e.g., sowing window, critical irrigation)",
+        "  * high = Very important, should be done on schedule (e.g., fertilizer application, pest control)",
+        "  * medium = Important but some flexibility allowed (e.g., regular irrigation, weeding)",
+        "  * low = Can be done when convenient (e.g., general maintenance, optional tasks)",
+        "- For each task, provide:",
+        "  * Title: Clear, simple task name (e.g., 'Apply Nitrogen Fertilizer', 'First Irrigation', 'Harvest Ready')",
+        "  * Description: Detailed instructions on what to do, how to do it, and why it's important",
+        "  * Scheduled Date: Specific date or date range when task should be done",
+        "  * Priority: How urgent/important the task is",
+        "- Schedule tasks based on crop growth stages:",
+        "  * Pre-sowing: Land preparation, soil testing, seed treatment",
+        "  * Sowing: Planting at optimal time",
+        "  * Early growth: First irrigation, thinning, early fertilizer",
+        "  * Vegetative: Regular irrigation, fertilizer application, pest monitoring",
+        "  * Flowering: Critical irrigation, fertilizer, pest control",
+        "  * Fruiting/Grain filling: Adequate water, final fertilizer, pest control",
+        "  * Maturity: Reduce irrigation, prepare for harvest",
+        "  * Harvest: Optimal harvest time, post-harvest tasks",
+        "- Consider regional weather patterns:",
+        "  * Monsoon season: Schedule around rain, avoid field work during heavy rain",
+        "  * Summer: Early morning/evening tasks, increase irrigation frequency",
+        "  * Winter: Avoid early morning (frost), reduce irrigation",
+        "- Include essential tasks:",
+        "  * Soil testing: Before sowing and during crop growth (every 2-3 months)",
+        "  * Fertilizer application: Based on crop stage and soil test results",
+        "  * Pest control: Regular monitoring and timely treatment",
+        "  * Irrigation: Regular schedule based on crop needs and weather",
+        "  * Weeding: Regular removal of weeds",
+        "- Consider Indian farming seasons:",
+        "  * Kharif (monsoon): June-October, crops like rice, cotton, soybean",
+        "  * Rabi (winter): October-March, crops like wheat, mustard, gram",
+        "  * Zaid (summer): March-June, short-duration crops",
         "- Use localized terminology and dates appropriate for the region.",
-        "- Never refer to this as AI output; speak as an expert advisor.",
+        "- Explain each task in simple terms farmers understand.",
+        "- Never refer to this as AI output; speak as an experienced farming advisor.",
       ]
         .filter(Boolean)
         .join("\n"),
@@ -4847,13 +5028,15 @@ app.post("/api/farming-calendar", async (req, res) => {
       duration
     );
 
-    const payload = await generateJsonResponse<Record<string, unknown>>({
-      model: MODEL_NAME,
+    // Use parallel model execution with fallbacks for reliability
+    const payload = await tryMultipleModels(
+      FALLBACK_MODELS,
       parts,
-      schema: farmingCalendarSchema,
-      timeoutMs: 20000, // 20 seconds - optimized for faster response
-      maxOutputTokens: 1536, // Limit tokens for faster generation
-    });
+      farmingCalendarSchema,
+      20000, // 20 seconds base timeout - optimized for faster response
+      1536, // Limit tokens for faster generation
+      true // Enable caching for similar requests
+    ) as Record<string, unknown>;
 
     res.json(payload);
   } catch (error) {
@@ -4918,9 +5101,9 @@ const buildFertilizerCostPrompt = (
   return [
     {
       text: [
-        "You are SoilSathi AI, an expert agricultural cost analyst specializing in fertilizer optimization for Indian farmers.",
+        "You are SoilSathi AI, an expert agricultural economist with 15 years of experience specializing in fertilizer cost optimization for Indian farmers.",
         `Respond in ${language.toUpperCase()} (the user's selected language).`,
-        "Analyze fertilizer costs and provide optimization recommendations to reduce expenses while maintaining crop health.",
+        "Analyze fertilizer costs and provide practical, actionable cost optimization recommendations with clear explanations.",
         "Output strictly as JSON that matches the provided schema.",
         "",
         "Context:",
@@ -4928,18 +5111,29 @@ const buildFertilizerCostPrompt = (
         `Region: ${region}`,
         `Farm size: ${farmSize.value} ${farmSize.unit}`,
         "",
-        "Fertilizers:",
+        "Fertilizers Planned:",
         fertilizerList,
         "",
-        "Guidelines:",
-        "- Calculate total cost based on provided fertilizer prices.",
-        "- Suggest optimized cost by recommending cheaper alternatives, bulk purchases, or organic substitutes.",
-        "- Calculate potential savings from optimization.",
-        "- Provide practical recommendations for cost reduction.",
-        "- Consider regional price variations and seasonal discounts.",
-        "- Suggest organic alternatives that can reduce costs.",
-        "- Use localized terminology and currency (₹).",
-        "- Never refer to this as AI output; speak as an expert advisor.",
+        "IMPORTANT GUIDELINES FOR FARMERS:",
+        "- Calculate total cost based on provided quantities and prices:",
+        "  * Sum up all fertilizer costs",
+        "  * Include any additional costs (transportation, application, etc.) if significant",
+        "  * Show cost per acre/hectare for easy comparison",
+        "- Suggest optimized cost by recommending:",
+        "  * Better alternatives: Organic options (compost, farmyard manure), government-subsidized fertilizers, bulk purchasing, local alternatives",
+        "  * Better timing: Split applications, apply during subsidy periods, seasonal price variations",
+        "  * Better quantities: Right amount based on soil test, balanced NPK ratio, crop stage-specific requirements",
+        "- Calculate potential savings: Show exact amount saved (in ₹), percentage saved, savings per acre/hectare",
+        "- Provide practical, actionable recommendations:",
+        "  * Specific alternatives to use (e.g., 'Use 2 tons of compost instead of 100 kg DAP')",
+        "  * Where to buy (e.g., 'Government cooperative', 'Local supplier', 'Online')",
+        "  * When to buy (e.g., 'Buy before monsoon for better prices')",
+        "  * How to apply (e.g., 'Split into 3 applications', 'Mix with organic matter')",
+        "  * Cost-saving tips (e.g., 'Buy in bulk', 'Use government subsidies', 'Make your own compost')",
+        "- Consider regional factors: Price variations, availability, transportation costs, government schemes, local organic alternatives",
+        "- Use localized terminology appropriate for the region (e.g., 'खत' for fertilizer, 'रुपये' for rupees).",
+        "- Explain cost calculations and recommendations in simple terms farmers understand.",
+        "- Never refer to this as AI output; speak as an experienced agricultural economist.",
       ]
         .filter(Boolean)
         .join("\n"),
@@ -4974,13 +5168,15 @@ app.post("/api/fertilizer-cost", async (req, res) => {
   try {
     const parts = buildFertilizerCostPrompt(language, cropName, region, farmSize, fertilizers);
 
-    const payload = await generateJsonResponse<Record<string, unknown>>({
-      model: MODEL_NAME,
+    // Use parallel model execution with fallbacks for reliability
+    const payload = await tryMultipleModels(
+      FALLBACK_MODELS,
       parts,
-      schema: fertilizerCostSchema,
-      timeoutMs: 20000, // 20 seconds - optimized for faster response
-      maxOutputTokens: 1536, // Limit tokens for faster generation
-    });
+      fertilizerCostSchema,
+      20000, // 20 seconds base timeout - optimized for faster response
+      1536, // Limit tokens for faster generation
+      true // Enable caching for similar requests
+    ) as Record<string, unknown>;
 
     res.json(payload);
   } catch (error) {
@@ -5044,9 +5240,9 @@ const buildSoilHealthPredictionPrompt = (
   return [
     {
       text: [
-        "You are SoilSathi AI, an expert soil scientist specializing in soil health prediction and forecasting for Indian agriculture.",
+        "You are SoilSathi AI, an expert soil scientist with 15 years of experience in soil health prediction and forecasting for Indian agriculture.",
         `Respond in ${language.toUpperCase()} (the user's selected language).`,
-        "Predict future soil health based on current conditions, regional patterns, and agricultural practices.",
+        "Predict future soil health based on current conditions, regional patterns, and agricultural practices with farmer-friendly explanations and actionable recommendations.",
         "Output strictly as JSON that matches the provided schema.",
         "",
         "Context:",
@@ -5057,20 +5253,241 @@ const buildSoilHealthPredictionPrompt = (
         "Current Soil Data:",
         soilDataStr,
         "",
-        "Guidelines:",
-        "- Predict soil health score (0-100) for the forecast period.",
-        "- Predict key soil parameters (pH, N, P, K, organic matter, etc.) based on trends.",
-        "- Identify potential risk alerts (e.g., salinity increase, nutrient depletion, pH changes).",
-        "- Provide actionable recommendations to maintain or improve soil health.",
-        "- Consider regional climate patterns, farming practices, and seasonal variations.",
-        "- Use localized terminology appropriate for the region.",
-        "- Never refer to this as AI output; speak as an expert advisor.",
+        "IMPORTANT GUIDELINES FOR FARMERS:",
+        "- Predict soil health score (0-100) for the forecast period:",
+        "  * 80-100 = Excellent (very fertile, ideal for most crops)",
+        "  * 60-79 = Good (fertile, suitable for most crops with minor adjustments)",
+        "  * 40-59 = Fair (needs improvement, some limitations)",
+        "  * 0-39 = Poor (serious issues, major improvements needed)",
+        "- Predict key soil parameters based on current data and trends:",
+        "  * pH (acidity/alkalinity): typically 6.5-7.5 is ideal",
+        "  * Nitrogen (N): essential for plant growth, typically 200-400 kg/ha",
+        "  * Phosphorus (P): important for root development, typically 10-25 kg/ha",
+        "  * Potassium (K): important for overall health, typically 150-300 kg/ha",
+        "  * Organic Matter (OC/OM): improves soil structure, typically 0.5-2%",
+        "  * Other micronutrients (Zinc, Iron, etc.) if data available",
+        "- Identify potential risk alerts with clear explanations:",
+        "  * Salinity increase: salt buildup making soil unsuitable (common in dry regions)",
+        "  * Nutrient depletion: nutrients being used up faster than replaced",
+        "  * pH changes: becoming too acidic or too alkaline",
+        "  * Organic matter decline: soil becoming less fertile",
+        "  * Compaction: soil becoming hard, affecting root growth",
+        "  * Erosion: topsoil being lost (common in hilly areas)",
+        "- For each risk, explain:",
+        "  * What the risk is in simple terms",
+        "  * Why it's happening (causes)",
+        "  * What problems it will cause",
+        "  * When it might become critical",
+        "- Provide actionable recommendations to maintain or improve soil health:",
+        "  * Specific actions (e.g., 'Apply 2 tons of compost per acre', 'Reduce chemical fertilizer by 20%')",
+        "  * Timing (when to do it)",
+        "  * Methods (how to do it)",
+        "  * Expected results (what improvement to expect)",
+        "- Consider regional factors:",
+        "  * Climate patterns (monsoon, summer, winter)",
+        "  * Soil type (clay, sandy, loamy)",
+        "  * Farming practices (organic, conventional, mixed)",
+        "  * Water availability (irrigated, rainfed)",
+        "  * Crop rotation patterns",
+        "- Consider seasonal variations:",
+        "  * Monsoon: leaching of nutrients, waterlogging risk",
+        "  * Summer: evaporation, salt buildup",
+        "  * Winter: slower decomposition, nutrient availability",
+        "- Use localized terminology appropriate for the region (e.g., 'माती' for soil, 'खत' for fertilizer).",
+        "- Explain predictions and recommendations in simple terms farmers understand.",
+        "- Never refer to this as AI output; speak as an experienced soil advisor.",
       ]
         .filter(Boolean)
         .join("\n"),
     },
   ];
 };
+
+// Sensor Data API Endpoint
+const sensorDataRequestSchema = z.object({
+  language: languageSchema.optional(),
+  sensorData: z.object({
+    sessionId: z.string(),
+    startTime: z.string(),
+    endTime: z.string().optional(),
+    location: z.object({
+      latitude: z.number(),
+      longitude: z.number(),
+      address: z.string().optional(),
+    }),
+    readings: z.array(
+      z.object({
+        sensorId: z.string(),
+        sensorType: z.string(),
+        value: z.number(),
+        unit: z.string(),
+        timestamp: z.string(),
+        depth: z.number().optional(),
+        quality: z.enum(["good", "fair", "poor"]).optional(),
+      })
+    ),
+    deviceInfo: z.array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        type: z.string(),
+        status: z.string(),
+      })
+    ),
+  }),
+});
+
+app.post("/api/analyze-sensor-data", async (req, res) => {
+  const isDev = env.nodeEnv === "development";
+
+  if (!genAI) {
+    console.error("[SoilSathi] ❌ Gemini API client not initialized for sensor data!");
+    res.status(500).json({
+      error: "Gemini API key missing. Please configure GEMINI_API_KEY.",
+    });
+    return;
+  }
+
+  const parsed = sensorDataRequestSchema.safeParse(req.body);
+
+  if (!parsed.success) {
+    console.error("[SoilSathi] ❌ Validation failed for sensor data:", parsed.error.errors);
+    handleValidationFailure(res, parsed.error);
+    return;
+  }
+
+  const {
+    language = "en",
+    sensorData,
+  } = parsed.data;
+
+  try {
+    if (isDev) {
+      console.log("[SoilSathi] Sensor data analysis request received", {
+        language,
+        sessionId: sensorData.sessionId,
+        readingsCount: sensorData.readings.length,
+        deviceCount: sensorData.deviceInfo.length,
+      });
+    }
+
+    // Process sensor readings - calculate averages by sensor type
+    const readingsByType = new Map<string, { values: number[]; unit: string }>();
+    
+    sensorData.readings.forEach((reading) => {
+      if (!readingsByType.has(reading.sensorType)) {
+        readingsByType.set(reading.sensorType, { values: [], unit: reading.unit });
+      }
+      const entry = readingsByType.get(reading.sensorType)!;
+      entry.values.push(reading.value);
+      entry.unit = reading.unit;
+    });
+
+    // Convert to manual values format for analysis
+    const manualValues: Record<string, string> = {};
+    readingsByType.forEach((data, sensorType) => {
+      const avg = data.values.reduce((a, b) => a + b, 0) / data.values.length;
+      
+      switch (sensorType.toLowerCase()) {
+        case "ph":
+          manualValues.ph = avg.toFixed(2);
+          break;
+        case "nitrogen":
+          manualValues.nitrogen = Math.round(avg).toString();
+          break;
+        case "phosphorus":
+          manualValues.phosphorus = Math.round(avg).toString();
+          break;
+        case "potassium":
+          manualValues.potassium = Math.round(avg).toString();
+          break;
+        case "organic_matter":
+          manualValues.organic = avg.toFixed(2);
+          break;
+      }
+    });
+
+    // Build prompt for sensor-based analysis
+    const sensorDataText = Array.from(readingsByType.entries())
+      .map(([type, data]) => {
+        const avg = data.values.reduce((a, b) => a + b, 0) / data.values.length;
+        const min = Math.min(...data.values);
+        const max = Math.max(...data.values);
+        return `${type}: Average ${avg.toFixed(2)} ${data.unit} (Range: ${min.toFixed(2)} - ${max.toFixed(2)}, ${data.values.length} readings)`;
+      })
+      .join("\n");
+
+    const parts = [
+      {
+        text: [
+          "You are SoilSathi AI, an expert agronomist analyzing real-time sensor data from soil monitoring devices.",
+          `Respond in ${language.toUpperCase()} (the user's selected language).`,
+          "",
+          "CRITICAL JSON FORMATTING RULES:",
+          "- Return ONLY valid JSON. No markdown code blocks, no explanations, no text outside JSON.",
+          "- All string values must use double quotes (\"). Never use single quotes.",
+          "- Escape all quotes inside strings using backslash: \\\"",
+          "- Escape newlines in strings as \\n",
+          "- NO trailing commas in arrays or objects",
+          "- NO missing commas between array elements or object properties",
+          "",
+          "Sensor Data Collected:",
+          sensorDataText,
+          "",
+          `Location: ${sensorData.location.latitude}, ${sensorData.location.longitude}`,
+          `Collection Duration: ${sensorData.startTime} to ${sensorData.endTime || "ongoing"}`,
+          `Total Readings: ${sensorData.readings.length}`,
+          `Sensors Used: ${sensorData.deviceInfo.length}`,
+          "",
+          "Use the provided sensor data to craft a detailed, actionable analysis.",
+          "Deliver the response strictly as JSON that conforms exactly to the provided schema.",
+          "",
+          "Content Guidelines:",
+          "- Be practical and concise, but offer enough context for farmers with low technical literacy.",
+          "- Reference that this data comes from real-time sensor readings.",
+          "- Highlight the advantage of sensor-based monitoring (continuous, accurate, real-time).",
+          "- Reference nutrient levels, deficiencies, and risks based on sensor readings.",
+          "- Recommend both chemical and organic fertilizer strategies.",
+          "- Include actionable improvement steps and warnings when necessary.",
+          "- Provide localized section titles inside the sectionTitles object.",
+          "- Populate every array with at least one item.",
+          "- When writing text content, ensure all quotes are escaped: use \\\" instead of \"",
+          "",
+          "Remember: Return ONLY valid JSON that can be parsed directly. No markdown, no code blocks, no explanations.",
+        ].join("\n"),
+      },
+    ];
+
+    // Use the same schema as analyze-soil
+    const payload = await tryMultipleModels(
+      FALLBACK_MODELS,
+      parts,
+      analysisSchema,
+      30000, // 30 seconds timeout
+      2048, // Max output tokens
+      false // Disable cache for sensor data
+    ) as Record<string, unknown>;
+
+    if (isDev) {
+      console.log("[SoilSathi] ✅ Sensor data analysis completed successfully");
+    }
+
+    res.json(payload);
+  } catch (error) {
+    console.error("[SoilSathi] Sensor data analysis failed:", error);
+    const statusCode = (error as Error & { statusCode?: number })?.statusCode;
+    const apiError = (error as Error & {
+      apiError?: { code?: number; message?: string; status?: string };
+    })?.apiError;
+
+    const httpStatus = statusCode && statusCode >= 400 && statusCode < 600 ? statusCode : 500;
+    res.status(httpStatus).json({
+      error: "Failed to analyze sensor data. Please try again later.",
+      details: error instanceof Error ? error.message : "Unknown error occurred.",
+      ...(apiError && { apiError }),
+    });
+  }
+});
 
 app.post("/api/soil-health-prediction", async (req, res) => {
   if (!genAI) {
@@ -5104,13 +5521,15 @@ app.post("/api/soil-health-prediction", async (req, res) => {
       forecastPeriodMonths
     );
 
-    const payload = await generateJsonResponse<Record<string, unknown>>({
-      model: MODEL_NAME,
+    // Use parallel model execution with fallbacks for reliability
+    const payload = await tryMultipleModels(
+      FALLBACK_MODELS,
       parts,
-      schema: soilHealthPredictionSchema,
-      timeoutMs: 20000, // 20 seconds - optimized for faster response
-      maxOutputTokens: 1536, // Limit tokens for faster generation
-    });
+      soilHealthPredictionSchema,
+      20000, // 20 seconds base timeout - optimized for faster response
+      1536, // Limit tokens for faster generation
+      true // Enable caching for similar requests
+    ) as Record<string, unknown>;
 
     res.json(payload);
   } catch (error) {
@@ -5177,14 +5596,12 @@ if (env.nodeEnv === "development") {
       return;
     }
     
-    // In development, frontend is served by Vite
-    res.setHeader('Content-Type', 'application/json');
-    res.json({
-      message: "Frontend route",
-      note: "In development mode, frontend is served by Vite dev server",
-      path: req.path,
-      suggestion: "Access the frontend through Vite (usually http://localhost:5173)",
-    });
+    // In development, redirect to Vite dev server
+    // This provides a "single server" experience by auto-forwarding 
+    // browser requests to the frontend dev server
+    const vitePort = 8080; // Matches vite.config.ts
+    const viteUrl = `http://localhost:${vitePort}${req.path}`;
+    res.redirect(viteUrl);
   });
 }
 

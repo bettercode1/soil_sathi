@@ -13,11 +13,9 @@ import { buildApiUrl, parseJsonResponse } from "@/lib/api";
 import { saveGrowthMonitoringEntry } from "@/services/firebase/reportService";
 import { useFirebaseStorage } from "@/hooks/useFirebaseStorage";
 import { fileToBase64, compressImage } from "@/utils/imageUtils";
-import { TrendingUp, Loader2, Calendar } from "lucide-react";
+import { TrendingUp, Loader2, Calendar, Sprout, Leaf, Activity, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import type { GrowthMonitoringEntry } from "@/types/firebase";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { PageHero } from "@/components/shared/PageHero";
-import HealthScoreGauge from "@/components/reports/HealthScoreGauge";
 
 type GrowthAnalysis = {
   language: string;
@@ -141,28 +139,30 @@ const CropGrowthMonitor = () => {
     }
   };
 
-  const chartData = entries.map((entry, index) => ({
-    date: entry.photoDate instanceof Date 
-      ? entry.photoDate.toLocaleDateString() 
-      : new Date(entry.photoDate).toLocaleDateString(),
-    healthScore: entry.healthScore,
-    index: index + 1,
-  }));
+  const getHealthStatus = (score: number) => {
+    if (score >= 80) return { label: "Excellent", color: "text-green-600", bg: "bg-green-100", icon: TrendingUp };
+    if (score >= 60) return { label: "Good", color: "text-emerald-600", bg: "bg-emerald-100", icon: Activity };
+    if (score >= 40) return { label: "Average", color: "text-yellow-600", bg: "bg-yellow-100", icon: Minus };
+    return { label: "Poor", color: "text-red-600", bg: "bg-red-100", icon: ArrowDownRight };
+  };
 
   return (
     <Layout>
       <PageHero
         title={t(cropGrowthTranslations.title)}
         subtitle={t(cropGrowthTranslations.subtitle)}
-        icon={TrendingUp}
+        icon={Sprout}
       />
 
       <section className="py-12">
         <div className="container mx-auto px-2">
           <div className="max-w-4xl mx-auto space-y-8">
-            <Card>
+            <Card className="border-emerald-100 shadow-sm">
               <CardHeader>
-                <CardTitle>{t(cropGrowthTranslations.uploadPhoto)}</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Leaf className="h-5 w-5 text-emerald-600" />
+                  {t(cropGrowthTranslations.uploadPhoto)}
+                </CardTitle>
                 <CardDescription>
                   {language === "en" 
                     ? "Upload weekly photos to track crop growth and health" 
@@ -210,17 +210,17 @@ const CropGrowthMonitor = () => {
                 <Button
                   onClick={handleAnalyze}
                   disabled={isAnalyzing || !imageFile || !cropName.trim()}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30 py-6 text-lg"
                   size="lg"
                 >
                   {isAnalyzing ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       {t(commonTranslations.analyzing)}
                     </>
                   ) : (
                     <>
-                      <TrendingUp className="mr-2 h-4 w-4" />
+                      <Sprout className="mr-2 h-5 w-5" />
                       {t(cropGrowthTranslations.analyze)}
                     </>
                   )}
@@ -229,117 +229,116 @@ const CropGrowthMonitor = () => {
             </Card>
 
             {analysis && (
-              <div className="space-y-6">
-                {/* Visual Health Score Chart */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <HealthScoreGauge 
-                    score={analysis.healthScore} 
-                    title="Crop Health Score"
-                  />
-                  <Card className="border border-border bg-card shadow-sm">
-                    <CardHeader>
-                      <CardTitle>{t(commonTranslations.analysisResults)}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-1">
-                          {t(cropGrowthTranslations.growthStage)}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="text-lg">
-                            {analysis.growthStage}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {analysis.growthStageConfidence.toFixed(0)}%
-                          </span>
-                        </div>
+              <div className="space-y-6 animate-fade-in-up">
+                {/* Simplified Visual Results */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Health Score Card */}
+                  <Card className={`border-none shadow-md ${getHealthStatus(analysis.healthScore).bg}`}>
+                    <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+                      <h3 className="text-lg font-semibold text-slate-700 mb-2">Crop Health</h3>
+                      <div className={`p-4 rounded-full bg-white shadow-sm mb-2`}>
+                        {React.createElement(getHealthStatus(analysis.healthScore).icon, { 
+                          className: `h-8 w-8 ${getHealthStatus(analysis.healthScore).color}` 
+                        })}
                       </div>
-                      {analysis.yieldPrediction && (
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">
-                            {t(cropGrowthTranslations.yieldPrediction)}
-                          </p>
-                          <p className="text-lg font-semibold">
-                            {analysis.yieldPrediction.estimatedYield} {analysis.yieldPrediction.unit}
-                          </p>
-                        </div>
-                      )}
+                      <span className={`text-4xl font-bold ${getHealthStatus(analysis.healthScore).color}`}>
+                        {analysis.healthScore}/100
+                      </span>
+                      <span className="text-sm font-medium text-slate-600 mt-1">
+                        {getHealthStatus(analysis.healthScore).label}
+                      </span>
                     </CardContent>
                   </Card>
+
+                  {/* Growth Stage Card */}
+                  <Card className="border-blue-100 bg-blue-50/50 shadow-md">
+                    <CardContent className="flex flex-col items-center justify-center p-6 text-center h-full">
+                      <h3 className="text-lg font-semibold text-slate-700 mb-2">{t(cropGrowthTranslations.growthStage)}</h3>
+                      <Badge className="text-lg py-1 px-4 bg-blue-600 hover:bg-blue-700 mb-2">
+                        {analysis.growthStage}
+                      </Badge>
+                      <span className="text-sm text-slate-500">
+                        Confidence: {analysis.growthStageConfidence.toFixed(0)}%
+                      </span>
+                    </CardContent>
+                  </Card>
+
+                  {/* Yield Prediction Card */}
+                  {analysis.yieldPrediction && (
+                    <Card className="border-amber-100 bg-amber-50/50 shadow-md">
+                      <CardContent className="flex flex-col items-center justify-center p-6 text-center h-full">
+                        <h3 className="text-lg font-semibold text-slate-700 mb-2">{t(cropGrowthTranslations.yieldPrediction)}</h3>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-3xl font-bold text-amber-700">
+                            {analysis.yieldPrediction.estimatedYield}
+                          </span>
+                          <span className="text-sm font-medium text-amber-600">
+                            {analysis.yieldPrediction.unit}
+                          </span>
+                        </div>
+                        <span className="text-xs text-slate-500 mt-2">Estimated Yield</span>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
 
-                {/* Detailed Analysis */}
-                <Card className="border border-border bg-card shadow-sm">
+                {/* Detailed Analysis Text */}
+                <Card className="border border-slate-200 shadow-sm">
                   <CardHeader>
-                    <CardTitle>Detailed Analysis</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="h-5 w-5 text-emerald-600" />
+                      Detailed Analysis
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div>
-                      <h3 className="font-semibold mb-2">{t(cropGrowthTranslations.observations)}</h3>
-                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                      <h3 className="font-semibold text-slate-800 mb-2 flex items-center gap-2">
+                        <Leaf className="h-4 w-4 text-emerald-500" />
+                        {t(cropGrowthTranslations.observations)}
+                      </h3>
+                      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {analysis.observations.map((obs, idx) => (
-                          <li key={idx}>{obs}</li>
+                          <li key={idx} className="flex items-start gap-2 bg-slate-50 p-3 rounded-lg text-sm text-slate-700">
+                            <span className="text-emerald-500 font-bold">•</span>
+                            {obs}
+                          </li>
                         ))}
                       </ul>
                     </div>
 
-                    <div>
-                      <h3 className="font-semibold mb-2">AI Analysis</h3>
-                      <p className="text-sm text-muted-foreground">{analysis.aiAnalysis}</p>
+                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                      <h3 className="font-semibold text-slate-800 mb-2">AI Assessment</h3>
+                      <p className="text-sm text-slate-600 leading-relaxed">{analysis.aiAnalysis}</p>
                     </div>
-
-                    {analysis.yieldPrediction && (
-                      <div>
-                        <h3 className="font-semibold mb-2">Yield Factors</h3>
-                        <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                          {analysis.yieldPrediction.factors.map((factor, idx) => (
-                            <li key={idx}>{factor}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               </div>
             )}
 
             {entries.length > 0 && (
-              <>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Health Score Trend</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" />
-                        <YAxis domain={[0, 100]} />
-                        <Tooltip />
-                        <Line type="monotone" dataKey="healthScore" stroke="hsl(var(--primary))" strokeWidth={2} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-
-                <div>
-                  <h2 className="text-2xl font-bold mb-4">{t(cropGrowthTranslations.timeline)}</h2>
-                  <GrowthTimeline
-                    entries={entries.map((entry) => ({
-                      id: entry.id || "",
-                      date: entry.photoDate,
-                      imageUrl: entry.imageUrl,
-                      growthStage: {
-                        stage: entry.growthStage,
-                        confidence: entry.growthStageConfidence,
-                        healthScore: entry.healthScore,
-                      },
-                      observations: entry.observations,
-                      aiAnalysis: entry.aiAnalysis,
-                    }))}
-                  />
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-slate-800">{t(cropGrowthTranslations.timeline)}</h2>
+                  <Badge variant="outline" className="text-sm">
+                    {entries.length} Entries
+                  </Badge>
                 </div>
-              </>
+                
+                <GrowthTimeline
+                  entries={entries.map((entry) => ({
+                    id: entry.id || "",
+                    date: entry.photoDate,
+                    imageUrl: entry.imageUrl,
+                    growthStage: {
+                      stage: entry.growthStage,
+                      confidence: entry.growthStageConfidence,
+                      healthScore: entry.healthScore,
+                    },
+                    observations: entry.observations,
+                    aiAnalysis: entry.aiAnalysis,
+                  }))}
+                />
+              </div>
             )}
           </div>
         </div>
@@ -349,4 +348,3 @@ const CropGrowthMonitor = () => {
 };
 
 export default CropGrowthMonitor;
-

@@ -9,9 +9,8 @@ import { weatherAlertsTranslations, commonTranslations } from "@/constants/allTr
 import { AlertCard } from "@/components/shared/AlertCard";
 import { buildApiUrl, parseJsonResponse } from "@/lib/api";
 import { saveWeatherAlert } from "@/services/firebase/reportService";
-import { MapPin, Cloud, Loader2 } from "lucide-react";
+import { MapPin, Cloud, Loader2, Thermometer, Droplets, Wind, Umbrella, AlertTriangle } from "lucide-react";
 import { PageHero } from "@/components/shared/PageHero";
-import WeatherDataChart from "@/components/reports/WeatherDataChart";
 
 type WeatherAlert = {
   type: string;
@@ -220,17 +219,17 @@ const WeatherAlerts = () => {
                 <Button
                   onClick={handleGetAlerts}
                   disabled={isLoading || (!region.trim() && !latitude && !longitude)}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30 py-6 text-lg"
                   size="lg"
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       {t(weatherAlertsTranslations.loading)}
                     </>
                   ) : (
                     <>
-                      <Cloud className="mr-2 h-4 w-4" />
+                      <Cloud className="mr-2 h-5 w-5" />
                       {t(weatherAlertsTranslations.getAlerts)}
                     </>
                   )}
@@ -240,22 +239,60 @@ const WeatherAlerts = () => {
 
             {/* Weather Data Display */}
             {weatherData && (
-              <div className="space-y-6">
-                {/* Visual Weather Data Chart */}
-                <WeatherDataChart
-                  temperature={weatherData.temperature}
-                  humidity={weatherData.humidity}
-                  precipitation={weatherData.precipitation}
-                  windSpeed={weatherData.windSpeed}
-                />
+              <div className="space-y-6 animate-fade-in-up">
+                {/* Visual Weather Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <Card className="bg-orange-50 border-orange-100 shadow-sm">
+                    <CardContent className="p-4 flex flex-col items-center text-center">
+                      <div className="p-2 bg-white rounded-full shadow-sm mb-2">
+                        <Thermometer className="h-6 w-6 text-orange-500" />
+                      </div>
+                      <span className="text-2xl font-bold text-slate-800">{weatherData.temperature}°C</span>
+                      <span className="text-xs text-slate-500">Temperature</span>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-blue-50 border-blue-100 shadow-sm">
+                    <CardContent className="p-4 flex flex-col items-center text-center">
+                      <div className="p-2 bg-white rounded-full shadow-sm mb-2">
+                        <Droplets className="h-6 w-6 text-blue-500" />
+                      </div>
+                      <span className="text-2xl font-bold text-slate-800">{weatherData.humidity}%</span>
+                      <span className="text-xs text-slate-500">Humidity</span>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-slate-50 border-slate-200 shadow-sm">
+                    <CardContent className="p-4 flex flex-col items-center text-center">
+                      <div className="p-2 bg-white rounded-full shadow-sm mb-2">
+                        <Wind className="h-6 w-6 text-slate-500" />
+                      </div>
+                      <span className="text-2xl font-bold text-slate-800">{weatherData.windSpeed || 0}</span>
+                      <span className="text-xs text-slate-500">km/h Wind</span>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-indigo-50 border-indigo-100 shadow-sm">
+                    <CardContent className="p-4 flex flex-col items-center text-center">
+                      <div className="p-2 bg-white rounded-full shadow-sm mb-2">
+                        <Umbrella className="h-6 w-6 text-indigo-500" />
+                      </div>
+                      <span className="text-2xl font-bold text-slate-800">{weatherData.precipitation || 0}%</span>
+                      <span className="text-xs text-slate-500">Precipitation</span>
+                    </CardContent>
+                  </Card>
+                </div>
                 
                 {weatherData.forecast && (
-                  <Card className="border border-border bg-card shadow-sm">
-                    <CardHeader>
-                      <CardTitle>{t(commonTranslations.forecastPeriod)}</CardTitle>
+                  <Card className="border border-slate-200 bg-white shadow-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Cloud className="h-5 w-5 text-blue-500" />
+                        {t(commonTranslations.forecastPeriod)}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm">{weatherData.forecast}</p>
+                      <p className="text-slate-600 leading-relaxed">{weatherData.forecast}</p>
                     </CardContent>
                   </Card>
                 )}
@@ -264,8 +301,11 @@ const WeatherAlerts = () => {
 
             {/* Alerts Display */}
             {alerts.length > 0 ? (
-              <div className="space-y-4">
-                <h2 className="text-2xl font-bold">{t(weatherAlertsTranslations.title)}</h2>
+              <div className="space-y-4 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-6 w-6 text-amber-500" />
+                  <h2 className="text-2xl font-bold text-slate-800">{t(weatherAlertsTranslations.title)}</h2>
+                </div>
                 {alerts.map((alert, index) => (
                   <AlertCard
                     key={index}
@@ -280,9 +320,10 @@ const WeatherAlerts = () => {
             ) : !isLoading && alerts.length === 0 && (region || latitude) ? (
               <Card>
                 <CardContent className="pt-6">
-                  <p className="text-center text-muted-foreground">
-                    {t(weatherAlertsTranslations.noAlerts)}
-                  </p>
+                  <div className="text-center text-muted-foreground flex flex-col items-center py-8">
+                    <Cloud className="h-12 w-12 text-slate-200 mb-4" />
+                    <p>{t(weatherAlertsTranslations.noAlerts)}</p>
+                  </div>
                 </CardContent>
               </Card>
             ) : null}
@@ -294,4 +335,3 @@ const WeatherAlerts = () => {
 };
 
 export default WeatherAlerts;
-

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,11 +13,9 @@ import { buildApiUrl, parseJsonResponse } from "@/lib/api";
 import { saveCropDiseaseReport } from "@/services/firebase/reportService";
 import { useFirebaseStorage } from "@/hooks/useFirebaseStorage";
 import { fileToBase64, compressImage } from "@/utils/imageUtils";
-import { AlertTriangle, Leaf, FlaskConical, Shield, Save, Loader2, Bug } from "lucide-react";
+import { AlertTriangle, Leaf, FlaskConical, Shield, Save, Loader2, Bug, Search, Activity, AlertCircle, Info } from "lucide-react";
 import type { CropDiseaseReport } from "@/types/firebase";
 import { PageHero } from "@/components/shared/PageHero";
-import DiseaseSeverityGauge from "@/components/reports/DiseaseSeverityGauge";
-import TreatmentComparisonChart from "@/components/reports/TreatmentComparisonChart";
 
 type DiseaseAnalysis = {
   language: string;
@@ -63,7 +61,6 @@ const CropDiseaseIdentifier = () => {
 
   const handleImageSelect = async (file: File, preview: string) => {
     try {
-      // Compress image before storing
       const compressedFile = await compressImage(file, 1920, 1920, 0.8);
       setImageFile(compressedFile);
       setSelectedImage(preview);
@@ -102,11 +99,9 @@ const CropDiseaseIdentifier = () => {
     setAnalysis(null);
 
     try {
-      // Convert image to base64
       const base64Data = await fileToBase64(imageFile);
       const mimeType = imageFile.type;
 
-      // Call API
       const response = await fetch(buildApiUrl("/api/identify-disease"), {
         method: "POST",
         headers: {
@@ -168,12 +163,10 @@ const CropDiseaseIdentifier = () => {
 
     setIsSaving(true);
     try {
-      // Upload image to Firebase Storage
       const timestamp = Date.now();
       const imagePath = `crop-disease/${timestamp}-${imageFile.name}`;
       const imageUrl = await uploadFileResumable(imageFile, imagePath);
 
-      // Save report to Firestore
       const report: Omit<CropDiseaseReport, "id" | "createdAt" | "updatedAt"> = {
         language: analysis.language as any,
         cropName: cropName.trim(),
@@ -212,15 +205,15 @@ const CropDiseaseIdentifier = () => {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case "critical":
-        return "bg-red-500";
+        return "bg-red-500 text-white border-red-600";
       case "high":
-        return "bg-orange-500";
+        return "bg-orange-500 text-white border-orange-600";
       case "medium":
-        return "bg-amber-500";
+        return "bg-yellow-500 text-white border-yellow-600";
       case "low":
-        return "bg-emerald-500";
+        return "bg-emerald-500 text-white border-emerald-600";
       default:
-        return "bg-slate-500";
+        return "bg-slate-500 text-white border-slate-600";
     }
   };
 
@@ -239,7 +232,6 @@ const CropDiseaseIdentifier = () => {
       <section className="py-12">
         <div className="container mx-auto px-2">
           <div className="max-w-4xl mx-auto space-y-8">
-            {/* Input Form */}
             <Card className="border border-border bg-card shadow-sm">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -297,45 +289,50 @@ const CropDiseaseIdentifier = () => {
                 <Button
                   onClick={handleAnalyze}
                   disabled={isAnalyzing || !imageFile || !cropName.trim()}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30 py-6 text-lg"
                   size="lg"
                 >
                   {isAnalyzing ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       {t(cropDiseaseTranslations.analyzing)}
                     </>
                   ) : (
-                    t(cropDiseaseTranslations.analyze)
+                    <>
+                      <Search className="mr-2 h-5 w-5" />
+                      {t(cropDiseaseTranslations.analyze)}
+                    </>
                   )}
                 </Button>
               </CardContent>
             </Card>
 
-            {/* Error Display */}
             {error && (
-              <Card className="border-destructive">
+              <Card className="border-destructive bg-destructive/5">
                 <CardContent className="pt-6">
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-medium text-destructive">Error</p>
-                      <p className="text-sm text-muted-foreground">{error}</p>
+                      <p className="text-sm text-destructive/80">{error}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Analysis Results */}
             {analysis && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold">Analysis Results</h2>
+              <div className="space-y-8 animate-fade-in-up">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <h2 className="text-2xl font-bold flex items-center gap-2">
+                    <Activity className="h-6 w-6 text-emerald-500" />
+                    Analysis Results
+                  </h2>
                   <Button
                     onClick={handleSaveReport}
                     disabled={isSaving}
                     variant="outline"
+                    className="w-full sm:w-auto"
                   >
                     {isSaving ? (
                       <>
@@ -351,88 +348,94 @@ const CropDiseaseIdentifier = () => {
                   </Button>
                 </div>
 
-                {/* Visual Charts Section - Quick Overview */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Disease Severity Gauge */}
-                  <DiseaseSeverityGauge
-                    severity={analysis.severity}
-                    confidence={analysis.confidence}
-                    diseaseName={analysis.diseaseName}
-                  />
-                  
-                  {/* Treatment Comparison Chart */}
-                  <TreatmentComparisonChart
-                    organic={analysis.treatments.organic}
-                    chemical={analysis.treatments.chemical}
-                  />
+                {/* Simplified Result Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Diagnosis Card */}
+                  <Card className="border-l-4 border-l-emerald-500 shadow-md">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg text-slate-500 font-medium">Diagnosis</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <h3 className="text-3xl font-bold text-slate-800 mb-2">{analysis.diseaseName}</h3>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="outline" className="text-sm">
+                          {analysis.diseaseType.replace("_", " ")}
+                        </Badge>
+                        <Badge variant="secondary" className="text-sm">
+                          {analysis.confidence.toFixed(0)}% Confidence
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Severity Card */}
+                  <Card className={`border-l-4 shadow-md ${analysis.severity === 'critical' ? 'border-l-red-500 bg-red-50/50' : analysis.severity === 'high' ? 'border-l-orange-500 bg-orange-50/50' : analysis.severity === 'medium' ? 'border-l-yellow-500 bg-yellow-50/50' : 'border-l-emerald-500 bg-emerald-50/50'}`}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg text-slate-500 font-medium">Severity Level</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-3 mb-2">
+                        <AlertCircle className={`h-8 w-8 ${analysis.severity === 'critical' ? 'text-red-500' : analysis.severity === 'high' ? 'text-orange-500' : analysis.severity === 'medium' ? 'text-yellow-500' : 'text-emerald-500'}`} />
+                        <span className={`text-3xl font-bold capitalize ${analysis.severity === 'critical' ? 'text-red-700' : analysis.severity === 'high' ? 'text-orange-700' : analysis.severity === 'medium' ? 'text-yellow-700' : 'text-emerald-700'}`}>
+                          {analysis.severity}
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-600">
+                        Immediate attention {analysis.severity === 'critical' || analysis.severity === 'high' ? 'required' : 'recommended'}
+                      </p>
+                    </CardContent>
+                  </Card>
                 </div>
 
-                {/* Disease Info Card */}
-                <Card>
+                {/* Info Card */}
+                <Card className="border border-slate-200">
                   <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-xl mb-2">
-                          {analysis.diseaseName}
-                        </CardTitle>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge
-                            className={getSeverityColor(analysis.severity)}
-                          >
-                            {getSeverityLabel(analysis.severity)}
-                          </Badge>
-                          <Badge variant="outline">
-                            {analysis.confidence.toFixed(0)}% {t(cropDiseaseTranslations.confidence)}
-                          </Badge>
-                          <Badge variant="secondary">
-                            {analysis.diseaseType.replace("_", " ")}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Info className="h-5 w-5 text-blue-500" />
+                      About this Condition
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div>
-                      <h3 className="font-semibold mb-2">
-                        {t(cropDiseaseTranslations.description)}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {analysis.description}
-                      </p>
+                      <h4 className="font-semibold text-slate-700 mb-2">{t(cropDiseaseTranslations.description)}</h4>
+                      <p className="text-slate-600 leading-relaxed">{analysis.description}</p>
                     </div>
 
-                    <div>
-                      <h3 className="font-semibold mb-2">
-                        {t(cropDiseaseTranslations.symptoms)}
-                      </h3>
-                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                        {analysis.symptoms.map((symptom, idx) => (
-                          <li key={idx}>{symptom}</li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div>
-                      <h3 className="font-semibold mb-2">
-                        {t(cropDiseaseTranslations.causes)}
-                      </h3>
-                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                        {analysis.causes.map((cause, idx) => (
-                          <li key={idx}>{cause}</li>
-                        ))}
-                      </ul>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h4 className="font-semibold text-slate-700 mb-2">{t(cropDiseaseTranslations.symptoms)}</h4>
+                        <ul className="space-y-1">
+                          {analysis.symptoms.map((symptom, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-sm text-slate-600">
+                              <span className="text-amber-500 mt-1">•</span>
+                              {symptom}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-slate-700 mb-2">{t(cropDiseaseTranslations.causes)}</h4>
+                        <ul className="space-y-1">
+                          {analysis.causes.map((cause, idx) => (
+                            <li key={idx} className="flex items-start gap-2 text-sm text-slate-600">
+                              <span className="text-blue-500 mt-1">•</span>
+                              {cause}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
 
                 {/* Treatments */}
-                <Tabs defaultValue="organic">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="organic">
+                <Tabs defaultValue="organic" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="organic" className="data-[state=active]:bg-emerald-100 data-[state=active]:text-emerald-800">
                       <Leaf className="mr-2 h-4 w-4" />
                       {t(cropDiseaseTranslations.organicTreatments)}
                     </TabsTrigger>
-                    <TabsTrigger value="chemical">
+                    <TabsTrigger value="chemical" className="data-[state=active]:bg-blue-100 data-[state=active]:text-blue-800">
                       <FlaskConical className="mr-2 h-4 w-4" />
                       {t(cropDiseaseTranslations.chemicalTreatments)}
                     </TabsTrigger>
@@ -440,23 +443,25 @@ const CropDiseaseIdentifier = () => {
 
                   <TabsContent value="organic" className="space-y-4">
                     {analysis.treatments.organic.map((treatment, idx) => (
-                      <Card key={idx}>
+                      <Card key={idx} className="border-l-4 border-l-emerald-400">
                         <CardHeader>
-                          <CardTitle className="text-lg">{treatment.name}</CardTitle>
+                          <CardTitle className="text-lg text-emerald-800">{treatment.name}</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                          <p>
-                            <span className="font-medium">{t(cropDiseaseTranslations.method)}:</span>{" "}
-                            {treatment.method}
-                          </p>
-                          <p>
-                            <span className="font-medium">{t(cropDiseaseTranslations.timing)}:</span>{" "}
-                            {treatment.timing}
-                          </p>
-                          <p>
-                            <span className="font-medium">{t(cropDiseaseTranslations.notes)}:</span>{" "}
+                        <CardContent className="space-y-3 text-sm">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <span className="font-bold text-slate-700 block mb-1">{t(cropDiseaseTranslations.method)}</span>
+                              <p className="text-slate-600">{treatment.method}</p>
+                            </div>
+                            <div>
+                              <span className="font-bold text-slate-700 block mb-1">{t(cropDiseaseTranslations.timing)}</span>
+                              <p className="text-slate-600">{treatment.timing}</p>
+                            </div>
+                          </div>
+                          <div className="bg-emerald-50 p-3 rounded-lg text-emerald-800 border border-emerald-100 mt-2">
+                            <span className="font-bold mr-1">{t(cropDiseaseTranslations.notes)}:</span>
                             {treatment.notes}
-                          </p>
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
@@ -464,30 +469,32 @@ const CropDiseaseIdentifier = () => {
 
                   <TabsContent value="chemical" className="space-y-4">
                     {analysis.treatments.chemical.map((treatment, idx) => (
-                      <Card key={idx}>
+                      <Card key={idx} className="border-l-4 border-l-blue-400">
                         <CardHeader>
-                          <CardTitle className="text-lg">{treatment.name}</CardTitle>
+                          <CardTitle className="text-lg text-blue-800">{treatment.name}</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                          <p>
-                            <span className="font-medium">{t(cropDiseaseTranslations.method)}:</span>{" "}
-                            {treatment.method}
-                          </p>
-                          <p>
-                            <span className="font-medium">{t(cropDiseaseTranslations.timing)}:</span>{" "}
-                            {treatment.timing}
-                          </p>
-                          <p>
-                            <span className="font-medium">{t(cropDiseaseTranslations.notes)}:</span>{" "}
+                        <CardContent className="space-y-3 text-sm">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <span className="font-bold text-slate-700 block mb-1">{t(cropDiseaseTranslations.method)}</span>
+                              <p className="text-slate-600">{treatment.method}</p>
+                            </div>
+                            <div>
+                              <span className="font-bold text-slate-700 block mb-1">{t(cropDiseaseTranslations.timing)}</span>
+                              <p className="text-slate-600">{treatment.timing}</p>
+                            </div>
+                          </div>
+                          <div className="bg-blue-50 p-3 rounded-lg text-blue-800 border border-blue-100 mt-2">
+                            <span className="font-bold mr-1">{t(cropDiseaseTranslations.notes)}:</span>
                             {treatment.notes}
-                          </p>
+                          </div>
                           {treatment.safetyWarnings && treatment.safetyWarnings.length > 0 && (
-                            <div className="mt-3 pt-3 border-t">
-                              <p className="font-medium text-amber-600 mb-1 flex items-center gap-1">
+                            <div className="mt-3 pt-3 border-t border-slate-100">
+                              <p className="font-bold text-amber-600 mb-2 flex items-center gap-1">
                                 <Shield className="h-4 w-4" />
                                 {t(cropDiseaseTranslations.safetyWarnings)}
                               </p>
-                              <ul className="list-disc list-inside space-y-1 text-amber-700">
+                              <ul className="list-disc list-inside space-y-1 text-amber-700 bg-amber-50 p-3 rounded border border-amber-100">
                                 {treatment.safetyWarnings.map((warning, wIdx) => (
                                   <li key={wIdx}>{warning}</li>
                                 ))}
@@ -501,17 +508,20 @@ const CropDiseaseIdentifier = () => {
                 </Tabs>
 
                 {/* Prevention Tips */}
-                <Card>
+                <Card className="border border-indigo-100 bg-indigo-50/30">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-indigo-700">
                       <Shield className="h-5 w-5" />
                       {t(cropDiseaseTranslations.preventionTips)}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {analysis.preventionTips.map((tip, idx) => (
-                        <li key={idx}>{tip}</li>
+                        <li key={idx} className="flex items-start gap-3 bg-white p-3 rounded-lg border border-indigo-100 shadow-sm text-slate-700 text-sm">
+                          <CheckCircle2 className="h-4 w-4 text-indigo-500 mt-0.5 shrink-0" />
+                          {tip}
+                        </li>
                       ))}
                     </ul>
                   </CardContent>
@@ -526,4 +536,3 @@ const CropDiseaseIdentifier = () => {
 };
 
 export default CropDiseaseIdentifier;
-

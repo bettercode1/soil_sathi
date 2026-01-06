@@ -4,18 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { irrigationSchedulerTranslations, commonTranslations } from "@/constants/allTranslations";
 import { buildApiUrl, parseJsonResponse } from "@/lib/api";
 import { saveIrrigationSchedule } from "@/services/firebase/reportService";
-import { Droplets, Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import { Droplets, Calendar as CalendarIcon, Loader2, Sprout, MapPin, Ruler, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { format } from "date-fns";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import { PageHero } from "@/components/shared/PageHero";
-import IrrigationScheduleChart from "@/components/reports/IrrigationScheduleChart";
 
 type IrrigationScheduleItem = {
   date: string;
@@ -168,7 +164,10 @@ const IrrigationScheduler = () => {
           <div className="max-w-4xl mx-auto space-y-8">
             <Card className="border border-border bg-card shadow-sm">
               <CardHeader>
-                <CardTitle>{t(commonTranslations.cropFarmInfo)}</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Sprout className="h-5 w-5 text-emerald-500" />
+                  {t(commonTranslations.cropFarmInfo)}
+                </CardTitle>
                 <CardDescription>
                   {t(irrigationSchedulerTranslations.subtitle)}
                 </CardDescription>
@@ -196,22 +195,29 @@ const IrrigationScheduler = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium">{t(commonTranslations.region)} *</label>
-                    <Input
-                      value={region}
-                      onChange={(e) => setRegion(e.target.value)}
-                      placeholder={t(commonTranslations.regionPlaceholder)}
-                    />
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                      <Input
+                        value={region}
+                        onChange={(e) => setRegion(e.target.value)}
+                        placeholder={t(commonTranslations.regionPlaceholder)}
+                        className="pl-9"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">{t(commonTranslations.farmSize)} *</label>
                     <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        value={farmSizeValue}
-                        onChange={(e) => setFarmSizeValue(e.target.value)}
-                        placeholder={t(commonTranslations.farmSize)}
-                        className="flex-1"
-                      />
+                      <div className="relative flex-1">
+                        <Ruler className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                        <Input
+                          type="number"
+                          value={farmSizeValue}
+                          onChange={(e) => setFarmSizeValue(e.target.value)}
+                          placeholder={t(commonTranslations.farmSize)}
+                          className="pl-9"
+                        />
+                      </div>
                       <Select value={farmSizeUnit} onValueChange={(v: "acre" | "hectare") => setFarmSizeUnit(v)}>
                         <SelectTrigger className="w-32">
                           <SelectValue />
@@ -261,17 +267,17 @@ const IrrigationScheduler = () => {
                 <Button
                   onClick={handleGenerateSchedule}
                   disabled={isLoading || !cropName.trim() || !region.trim() || !farmSizeValue.trim()}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30 py-6 text-lg"
                   size="lg"
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       {t(commonTranslations.generating)}
                     </>
                   ) : (
                     <>
-                      <Droplets className="mr-2 h-4 w-4" />
+                      <Droplets className="mr-2 h-5 w-5" />
                       {t(irrigationSchedulerTranslations.generateSchedule)}
                     </>
                   )}
@@ -280,60 +286,77 @@ const IrrigationScheduler = () => {
             </Card>
 
             {scheduleData && (
-              <div className="space-y-6">
-                {/* Visual Schedule Chart */}
-                <IrrigationScheduleChart schedule={scheduleData.schedule} />
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle>{t(irrigationSchedulerTranslations.schedule)}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {scheduleData.schedule.slice(0, 14).map((item, idx) => (
-                        <div key={idx} className="border rounded-lg p-4">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <p className="font-semibold">
-                                {format(new Date(item.date), "MMM dd, yyyy")}
-                              </p>
-                              <p className="text-sm text-muted-foreground">{item.method}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-semibold">{item.duration} min</p>
-                              <p className="text-sm text-muted-foreground">
-                                {item.amount} {item.amount > 1000 ? "L" : "mm"}
-                              </p>
-                            </div>
+              <div className="space-y-8 animate-fade-in-up">
+                {/* Visual Schedule Timeline */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5 text-emerald-600" />
+                    <h2 className="text-2xl font-bold text-slate-800">{t(irrigationSchedulerTranslations.schedule)}</h2>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {scheduleData.schedule.slice(0, 9).map((item, idx) => (
+                      <Card key={idx} className={`border-l-4 shadow-sm hover:shadow-md transition-shadow ${idx === 0 ? 'border-l-emerald-500 bg-emerald-50/50' : 'border-l-blue-400 bg-white'}`}>
+                        <CardContent className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                              {format(new Date(item.date), "MMM dd")}
+                            </span>
+                            {idx === 0 && (
+                              <span className="text-xs font-bold px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full">
+                                Next
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <Droplets className="h-5 w-5 text-blue-500" />
+                            <span className="text-xl font-bold text-slate-800">{item.amount} {item.amount > 1000 ? "L" : "mm"}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-sm text-slate-600">
+                            <span>{item.duration} min</span>
+                            <span className="text-xs bg-slate-100 px-2 py-1 rounded">{item.method}</span>
                           </div>
                           {item.notes && (
-                            <p className="text-sm text-muted-foreground mt-2">{item.notes}</p>
+                            <p className="text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
+                              {item.notes}
+                            </p>
                           )}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
 
                 {scheduleData.weatherAdjustments && scheduleData.weatherAdjustments.length > 0 && (
-                  <Card>
+                  <Card className="border-amber-200 bg-amber-50/30">
                     <CardHeader>
-                      <CardTitle>Weather-Based Adjustments</CardTitle>
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <AlertCircle className="h-5 w-5 text-amber-500" />
+                        Weather-Based Adjustments
+                      </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
                         {scheduleData.weatherAdjustments.map((adj, idx) => (
-                          <div key={idx} className="border rounded-lg p-4 bg-amber-50">
-                            <p className="font-semibold mb-1">
-                              {format(new Date(adj.date), "MMM dd, yyyy")}
+                          <div key={idx} className="bg-white p-4 rounded-lg border border-amber-100 shadow-sm">
+                            <div className="flex justify-between items-start mb-2">
+                              <span className="font-semibold text-amber-900">
+                                {format(new Date(adj.date), "MMMM dd, yyyy")}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-2">
+                              <div className="flex flex-col">
+                                <span className="text-xs text-slate-500 uppercase">Original Plan</span>
+                                <span className="font-medium text-slate-700 decoration-slate-400 line-through decoration-1">{adj.originalSchedule}</span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-xs text-emerald-600 uppercase font-bold">New Plan</span>
+                                <span className="font-bold text-emerald-700">{adj.adjustedSchedule}</span>
+                              </div>
+                            </div>
+                            <p className="text-xs text-slate-500 italic mt-2 bg-slate-50 p-2 rounded">
+                              Reason: {adj.reason}
                             </p>
-                            <p className="text-sm mb-1">
-                              <span className="font-medium">Original:</span> {adj.originalSchedule}
-                            </p>
-                            <p className="text-sm mb-1">
-                              <span className="font-medium">Adjusted:</span> {adj.adjustedSchedule}
-                            </p>
-                            <p className="text-sm text-muted-foreground">{adj.reason}</p>
                           </div>
                         ))}
                       </div>
@@ -341,16 +364,22 @@ const IrrigationScheduler = () => {
                   </Card>
                 )}
 
-                <Card>
+                <Card className="border border-slate-200 shadow-sm">
                   <CardHeader>
-                    <CardTitle>{t(irrigationSchedulerTranslations.optimizationTips)}</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                      {t(irrigationSchedulerTranslations.optimizationTips)}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {scheduleData.waterUsageOptimization.map((tip, idx) => (
-                        <li key={idx}>{tip}</li>
+                        <div key={idx} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg">
+                          <Info className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+                          <p className="text-sm text-slate-700">{tip}</p>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -363,4 +392,3 @@ const IrrigationScheduler = () => {
 };
 
 export default IrrigationScheduler;
-

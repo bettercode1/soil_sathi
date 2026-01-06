@@ -1,296 +1,231 @@
-
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import Layout from "@/components/layout/Layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
-import {
-  Leaf,
-  Info,
-  Droplets,
-  Ruler,
-  Target,
-  Sparkles,
-} from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { recommendationsTranslations, soilAnalyzerTranslations } from "@/constants/allTranslations";
-import { buildApiUrl, parseJsonResponse } from "@/lib/api";
-import fertilizerHero from "@/assets/fertilizer-hero.jpg";
-import FertilizerComparisonChart from "@/components/reports/FertilizerComparisonChart";
+import { recommendationsTranslations } from "@/constants/allTranslations";
+import { buildApiUrl, parseJsonResponse, parseErrorResponse } from "@/lib/api";
+import { 
+  Leaf, 
+  Sprout, 
+  Droplets, 
+  TrendingUp, 
+  Calendar, 
+  MapPin,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  ArrowRight,
+  Beaker,
+  Sparkles
+} from "lucide-react";
 
-type LanguageCode = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
-type LocalizedString = Record<LanguageCode, string>;
+interface RecommendationData {
+  soilType: string;
+  region: string;
+  crop: string;
+  cropStage: string;
+  farmSize: string;
+  farmSizeUnit: string;
+  irrigation: string;
+  farmingGoal: string;
+  challenges: string[];
+  additionalNotes: string;
+}
 
-type SelectOption = {
-  id: string;
-  label: LocalizedString;
-  aiLabel: string;
-};
-
-type AiRecommendationEntry = {
+interface FertilizerRecommendation {
   name: string;
   quantity: string;
-  frequency: string;
-  details: string;
-  notes?: string;
-};
+  timing: string;
+  application: string;
+  notes: string;
+}
 
-type AiRecommendationPlan = {
-  primary: AiRecommendationEntry[];
-  secondary: AiRecommendationEntry[];
-};
-
-type AiRecommendations = {
-  language: string;
-  summary?: string;
-  chemical: AiRecommendationPlan;
-  organic: AiRecommendationPlan;
-  tips: string[];
-};
-
-type FarmSizeUnit = "acre" | "hectare";
-
-type FarmSizePayload = {
-  value: number;
-  unit: FarmSizeUnit;
-};
-
-const localized = (
-  en: string,
-  hi: string,
-  pa: string,
-  ta: string,
-  te: string,
-  bn: string,
-  mr: string
-): LocalizedString => ({
-  en,
-  hi,
-  pa,
-  ta,
-  te,
-  bn,
-  mr,
-});
-
-const soilTypes: SelectOption[] = [
-  { id: "black", label: localized("Black Soil (Regur)", "काली मिट्टी (रेगर)", "ਕਾਲੀ ਮਿੱਟੀ (ਰੇਗਰ)", "கருப்பு மண் (ரேகூர்)", "నల్ల మట్టి (రేగూర్)", "কালো মাটি (রেগুর)", "काळी माती (रेगर)"), aiLabel: "Black clay soil (Regur)" },
-  { id: "red", label: localized("Red Soil", "लाल मिट्टी", "ਲਾਲ ਮਿੱਟੀ", "சிகப்பு மண்", "ఎర్ర మట్టి", "লাল মাটি", "लाल माती"), aiLabel: "Red loamy soil" },
-  { id: "alluvial", label: localized("Alluvial Soil", "जलोढ़ मिट्टी", "ਗਾਦ ਵਾਲੀ ਮਿੱਟੀ", "அல்லுவியல் மண்", "అల్లూవియల్ మట్టి", "পলিমাটি", "जलोढ माती"), aiLabel: "Alluvial soil" },
-  { id: "laterite", label: localized("Laterite Soil", "लेटराइट मिट्टी", "ਲੇਟਰਾਈਟ ਮਿੱਟੀ", "லேடரைட் மண்", "లేటరైట్ మట్టి", "ল্যাটেরাইট মাটি", "लेटराइट माती"), aiLabel: "Laterite soil" },
-  { id: "sandy", label: localized("Sandy Soil", "रेतीली मिट्टी", "ਰੇਤਲੀ ਮਿੱਟੀ", "மணற்பான மண்", "ఇసుక మట్టి", "বালুকামাটি", "वालुकामय माती"), aiLabel: "Sandy soil" },
-  { id: "clayloam", label: localized("Clay Loam", "दोमट मिट्टी", "ਦੋਮਟ ਮਿੱਟੀ", "களிமண் லோம்", "క్లే లోమ్ మట్టి", "দোঁআশ মাটি", "दोमट माती"), aiLabel: "Clay loam" },
-];
-
-const regions: SelectOption[] = [
-  { id: "north", label: localized("North India", "उत्तरी भारत", "ਉੱਤਰੀ ਭਾਰਤ", "வட இந்தியா", "ఉత్తర భారతదేశం", "উত্তর ভারত", "उत्तर भारत"), aiLabel: "North India" },
-  { id: "south", label: localized("South India", "दक्षिण भारत", "ਦੱਖਣੀ ਭਾਰਤ", "தென் இந்தியா", "దక్షిణ భారతదేశం", "দক্ষিণ ভারত", "दक्षिण भारत"), aiLabel: "South India" },
-  { id: "east", label: localized("East India", "पूर्वी भारत", "ਪੂਰਬੀ ਭਾਰਤ", "கிழக்கு இந்தியா", "తూర్పు భారతదేశం", "পূর্ব ভারত", "पूर्व भारत"), aiLabel: "East India" },
-  { id: "west", label: localized("West India", "पश्चिमी भारत", "ਪੱਛਮੀ ਭਾਰਤ", "மேற்கு இந்தியா", "పడమర భారతదేశం", "পশ্চিম ভারত", "पश्चिम भारत"), aiLabel: "West India" },
-  { id: "central", label: localized("Central India", "मध्य भारत", "ਮੱਧ ਭਾਰਤ", "மத்திய இந்தியா", "మధ్య భారతదేశం", "মধ্য ভারত", "मध्य भारत"), aiLabel: "Central India" },
-  { id: "northeast", label: localized("North East India", "उत्तर पूर्व भारत", "ਉੱਤਰੀ-ਪੂਰਬੀ ਭਾਰਤ", "வடகிழக்கு இந்தியா", "ఈశాన్య భారతదేశం", "উত্তর-পূর্ব ভারত", "ईशान्य भारत"), aiLabel: "North East India" },
-];
-
-const cropOptions: SelectOption[] = [
-  { id: "wheat", label: localized("Wheat", "गेहूं", "ਗੰਦਮ", "கோதுமை", "గోధుమ", "গম", "गहू"), aiLabel: "Wheat" },
-  { id: "rice", label: localized("Rice", "चावल", "ਚਾਵਲ", "அரிசி", "బియ్యం", "চাল", "तांदूळ"), aiLabel: "Rice" },
-  { id: "cotton", label: localized("Cotton", "कपास", "ਕਪਾਹ", "பருத்தி", "పత్తి", "কাপাস", "कापूस"), aiLabel: "Cotton" },
-  { id: "maize", label: localized("Maize", "मक्का", "ਮੱਕੀ", "மக்காச்சோளம்", "మొక్కజొన్న", "ভুট্টা", "मका"), aiLabel: "Maize (corn)" },
-  { id: "sugarcane", label: localized("Sugarcane", "गन्ना", "ਗੰਨਾ", "கரும்பு", "చెరకు", "আখ", "ऊस"), aiLabel: "Sugarcane" },
-  { id: "potato", label: localized("Potato", "आलू", "ਆਲੂ", "உருளைக்கிழங்கு", "ఆలుగడ్డ", "আলু", "बटाटा"), aiLabel: "Potato" },
-  { id: "tomato", label: localized("Tomato", "टमाटर", "ਟਮਾਟਰ", "தக்காளி", "టమాట", "টমেটো", "टोमॅटो"), aiLabel: "Tomato" },
-  { id: "onion", label: localized("Onion", "प्याज", "ਪਿਆਜ਼", "வெங்காயம்", "ఉల్లిపాయ", "পিঁযాజ", "कांदा"), aiLabel: "Onion" },
-  { id: "mustard", label: localized("Mustard", "सरसों", "ਸਰੋਂ", "கடுகு", "ఆవాలు", "সরিষা", "मोहरी"), aiLabel: "Mustard" },
-  { id: "soybean", label: localized("Soybean", "सोयाबीन", "ਸੋਯਾਬੀਨ", "சோயா பீன்", "సోయాబీన్", "সয়াবিন", "सोयाबीन"), aiLabel: "Soybean" },
-];
-
-const cropStages: SelectOption[] = [
-  { id: "pre-sowing", label: localized("Pre-sowing / Land Preparation", "बुवाई से पहले / भूमि तैयारी", "ਬੀਜ ਬੋਣ ਤੋਂ ਪਹਿਲਾਂ / ਜ਼ਮੀਨ ਤਿਆਰੀ", "விதைப்பு முன் / நிலத் தயாரிப்பு", "విత్తనానికి ముందు / నేల సిద్ధం", "বপনের আগে / জমি প্রস্তুতি", "पेरणीपूर्व / जमीन तयारी"), aiLabel: "Pre-sowing and land preparation" },
-  { id: "sowing", label: localized("Sowing / Planting", "बुवाई / रोपाई", "ਬੀਜ ਬੋਣਾ / ਰੋਪਾਈ", "விதைப்பு / நடவு", "విత్తకం / నాటుడు", "বপন / রোপণ", "पेरणी / लागवड"), aiLabel: "Sowing or planting stage" },
-  { id: "vegetative", label: localized("Vegetative Growth", "वनस्पतिक वृद्धि", "ਵਨਸਪਤੀ ਵਾਧਾ", "தாவர வளர்ச்சி", "వృక్ష వికాసం", "সবুজ বৃদ্ধি", "वनस्पती वाढ"), aiLabel: "Vegetative growth stage" },
-  { id: "flowering", label: localized("Flowering Stage", "फूल आने का चरण", "ਫੁੱਲ ਆਉਣ ਦਾ ਪੜਾਅ", "மலர்ச்சி நிலை", "పుష్పించే దశ", "ফুল ফোটার পর্যায়", "फुलोऱ्याचा टप्पा"), aiLabel: "Flowering stage" },
-  { id: "fruiting", label: localized("Fruiting Stage", "फल बनने का चरण", "ਫਲ ਬਣਨ ਦਾ ਪੜਾਅ", "கனி அமைக்கும் நிலை", "ఫల దశ", "ফল ধরার পর্যায়", "फळधारणा टप्पा"), aiLabel: "Fruiting or pod-filling stage" },
-  { id: "maturity", label: localized("Maturity Stage", "परिपक्वता चरण", "ਪਕਕਣ ਦਾ ਪੜਾਅ", "முழு வளர்ச்சி நிலை", "పక్వ దశ", "পরিপক্বতা পর্যায়", "परिपक्वतेचा टप्पा"), aiLabel: "Maturity or pre-harvest stage" },
-];
-
-const irrigationOptions: SelectOption[] = [
-  { id: "rainfed", label: localized("Rainfed (no regular irrigation)", "वर्षा आधारित (नियमित सिंचाई नहीं)", "ਬਰਸਾਤ ਤੇ ਨਿਰਭਰ (ਨਿਯਮਿਤ ਸਿੰਚਾਈ ਨਹੀਂ)", "மழை சார்ந்தது (வழக்கமான பாசனம் இல்லை)", "వర్షాధారిత (నియమిత నీటిపారుదల లేదు)", "বৃষ্টিনির্ভর (নিয়মিত সেচ নেই)", "पावसावर अवलंबून (नियमित सिंचन नाही)"), aiLabel: "Rainfed cultivation without regular irrigation" },
-  { id: "canal", label: localized("Canal / Surface Irrigation", "नहर / सतही सिंचाई", "ਕੈਨਾਲ / ਸਤਹੀ ਸਿੰਚਾਈ", "கால்வாய் / மேல்நிலை பாசனம்", "కాలువ / ఉపరితల నీటిపారుదల", "খাল / পৃষ্ঠ সেচ", "कालवा / पृष्ठ सिंचन"), aiLabel: "Canal or surface irrigation" },
-  { id: "borewell", label: localized("Tube well / Borewell", "ट्यूबवेल / बोरवेल", "ਟਿਊਬਵੈੱਲ / ਬੋਰਵੈੱਲ", "குழாய் கிணறு / போர்வெல்", "ట్యూబ్‌వెల్ / బోర్‌వెల్", "টিউবওয়েল / বোরওয়েল", "ट्यूबवेल / बोअरवेल"), aiLabel: "Tube well or borewell irrigation" },
-  { id: "drip", label: localized("Drip Irrigation", "ड्रिप सिंचाई", "ਡ੍ਰਿਪ ਸਿੰਚਾਈ", "துளி பாசனம்", "డ్రిప్ నీటిపారుదల", "ড্রিপ সেচ", "ठिबक सिंचन"), aiLabel: "Drip irrigation system" },
-  { id: "sprinkler", label: localized("Sprinkler / Rain-gun", "स्प्रिंकलर / रेन्-गन", "ਸਪ੍ਰਿੰਕਲਰ / ਰੇਨ-ਗਨ", "ஸ்பிரிங்கள் / மழைக்குண்", "స్ప్రింక్లర్ / రైన్-గన్", "স্প্রিঙ্কলার / রেইন-গান", "स्प्रिंकलर / रेन-गन"), aiLabel: "Sprinkler or rain-gun irrigation" },
-];
-
-const farmingGoals: SelectOption[] = [
-  { id: "yield", label: localized("Increase yield and productivity", "उपज और उत्पादकता बढ़ाना", "ਪੈਦਾਵਾਰ ਅਤੇ ਉਤਪਾਦਕਤਾ ਵਧਾਉਣਾ", "உற்பத்தி மற்றும் கிடைக்கும் அளவை உயர்த்துவது", "ఉత్పత్తి మరియు దిగుబడిని పెంచడం", "ফসল ফলন ও উৎপাদনশীলতা বাড়ানো", "उत्पन्न आणि उत्पादकता वाढवणे"), aiLabel: "Increase crop yield and productivity" },
-  { id: "cost", label: localized("Reduce fertilizer cost", "उर्वरक लागत कम करना", "ਖਾਦ ਦੀ ਲਾਗਤ ਘਟਾਉਣਾ", "உரச் செலவை குறைப்பது", "ఎరువుల ఖర్చును తగ్గించడం", "সারের খরচ কমানো", "खताचा खर्च कमी करणे"), aiLabel: "Reduce fertilizer and input costs" },
-  { id: "soil-health", label: localized("Improve soil health long-term", "मिट्टी के स्वास्थ्य में दीर्घकालिक सुधार", "ਮਿੱਟੀ ਦੀ ਸਿਹਤ ਵਿੱਚ ਲੰਬੇ ਸਮੇਂ ਲਈ ਸੁਧਾਰ", "மண்ணின் நீண்டகால ஆரோக்கியத்தை மேம்படுத்துதல்", "నేల ఆరోగ్యాన్ని దీర్ఘకాలంగా మెరుగుపరచడం", "মাটির দীর্ঘমেয়াদি স্বাস্থ্য উন্নত করা", "मातीचे दीर्घकालीन आरोग्य सुधारणे"), aiLabel: "Improve long-term soil health" },
-  { id: "organic-shift", label: localized("Shift towards organic practices", "जैविक प्रथाओं की ओर शिफ्ट होना", "ਜੈਵਿਕ ਅਭਿਆਸਾਂ ਵੱਲ ਮੋੜਨਾ", "இயற்கை முறைகளுக்கு மாறுவது", "సేంద్రీయ పద్ధతుల వైపు మారడం", "জৈব চাষের দিকে ঝোঁকা", "सेंद्रिय पद्धतींकडे वळणे"), aiLabel: "Transition towards organic or natural farming practices" },
-  { id: "pest-disease", label: localized("Manage pest or disease pressure", "कीट या रोग दबाव प्रबंधित करना", "ਕੀੜੇ ਜਾਂ ਰੋਗ ਦਾ ਦਬਾਅ ਸੰਭਾਲਣਾ", "பூச்சி அல்லது நோய் அழுத்தத்தை கட்டுப்படுத்துதல்", "పురుగు లేదా రోగ ఒత్తిడిని నియంత్రించడం", "পোকা বা রোগের চাপ নিয়ন্ত্রণ করা", "किड/रोग नियंत्रण करणे"), aiLabel: "Manage pest or disease pressure effectively" },
-];
-
-const challengeOptions: SelectOption[] = [
-  { id: "drought", label: localized("Frequent drought or dry spells", "बार-बार सूखा या शुष्क मौसम", "ਵਾਰ-ਵਾਰ ਸੁੱਕਾ ਜਾਂ ਸੁੱਕੇ ਦਿਨ", "அடிக்கடி வறட்சி அல்லது வறண்ட காலங்கள்", "తరచూ కరువు లేదా ఎండల దశలు", "ঘন ঘন খরা বা শুকনো সময়", "वारंवार दुष्काळ किंवा कोरडे काळ"), aiLabel: "Frequent drought stress or dry spells" },
-  { id: "waterlogging", label: localized("Waterlogging after rain or irrigation", "बारिश या सिंचाई के बाद जलभराव", "ਬਰਸਾਤ ਜਾਂ ਸਿੰਚਾਈ ਤੋਂ ਬਾਅਦ ਪਾਣੀ ਖੜ੍ਹਾ ਹੋਣਾ", "மழை அல்லது பாசனத்திற்கு பின் நீர் தேக்கம்", "వర్షం లేదా నీటిపారుదల తర్వాత నీరు నిల్వ అవ్వడం", "বৃষ্টি বা সেচের পর জল জমে থাকা", "पावस किंवा सिंचनानंतर पाणी साचणे"), aiLabel: "Waterlogging issues after rain or irrigation" },
-  { id: "nutrient", label: localized("Visible nutrient deficiency symptoms", "दिखाई देने वाले पोषक तत्व की कमी के लक्षण", "ਨਜ਼ਰ ਆਉਣ ਵਾਲੇ ਪੋਸ਼ਕ ਤੱਤਾਂ ਦੀ ਘਾਟ ਦੇ ਲੱਛਣ", "காணக்கூடிய ஊட்டச்சத்து பற்றாக்குறை அறிகுறிகள்", "కనిపించే పోషక లోప సంకేతాలు", "দৃশ্যমান পুষ্টির ঘাটতির লক্ষণ", "दृश्यमान पोषक कमतरतेची लक्षणे"), aiLabel: "Visible nutrient deficiency symptoms" },
-  { id: "salinity", label: localized("Soil salinity or alkalinity issues", "मिट्टी में लवणता या क्षारीयता की समस्या", "ਮਿੱਟੀ ਵਿੱਚ ਲੂਣਦਾਰਤਾ ਜਾਂ ਖਾਰਾਪਣ ਦੀ ਸਮੱਸਿਆ", "மண்ணில் உப்பு அல்லது காரத் தன்மை சிக்கல்", "మట్టిలో ఉప్పుదనం లేదా క్షారత సమస్యలు", "মাটিতে লবণাক্ততা বা ক্ষারত্ব সমস্যা", "मातीतील क्षारता किंवा अल्कधर्मी समस्या"), aiLabel: "Soil salinity or alkalinity challenges" },
-  { id: "pest-disease", label: localized("Recurring pest or disease attacks", "बार-बार कीट या रोग के हमले", "ਵਾਰ-ਵਾਰ ਕੀੜੇ ਜਾਂ ਰੋਗ ਦੇ ਹਮਲੇ", "மீண்டும் மீண்டும் பூச்சி அல்லது நோய் தாக்குதல்", "పునరావృతమయ్యే పురుగు లేదా రోగ దాడులు", "পুনরাবৃত্ত পোকা বা রোগ আক্রমণ", "पुन्हा पुन्हा होणारे किड किंवा रोग हल्ले"), aiLabel: "Recurring pest or disease attacks" },
-];
-
-type AiRequestOption = {
-  id: string;
-  label: string;
-};
-
-const convertOptionForRequest = (option: SelectOption | undefined): AiRequestOption | undefined =>
-  option ? { id: option.id, label: option.aiLabel } : undefined;
+interface RecommendationResult {
+  chemical: FertilizerRecommendation[];
+  organic: FertilizerRecommendation[];
+  keyInsights: string[];
+  warnings: string[];
+  nextSteps: string[];
+}
 
 const Recommendations = () => {
   const { toast } = useToast();
   const { t, language } = useLanguage();
-  const [selectedSoil, setSelectedSoil] = useState("");
-  const [selectedRegion, setSelectedRegion] = useState("");
-  const [selectedCrop, setSelectedCrop] = useState("");
-  const [selectedStage, setSelectedStage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [recommendations, setRecommendations] = useState<AiRecommendations | null>(null);
-  const [farmSizeValue, setFarmSizeValue] = useState("");
-  const [farmSizeUnit, setFarmSizeUnit] = useState<FarmSizeUnit>("acre");
-  const [selectedIrrigation, setSelectedIrrigation] = useState("");
-  const [selectedGoal, setSelectedGoal] = useState("");
-  const [selectedChallenges, setSelectedChallenges] = useState<string[]>([]);
-  const [notes, setNotes] = useState("");
+  const [recommendations, setRecommendations] = useState<RecommendationResult | null>(null);
+  
+  const [formData, setFormData] = useState<RecommendationData>({
+    soilType: "",
+    region: "",
+    crop: "",
+    cropStage: "",
+    farmSize: "",
+    farmSizeUnit: "acres",
+    irrigation: "",
+    farmingGoal: "",
+    challenges: [],
+    additionalNotes: "",
+  });
 
-  const selectedSoilOption = useMemo(() => soilTypes.find((soil) => soil.id === selectedSoil), [selectedSoil]);
-  const selectedRegionOption = useMemo(() => regions.find((region) => region.id === selectedRegion), [selectedRegion]);
-  const selectedCropOption = useMemo(() => cropOptions.find((crop) => crop.id === selectedCrop), [selectedCrop]);
-  const selectedStageOption = useMemo(() => cropStages.find((stage) => stage.id === selectedStage), [selectedStage]);
-  const selectedIrrigationOption = useMemo(
-    () => irrigationOptions.find((method) => method.id === selectedIrrigation),
-    [selectedIrrigation]
-  );
-  const selectedGoalOption = useMemo(() => farmingGoals.find((goal) => goal.id === selectedGoal), [selectedGoal]);
-  const selectedChallengeOptions = useMemo(
-    () => challengeOptions.filter((challenge) => selectedChallenges.includes(challenge.id)),
-    [selectedChallenges]
-  );
+  const soilTypes = [
+    "Alluvial", "Black (Regur)", "Red", "Laterite", "Desert", "Mountain", "Clayey", "Sandy", "Loamy"
+  ];
 
-  const isDefined = <T,>(value: T | undefined): value is T => value !== undefined;
+  const regions = [
+    "Punjab", "Haryana", "Uttar Pradesh", "Bihar", "West Bengal", "Maharashtra", 
+    "Karnataka", "Tamil Nadu", "Andhra Pradesh", "Telangana", "Kerala", "Gujarat", "Rajasthan", "Madhya Pradesh"
+  ];
 
-  const convertOptionsArrayForRequest = (options: SelectOption[]) =>
-    options
-      .map((option) => convertOptionForRequest(option))
-      .filter(isDefined);
+  const crops = [
+    "Rice", "Wheat", "Maize", "Cotton", "Sugarcane", "Soybean", "Potato", "Tomato",
+    "Onion", "Mango", "Banana", "Groundnut", "Mustard", "Chickpea", "Pulses"
+  ];
 
-  const getFarmSizePayload = (): FarmSizePayload | undefined | "invalid" => {
-    if (!farmSizeValue.trim()) {
-      return undefined;
-    }
-    const parsedFarmSize = Number.parseFloat(farmSizeValue);
-    if (!Number.isFinite(parsedFarmSize) || parsedFarmSize <= 0) {
-      return "invalid";
-    }
-    return {
-      value: parsedFarmSize,
-      unit: farmSizeUnit,
-    };
+  const cropStages = [
+    { value: "sowing", label: "Sowing/Planting" },
+    { value: "vegetative", label: "Vegetative Growth" },
+    { value: "flowering", label: "Flowering" },
+    { value: "fruiting", label: "Fruiting/Grain Filling" },
+    { value: "harvest", label: "Pre-Harvest" }
+  ];
+
+  const irrigationMethods = [
+    "Drip Irrigation", "Sprinkler", "Flood/Furrow", "Rainfed"
+  ];
+
+  const farmingGoals = [
+    "Maximum Yield", "Cost Reduction", "Organic Transition", "Soil Health Improvement"
+  ];
+
+  const commonChallenges = [
+    "Low crop yield", "Soil nutrient deficiency", "Pest/disease issues", 
+    "Water scarcity", "Poor soil drainage", "Soil salinity"
+  ];
+
+  const handleInputChange = (field: keyof RecommendationData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const toggleChallenge = (id: string) => {
-    setSelectedChallenges((previous) =>
-      previous.includes(id) ? previous.filter((challengeId) => challengeId !== id) : [...previous, id]
-    );
+  const handleChallengeToggle = (challenge: string) => {
+    setFormData(prev => ({
+      ...prev,
+      challenges: prev.challenges.includes(challenge)
+        ? prev.challenges.filter(c => c !== challenge)
+        : [...prev.challenges, challenge]
+    }));
   };
 
-  const handleGetRecommendations = async () => {
-    if (!selectedSoil || !selectedRegion || !selectedCrop || !selectedStage) {
+  const validateForm = (): boolean => {
+    if (!formData.soilType || !formData.region || !formData.crop || !formData.cropStage) {
       toast({
-        title: t(recommendationsTranslations.missingInfoTitle),
-        description: t(recommendationsTranslations.missingInfoDescription),
+        title: "Missing Information",
+        description: "Please fill in Soil Type, Region, Crop, and Crop Stage.",
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
-    const soilForRequest = convertOptionForRequest(selectedSoilOption);
-    const regionForRequest = convertOptionForRequest(selectedRegionOption);
-    const cropForRequest = convertOptionForRequest(selectedCropOption);
-    const stageForRequest = convertOptionForRequest(selectedStageOption);
-
-    if (!soilForRequest || !regionForRequest || !cropForRequest || !stageForRequest) {
-      toast({
-        title: t(recommendationsTranslations.missingInfoTitle),
-        description: t(recommendationsTranslations.missingInfoDescription),
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const farmSizePayload = getFarmSizePayload();
-    if (farmSizePayload === "invalid") {
+    if (!formData.farmSize || parseFloat(formData.farmSize) <= 0) {
       toast({
         title: t(recommendationsTranslations.invalidFarmSizeTitle),
         description: t(recommendationsTranslations.invalidFarmSizeDescription),
         variant: "destructive",
       });
-      return;
+      return false;
     }
 
-    const challengesForRequest = convertOptionsArrayForRequest(selectedChallengeOptions);
-    const trimmedNotes = notes.trim();
+    return true;
+  };
+
+  // Mock generator for recommendations since backend is not available
+  const generateMockRecommendations = (data: RecommendationData): RecommendationResult => {
+    return {
+      chemical: [
+        {
+          name: "Urea (46% N)",
+          quantity: "110 kg/acre",
+          timing: "Split Application (3 splits)",
+          application: "Broadcast",
+          notes: "Apply 1/3 at basal, 1/3 at active tillering, 1/3 at panicle initiation."
+        },
+        {
+          name: "DAP (18:46:0)",
+          quantity: "55 kg/acre",
+          timing: "Basal Dose",
+          application: "Soil Incorporation",
+          notes: "Apply before final puddling/sowing."
+        },
+        {
+          name: "MOP (60% K2O)",
+          quantity: "40 kg/acre",
+          timing: "Split Application (2 splits)",
+          application: "Broadcast",
+          notes: "Apply 50% at basal and 50% at panicle initiation."
+        }
+      ],
+      organic: [
+        {
+          name: "Farm Yard Manure",
+          quantity: "5-10 tons/acre",
+          timing: "Pre-sowing (2-3 weeks before)",
+          application: "Spread and mix",
+          notes: "Well decomposed manure improves soil structure."
+        },
+        {
+          name: "Bio-fertilizers (Azospirillum)",
+          quantity: "2 kg/acre",
+          timing: "Seed Treatment/Soil Application",
+          application: "Mix with sand/compost",
+          notes: "Enhances nitrogen fixation naturally."
+        }
+      ],
+      keyInsights: [
+        `Optimal NPK ratio for ${data.crop} in ${data.soilType} soil is maintained.`,
+        `Split application of Nitrogen improves efficiency by 20%.`,
+        `Organic matter addition is crucial for long-term health of ${data.soilType} soil.`
+      ],
+      warnings: [
+        "Avoid applying urea when leaves are wet to prevent leaf scorch.",
+        "Ensure proper moisture in soil before fertilizer application."
+      ],
+      nextSteps: [
+        "Procure the recommended fertilizers.",
+        "Prepare the field for basal application.",
+        "Schedule irrigation 2 days after application."
+      ]
+    };
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
 
     setIsLoading(true);
     setRecommendations(null);
 
+    // Simulation of API call
     try {
-      const response = await fetch(buildApiUrl("/api/recommendations"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          language,
-          soilType: soilForRequest,
-          region: regionForRequest,
-          crop: cropForRequest,
-          growthStage: stageForRequest,
-          farmSize: farmSizePayload,
-          irrigation: convertOptionForRequest(selectedIrrigationOption),
-          farmingGoal: convertOptionForRequest(selectedGoalOption),
-          challenges: challengesForRequest.length ? challengesForRequest : undefined,
-          notes: trimmedNotes || undefined,
-        }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = `Server responded with ${response.status}`;
-        try {
-          const errorPayload = await parseJsonResponse<{
-            error?: string;
-            details?: string;
-          }>(response.clone());
-          errorMessage = errorPayload.details || errorPayload.error || errorMessage;
-        } catch (parseError) {
-          if (parseError instanceof Error && parseError.message) {
-            errorMessage = parseError.message;
-          }
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await parseJsonResponse<AiRecommendations>(response);
-      setRecommendations(data);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to fetch recommendations from Gemini.";
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      const result = generateMockRecommendations(formData);
+      setRecommendations(result);
+      
       toast({
-        title: t(soilAnalyzerTranslations.analysisErrorTitle),
-        description: message,
+        title: "Recommendations Ready",
+        description: "Your personalized fertilizer recommendations have been generated.",
+      });
+    } catch (error) {
+      console.error("[Recommendations] Error:", error);
+      toast({
+        title: t(recommendationsTranslations.assistantErrorTitle),
+        description: "Failed to generate recommendations.",
         variant: "destructive",
       });
     } finally {
@@ -300,476 +235,493 @@ const Recommendations = () => {
 
   return (
     <Layout>
-      <section className="relative isolate overflow-hidden py-12 sm:py-16 animate-fade-in">
-        <img
-          src={fertilizerHero}
-          alt="Tractor spraying fertilizer on farmland"
-          className="absolute inset-0 h-full w-full object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-slate-900/65" aria-hidden="true" />
-        <div className="container relative mx-auto px-2">
-          <div className="max-w-3xl mx-auto text-center text-white">
-            <h1 className="text-2xl sm:text-3xl md:text-3xl font-bold mb-4">
+      {/* Hero Section */}
+      <section className="relative isolate overflow-hidden py-12 sm:py-16 bg-gradient-to-br from-emerald-600 via-emerald-500 to-teal-600 animate-fade-in">
+        <div className="absolute inset-0 bg-[radial-gradient(#ffffff33_1px,transparent_1px)] [background-size:16px_16px] opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        
+        <div className="container relative mx-auto px-4 max-w-4xl">
+          <div className="text-center text-white">
+            <Badge variant="outline" className="mb-4 bg-white/10 text-white border-white/30 backdrop-blur-sm">
+              <Sparkles className="w-3 h-3 mr-1" />
+              AI-Powered Insights
+            </Badge>
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 tracking-tight">
               {t(recommendationsTranslations.title)}
             </h1>
-            <p className="text-white/90 mb-6 text-base sm:text-[17px]">
+            <p className="text-white/90 mb-6 text-base sm:text-lg max-w-2xl mx-auto font-light">
               {t(recommendationsTranslations.subtitle)}
             </p>
           </div>
         </div>
       </section>
 
-      <section className="py-12 sm:py-16">
-        <div className="container mx-auto px-2">
-          <div className="max-w-4xl mx-auto">
-            <Card className="rounded-lg animate-fade-in-up">
-              <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl">{t(recommendationsTranslations.customRecommendations)}</CardTitle>
-                <CardDescription className="text-base">
-                  {t(recommendationsTranslations.selectDetails)}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-10">
-                <div className="space-y-6">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div className="flex items-center gap-2 text-base font-semibold">
-                      <Ruler className="h-5 w-5 text-primary" />
-                      <span>{t(recommendationsTranslations.fieldProfileHeading)}</span>
+      {/* Main Content */}
+      <section className="py-12 sm:py-16 bg-slate-50/50">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Form Section */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Field Profile */}
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-emerald-100 rounded-lg">
+                      <MapPin className="w-5 h-5 text-emerald-600" />
                     </div>
-                    <p className="text-sm text-muted-foreground md:max-w-xl">
-                      {t(recommendationsTranslations.fieldProfileDescription)}
-                    </p>
+                    <div>
+                      <CardTitle className="text-xl">{t(recommendationsTranslations.fieldProfileHeading)}</CardTitle>
+                      <CardDescription>{t(recommendationsTranslations.fieldProfileDescription)}</CardDescription>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                </CardHeader>
+                <CardContent className="pt-6">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {/* Soil Type */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">
-                        {t(recommendationsTranslations.soilType)}
+                      <label className="text-sm font-medium text-slate-700">
+                        {t(recommendationsTranslations.soilType)} <span className="text-red-500">*</span>
                       </label>
-                      <Select value={selectedSoil} onValueChange={setSelectedSoil}>
+                      <Select value={formData.soilType} onValueChange={(val) => handleInputChange("soilType", val)}>
                         <SelectTrigger>
-                          <SelectValue placeholder={t(recommendationsTranslations.soilTypePlaceholder)} />
+                          <SelectValue placeholder="Select soil type" />
                         </SelectTrigger>
                         <SelectContent>
-                          {soilTypes.map((soil) => (
-                            <SelectItem key={soil.id} value={soil.id}>
-                              {t(soil.label)}
-                            </SelectItem>
+                          {soilTypes.map(type => (
+                            <SelectItem key={type} value={type}>{type}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Region */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">
-                        {t(recommendationsTranslations.region)}
+                      <label className="text-sm font-medium text-slate-700">
+                        {t(recommendationsTranslations.region)} <span className="text-red-500">*</span>
                       </label>
-                      <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+                      <Select value={formData.region} onValueChange={(val) => handleInputChange("region", val)}>
                         <SelectTrigger>
-                          <SelectValue placeholder={t(recommendationsTranslations.regionPlaceholder)} />
+                          <SelectValue placeholder="Select region" />
                         </SelectTrigger>
                         <SelectContent>
-                          {regions.map((region) => (
-                            <SelectItem key={region.id} value={region.id}>
-                              {t(region.label)}
-                            </SelectItem>
+                          {regions.map(region => (
+                            <SelectItem key={region} value={region}>{region}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* Crop */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium flex items-center gap-2">
-                        {t(recommendationsTranslations.farmSize)}
+                      <label className="text-sm font-medium text-slate-700">
+                        {t(recommendationsTranslations.crop)} <span className="text-red-500">*</span>
                       </label>
-                      <div className="flex flex-col gap-2 sm:flex-row">
+                      <Select value={formData.crop} onValueChange={(val) => handleInputChange("crop", val)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select crop" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {crops.map(crop => (
+                            <SelectItem key={crop} value={crop}>{crop}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Crop Stage */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">
+                        {t(recommendationsTranslations.cropStage)} <span className="text-red-500">*</span>
+                      </label>
+                      <Select value={formData.cropStage} onValueChange={(val) => handleInputChange("cropStage", val)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select stage" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cropStages.map(stage => (
+                            <SelectItem key={stage.value} value={stage.value}>{stage.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Farm Size */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-slate-700">
+                        {t(recommendationsTranslations.farmSize)} <span className="text-red-500">*</span>
+                      </label>
+                      <div className="flex gap-2">
                         <Input
                           type="number"
-                          min="0"
                           step="0.1"
-                          inputMode="decimal"
-                          value={farmSizeValue}
-                          onChange={(event) => setFarmSizeValue(event.target.value)}
                           placeholder={t(recommendationsTranslations.farmSizePlaceholder)}
-                          className="sm:max-w-[180px]"
+                          value={formData.farmSize}
+                          onChange={(e) => handleInputChange("farmSize", e.target.value)}
+                          className="flex-1"
                         />
-                        <Select value={farmSizeUnit} onValueChange={(value: FarmSizeUnit) => setFarmSizeUnit(value)}>
-                          <SelectTrigger className="sm:max-w-[180px]">
+                        <Select value={formData.farmSizeUnit} onValueChange={(val) => handleInputChange("farmSizeUnit", val)}>
+                          <SelectTrigger className="w-28">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="acre">{t(recommendationsTranslations.farmSizeUnitAcre)}</SelectItem>
-                            <SelectItem value="hectare">{t(recommendationsTranslations.farmSizeUnitHectare)}</SelectItem>
+                            <SelectItem value="acres">{t(recommendationsTranslations.farmSizeUnitAcre)}</SelectItem>
+                            <SelectItem value="hectares">{t(recommendationsTranslations.farmSizeUnitHectare)}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        {t(recommendationsTranslations.farmSizeHelper)}
-                      </p>
+                      <p className="text-xs text-slate-500">{t(recommendationsTranslations.farmSizeHelper)}</p>
                     </div>
+
+                    {/* Irrigation */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium flex items-center gap-2">
-                        <Droplets className="h-4 w-4 text-primary" />
-                        <span>{t(recommendationsTranslations.irrigation)}</span>
+                      <label className="text-sm font-medium text-slate-700">
+                        {t(recommendationsTranslations.irrigation)}
                       </label>
-                      <Select value={selectedIrrigation} onValueChange={setSelectedIrrigation}>
+                      <Select value={formData.irrigation} onValueChange={(val) => handleInputChange("irrigation", val)}>
                         <SelectTrigger>
                           <SelectValue placeholder={t(recommendationsTranslations.irrigationPlaceholder)} />
                         </SelectTrigger>
                         <SelectContent>
-                          {irrigationOptions.map((option) => (
-                            <SelectItem key={option.id} value={option.id}>
-                              {t(option.label)}
-                            </SelectItem>
+                          {irrigationMethods.map(method => (
+                            <SelectItem key={method} value={method}>{method}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
 
-                <div className="space-y-6">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div className="flex items-center gap-2 text-base font-semibold">
-                      <Sparkles className="h-5 w-5 text-primary" />
-                      <span>{t(recommendationsTranslations.cultivationFocusHeading)}</span>
+              {/* Cultivation Focus */}
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-100 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-amber-600" />
                     </div>
-                    <p className="text-sm text-muted-foreground md:max-w-xl">
-                      {t(recommendationsTranslations.cultivationFocusDescription)}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">
-                        {t(recommendationsTranslations.crop)}
-                      </label>
-                      <Select value={selectedCrop} onValueChange={setSelectedCrop}>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t(recommendationsTranslations.cropPlaceholder)} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {cropOptions.map((crop) => (
-                            <SelectItem key={crop.id} value={crop.id}>
-                              {t(crop.label)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">
-                        {t(recommendationsTranslations.cropStage)}
-                      </label>
-                      <Select value={selectedStage} onValueChange={setSelectedStage}>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t(recommendationsTranslations.stagePlaceholder)} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {cropStages.map((stage) => (
-                            <SelectItem key={stage.id} value={stage.id}>
-                              {t(stage.label)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <label className="text-sm font-medium flex items-center gap-2">
-                        <Target className="h-4 w-4 text-primary" />
-                        <span>{t(recommendationsTranslations.farmingGoal)}</span>
-                      </label>
-                      <Select value={selectedGoal} onValueChange={setSelectedGoal}>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t(recommendationsTranslations.farmingGoalPlaceholder)} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {farmingGoals.map((goal) => (
-                            <SelectItem key={goal.id} value={goal.id}>
-                              {t(goal.label)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <div>
+                      <CardTitle className="text-xl">{t(recommendationsTranslations.cultivationFocusHeading)}</CardTitle>
+                      <CardDescription>{t(recommendationsTranslations.cultivationFocusDescription)}</CardDescription>
                     </div>
                   </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div className="flex items-center gap-2 text-base font-semibold">
-                      <Info className="h-5 w-5 text-primary" />
-                      <span>{t(recommendationsTranslations.additionalContextHeading)}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground md:max-w-xl">
-                      {t(recommendationsTranslations.additionalContextDescription)}
-                    </p>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-4">
+                  {/* Farming Goal */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      {t(recommendationsTranslations.farmingGoal)}
+                    </label>
+                    <Select value={formData.farmingGoal} onValueChange={(val) => handleInputChange("farmingGoal", val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t(recommendationsTranslations.farmingGoalPlaceholder)} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {farmingGoals.map(goal => (
+                          <SelectItem key={goal} value={goal}>{goal}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">
-                        {t(recommendationsTranslations.challengesLabel)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t(recommendationsTranslations.challengesHelper)}
-                      </p>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {challengeOptions.map((challenge) => {
-                          const isChecked = selectedChallenges.includes(challenge.id);
-                          return (
-                            <label
-                              key={challenge.id}
-                              className={`flex items-start gap-3 rounded-md border p-3 transition ${
-                                isChecked ? "border-primary bg-primary/5" : "border-border/70 hover:border-primary/40"
-                              }`}
-                            >
-                              <Checkbox
-                                checked={isChecked}
-                                onCheckedChange={(checked) => {
-                                  setSelectedChallenges((previous) => {
-                                    if (checked === true) {
-                                      return previous.includes(challenge.id)
-                                        ? previous
-                                        : [...previous, challenge.id];
-                                    }
-                                    return previous.filter((id) => id !== challenge.id);
-                                  });
-                                }}
-                              />
-                              <span className="text-sm leading-tight">{t(challenge.label)}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
+                </CardContent>
+              </Card>
+
+              {/* Additional Context */}
+              <Card className="border-0 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <AlertCircle className="w-5 h-5 text-blue-600" />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">
-                        {t(recommendationsTranslations.additionalNotes)}
-                      </label>
-                      <Textarea
-                        value={notes}
-                        onChange={(event) => setNotes(event.target.value)}
-                        placeholder={t(recommendationsTranslations.notesPlaceholder)}
-                        rows={4}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        {t(recommendationsTranslations.notesHelper)}
-                      </p>
+                    <div>
+                      <CardTitle className="text-xl">{t(recommendationsTranslations.additionalContextHeading)}</CardTitle>
+                      <CardDescription>{t(recommendationsTranslations.additionalContextDescription)}</CardDescription>
                     </div>
                   </div>
-                </div>
-
-                <Button
-                  className="w-full"
-                  onClick={handleGetRecommendations}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <span className="loading-dots">{t(recommendationsTranslations.generatingRecommendations)}</span>
-                  ) : (
-                    t(recommendationsTranslations.getRecommendations)
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {recommendations && (
-              <div className="mt-12 animate-grow">
-                <h2 className="text-2xl font-bold mb-6">{t(recommendationsTranslations.yourRecommendations)}</h2>
-
-                {/* Visual Chart - Quick Overview */}
-                <div className="mb-6">
-                  <FertilizerComparisonChart
-                    organic={[
-                      ...recommendations.organic.primary,
-                      ...recommendations.organic.secondary
-                    ]}
-                    chemical={[
-                      ...recommendations.chemical.primary,
-                      ...recommendations.chemical.secondary
-                    ]}
-                  />
-                </div>
-
-                {recommendations.summary && (
-                  <Card className="mb-6">
-                    <CardHeader>
-                      <CardTitle>{t(recommendationsTranslations.summaryHeading)}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-muted-foreground leading-relaxed">{recommendations.summary}</p>
-                    </CardContent>
-                  </Card>
-                )}
-
-                <Tabs defaultValue="chemical">
-                  <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger value="chemical">{t(recommendationsTranslations.chemicalFertilizers)}</TabsTrigger>
-                    <TabsTrigger value="organic">{t(recommendationsTranslations.organicAlternatives)}</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="chemical">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <span>{t(recommendationsTranslations.chemicalCardTitle)}</span>
-                        </CardTitle>
-                        <CardDescription>
-                          {t(recommendationsTranslations.chemicalCardDescription)}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-6">
-                          <div>
-                            <h3 className="text-lg font-semibold mb-3">{t(recommendationsTranslations.primaryNutrients)}</h3>
-                            <div className="space-y-4">
-                              {recommendations.chemical.primary.map((fertilizer, index) => (
-                                <div key={index} className="bg-muted p-4 rounded-md">
-                                  <div className="flex justify-between flex-wrap gap-2 mb-2">
-                                    <h4 className="font-medium">{fertilizer.name}</h4>
-                                    <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded">
-                                      {fertilizer.quantity}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground mb-1">
-                                    <span className="font-medium">{t(recommendationsTranslations.frequencyLabel)}:</span> {fertilizer.frequency}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    <span className="font-medium">{t(recommendationsTranslations.detailsLabel)}:</span> {fertilizer.details}
-                                  </p>
-                                  {fertilizer.notes && (
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                      <span className="font-medium">{t(recommendationsTranslations.notesLabel)}:</span> {fertilizer.notes}
-                                    </p>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <h3 className="text-lg font-semibold mb-3">{t(recommendationsTranslations.secondaryNutrients)}</h3>
-                            <div className="space-y-4">
-                              {recommendations.chemical.secondary.map((fertilizer, index) => (
-                                <div key={index} className="bg-muted p-4 rounded-md">
-                                  <div className="flex justify-between flex-wrap gap-2 mb-2">
-                                    <h4 className="font-medium">{fertilizer.name}</h4>
-                                    <span className="text-sm bg-secondary/10 text-secondary px-2 py-1 rounded">
-                                      {fertilizer.quantity}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground mb-1">
-                                    <span className="font-medium">{t(recommendationsTranslations.frequencyLabel)}:</span> {fertilizer.frequency}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    <span className="font-medium">{t(recommendationsTranslations.detailsLabel)}:</span> {fertilizer.details}
-                                  </p>
-                                  {fertilizer.notes && (
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                      <span className="font-medium">{t(recommendationsTranslations.notesLabel)}:</span> {fertilizer.notes}
-                                    </p>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                </CardHeader>
+                <CardContent className="pt-6 space-y-4">
+                  {/* Challenges */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium text-slate-700">
+                      {t(recommendationsTranslations.challengesLabel)}
+                    </label>
+                    <p className="text-xs text-slate-500">{t(recommendationsTranslations.challengesHelper)}</p>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      {commonChallenges.map(challenge => (
+                        <div key={challenge} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={challenge}
+                            checked={formData.challenges.includes(challenge)}
+                            onCheckedChange={() => handleChallengeToggle(challenge)}
+                          />
+                          <label
+                            htmlFor={challenge}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {challenge}
+                          </label>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                  
-                  <TabsContent value="organic">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Leaf className="h-5 w-5" />
-                          <span>{t(recommendationsTranslations.organicAlternatives)}</span>
-                        </CardTitle>
-                        <CardDescription>
-                          {t(recommendationsTranslations.organicCardDescription)}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-6">
-                          <div>
-                            <h3 className="text-lg font-semibold mb-3">{t(recommendationsTranslations.primaryOrganicInputs)}</h3>
-                            <div className="space-y-4">
-                              {recommendations.organic.primary.map((fertilizer, index) => (
-                                <div key={index} className="bg-accent p-4 rounded-md">
-                                  <div className="flex justify-between flex-wrap gap-2 mb-2">
-                                    <h4 className="font-medium">{fertilizer.name}</h4>
-                                    <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded">
-                                      {fertilizer.quantity}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground mb-1">
-                                    <span className="font-medium">{t(recommendationsTranslations.frequencyLabel)}:</span> {fertilizer.frequency}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    <span className="font-medium">{t(recommendationsTranslations.detailsLabel)}:</span> {fertilizer.details}
-                                  </p>
-                                  {fertilizer.notes && (
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                      <span className="font-medium">{t(recommendationsTranslations.notesLabel)}:</span> {fertilizer.notes}
-                                    </p>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <div>
-                            <h3 className="text-lg font-semibold mb-3">{t(recommendationsTranslations.biofertilizers)}</h3>
-                            <div className="space-y-4">
-                              {recommendations.organic.secondary.map((fertilizer, index) => (
-                                <div key={index} className="bg-accent p-4 rounded-md">
-                                  <div className="flex justify-between flex-wrap gap-2 mb-2">
-                                    <h4 className="font-medium">{fertilizer.name}</h4>
-                                    <span className="text-sm bg-secondary/10 text-secondary px-2 py-1 rounded">
-                                      {fertilizer.quantity}
-                                    </span>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground mb-1">
-                                    <span className="font-medium">{t(recommendationsTranslations.frequencyLabel)}:</span> {fertilizer.frequency}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    <span className="font-medium">{t(recommendationsTranslations.detailsLabel)}:</span> {fertilizer.details}
-                                  </p>
-                                  {fertilizer.notes && (
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                      <span className="font-medium">{t(recommendationsTranslations.notesLabel)}:</span> {fertilizer.notes}
-                                    </p>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                </Tabs>
-
-                <Card className="mt-6">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Info className="h-5 w-5" />
-                      <span>{t(recommendationsTranslations.additionalTips)}</span>
-                    </CardTitle>
-                    <CardDescription>
-                      {t(recommendationsTranslations.tipsCardDescription)}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {recommendations.tips.map((tip, index) => (
-                        <li key={index} className="flex items-start gap-2">
-                          <span className="text-primary font-bold">•</span>
-                          <span>{tip}</span>
-                        </li>
                       ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+                    </div>
+                  </div>
+
+                  {/* Additional Notes */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      {t(recommendationsTranslations.additionalNotes)}
+                    </label>
+                    <Textarea
+                      placeholder={t(recommendationsTranslations.notesPlaceholder)}
+                      value={formData.additionalNotes}
+                      onChange={(e) => handleInputChange("additionalNotes", e.target.value)}
+                      rows={4}
+                      className="resize-none"
+                    />
+                    <p className="text-xs text-slate-500">{t(recommendationsTranslations.notesHelper)}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Submit Button */}
+              <Button
+                size="lg"
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all h-12"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    {t(recommendationsTranslations.generatingRecommendations)}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    {t(recommendationsTranslations.getRecommendations)}
+                  </>
+                )}
+              </Button>
+            </div>
+
+            {/* Info Sidebar */}
+            <div className="lg:col-span-1 space-y-6">
+              <Card className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2 text-emerald-800">
+                    <CheckCircle2 className="w-5 h-5" />
+                    What You'll Get
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <Beaker className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-slate-700">Chemical fertilizer recommendations with precise quantities</p>
+                  </div>
+                  <Separator />
+                  <div className="flex items-start gap-3">
+                    <Leaf className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-slate-700">Organic alternatives for sustainable farming</p>
+                  </div>
+                  <Separator />
+                  <div className="flex items-start gap-3">
+                    <Calendar className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-slate-700">Timing and application methods</p>
+                  </div>
+                  <Separator />
+                  <div className="flex items-start gap-3">
+                    <Sprout className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-slate-700">Crop-specific insights and warnings</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-0 shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Droplets className="w-5 h-5 text-blue-600" />
+                    Quick Tips
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm text-slate-600">
+                  <p>• More details = better recommendations</p>
+                  <p>• Select all relevant challenges</p>
+                  <p>• Mention local conditions in notes</p>
+                  <p>• Update for each crop stage</p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
+
+          {/* Recommendations Display */}
+          {recommendations && (
+            <div className="mt-12 animate-fade-in-up">
+              <Card className="border-0 shadow-2xl overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white pb-8">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-2xl mb-2">{t(recommendationsTranslations.yourRecommendations)}</CardTitle>
+                      <CardDescription className="text-emerald-100">
+                        Personalized for {formData.crop} • {formData.region} • {formData.farmSize} {formData.farmSizeUnit}
+                      </CardDescription>
+                    </div>
+                    <div className="hidden sm:block">
+                      <Sparkles className="w-12 h-12 text-white/20" />
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="p-6">
+                  <Tabs defaultValue="chemical" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 mb-6">
+                      <TabsTrigger value="chemical" className="gap-2">
+                        <Beaker className="w-4 h-4" />
+                        Chemical Fertilizers
+                      </TabsTrigger>
+                      <TabsTrigger value="organic" className="gap-2">
+                        <Leaf className="w-4 h-4" />
+                        Organic Alternatives
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="chemical" className="space-y-4">
+                      {recommendations.chemical.map((rec, idx) => (
+                        <Card key={idx} className="border-slate-200 hover:shadow-lg transition-shadow">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm">
+                                {idx + 1}
+                              </div>
+                              {rec.name}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-3">
+                            <div className="grid sm:grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-xs font-medium text-slate-500 mb-1">Quantity</p>
+                                <p className="text-sm font-semibold text-slate-800">{rec.quantity}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-slate-500 mb-1">Timing</p>
+                                <p className="text-sm font-semibold text-slate-800">{rec.timing}</p>
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 mb-1">Application Method</p>
+                              <p className="text-sm text-slate-700">{rec.application}</p>
+                            </div>
+                            {rec.notes && (
+                              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                <p className="text-xs font-medium text-amber-900 mb-1 flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" />
+                                  Important Note
+                                </p>
+                                <p className="text-sm text-amber-800">{rec.notes}</p>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </TabsContent>
+
+                    <TabsContent value="organic" className="space-y-4">
+                      {recommendations.organic.map((rec, idx) => (
+                        <Card key={idx} className="border-emerald-200 hover:shadow-lg transition-shadow bg-emerald-50/30">
+                          <CardHeader className="pb-3">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-sm">
+                                {idx + 1}
+                              </div>
+                              {rec.name}
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-3">
+                            <div className="grid sm:grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-xs font-medium text-slate-500 mb-1">Quantity</p>
+                                <p className="text-sm font-semibold text-slate-800">{rec.quantity}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-slate-500 mb-1">Timing</p>
+                                <p className="text-sm font-semibold text-slate-800">{rec.timing}</p>
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-xs font-medium text-slate-500 mb-1">Application Method</p>
+                              <p className="text-sm text-slate-700">{rec.application}</p>
+                            </div>
+                            {rec.notes && (
+                              <div className="bg-emerald-100 border border-emerald-300 rounded-lg p-3">
+                                <p className="text-xs font-medium text-emerald-900 mb-1 flex items-center gap-1">
+                                  <Leaf className="w-3 h-3" />
+                                  Eco-Friendly Tip
+                                </p>
+                                <p className="text-sm text-emerald-800">{rec.notes}</p>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </TabsContent>
+                  </Tabs>
+
+                  {/* Key Insights */}
+                  {recommendations.keyInsights && recommendations.keyInsights.length > 0 && (
+                    <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-xl">
+                      <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5" />
+                        Key Insights
+                      </h3>
+                      <ul className="space-y-2">
+                        {recommendations.keyInsights.map((insight, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm text-blue-800">
+                            <ArrowRight className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                            <span>{insight}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Warnings */}
+                  {recommendations.warnings && recommendations.warnings.length > 0 && (
+                    <div className="mt-6 p-6 bg-amber-50 border border-amber-200 rounded-xl">
+                      <h3 className="font-semibold text-amber-900 mb-3 flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5" />
+                        Important Warnings
+                      </h3>
+                      <ul className="space-y-2">
+                        {recommendations.warnings.map((warning, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm text-amber-800">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 mt-1.5 flex-shrink-0" />
+                            <span>{warning}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Next Steps */}
+                  {recommendations.nextSteps && recommendations.nextSteps.length > 0 && (
+                    <div className="mt-6 p-6 bg-emerald-50 border border-emerald-200 rounded-xl">
+                      <h3 className="font-semibold text-emerald-900 mb-3 flex items-center gap-2">
+                        <CheckCircle2 className="w-5 h-5" />
+                        Next Steps
+                      </h3>
+                      <ol className="space-y-2">
+                        {recommendations.nextSteps.map((step, idx) => (
+                          <li key={idx} className="flex items-start gap-3 text-sm text-emerald-800">
+                            <span className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                              {idx + 1}
+                            </span>
+                            <span className="pt-0.5">{step}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </section>
     </Layout>

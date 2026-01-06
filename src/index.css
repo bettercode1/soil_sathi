@@ -5,6 +5,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .scrollbar-none {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @layer base {
   :root {
     --background: 40 38% 98%;
@@ -410,6 +420,25 @@
 
 .progress-animate {
   animation: progressFill 1.5s ease-out forwards;
+}
+
+/* Custom Scrollbar for Sensor Readings */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* Chart Container Styles */

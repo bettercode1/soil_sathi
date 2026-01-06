@@ -9,10 +9,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { buildApiUrl, parseJsonResponse } from "@/lib/api";
 import { saveSoilHealthPrediction } from "@/services/firebase/reportService";
-import { TrendingUp, AlertTriangle, Loader2 } from "lucide-react";
+import { TrendingUp, AlertTriangle, Loader2, Activity, CheckCircle2, ArrowRight } from "lucide-react";
 import { PageHero } from "@/components/shared/PageHero";
 import { commonTranslations } from "@/constants/allTranslations";
-import HealthScoreGauge from "@/components/reports/HealthScoreGauge";
 
 type PredictionResponse = {
   language: string;
@@ -102,6 +101,13 @@ const SoilHealthPrediction = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getHealthStatus = (score: number) => {
+    if (score >= 80) return { label: "Excellent", color: "text-emerald-600", bg: "bg-emerald-100", border: "border-emerald-200" };
+    if (score >= 60) return { label: "Good", color: "text-blue-600", bg: "bg-blue-100", border: "border-blue-200" };
+    if (score >= 40) return { label: "Fair", color: "text-yellow-600", bg: "bg-yellow-100", border: "border-yellow-200" };
+    return { label: "Poor", color: "text-red-600", bg: "bg-red-100", border: "border-red-200" };
   };
 
   return (
@@ -197,17 +203,17 @@ const SoilHealthPrediction = () => {
                 <Button
                   onClick={handlePredict}
                   disabled={isLoading || !region.trim()}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30 py-6 text-lg"
                   size="lg"
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       {t(commonTranslations.predicting)}
                     </>
                   ) : (
                     <>
-                      <TrendingUp className="mr-2 h-4 w-4" />
+                      <TrendingUp className="mr-2 h-5 w-5" />
                       {t(commonTranslations.predictSoilHealth)}
                     </>
                   )}
@@ -216,39 +222,93 @@ const SoilHealthPrediction = () => {
             </Card>
 
             {prediction && (
-              <div className="space-y-6">
-                {/* Visual Health Score Chart */}
-                <HealthScoreGauge 
-                  score={prediction.predictedHealthScore} 
-                  title="Predicted Health Score"
-                />
+              <div className="space-y-8 animate-fade-in-up">
+                {/* Visual Health Score Card */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className={`border-l-4 shadow-md ${getHealthStatus(prediction.predictedHealthScore).border} ${getHealthStatus(prediction.predictedHealthScore).bg.replace('100', '50/50')}`}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg text-slate-600">Predicted Health Score</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center gap-4">
+                        <div className={`p-4 rounded-full bg-white shadow-sm border ${getHealthStatus(prediction.predictedHealthScore).border}`}>
+                          <Activity className={`h-8 w-8 ${getHealthStatus(prediction.predictedHealthScore).color}`} />
+                        </div>
+                        <div>
+                          <span className={`text-4xl font-bold ${getHealthStatus(prediction.predictedHealthScore).color}`}>
+                            {prediction.predictedHealthScore.toFixed(0)}
+                          </span>
+                          <span className="text-slate-400 text-xl font-light">/100</span>
+                          <p className={`font-medium ${getHealthStatus(prediction.predictedHealthScore).color}`}>
+                            {getHealthStatus(prediction.predictedHealthScore).label} Condition
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-l-4 border-l-blue-400 shadow-md bg-blue-50/30">
+                     <CardHeader className="pb-2">
+                      <CardTitle className="text-lg text-slate-600">Forecast Overview</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-between items-center p-2 bg-white rounded border border-blue-100">
+                          <span className="text-sm text-slate-500">Forecast Period</span>
+                          <span className="font-bold text-blue-700">{forecastMonths} Months</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 bg-white rounded border border-blue-100">
+                          <span className="text-sm text-slate-500">Region</span>
+                          <span className="font-bold text-slate-700">{region}</span>
+                        </div>
+                         {cropName && (
+                          <div className="flex justify-between items-center p-2 bg-white rounded border border-blue-100">
+                            <span className="text-sm text-slate-500">Crop</span>
+                            <span className="font-bold text-slate-700">{cropName}</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
 
                 {prediction.riskAlerts.length > 0 && (
-                  <Card>
+                  <Card className="border-amber-200 bg-amber-50/30 shadow-sm">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5 text-amber-500" />
+                      <CardTitle className="flex items-center gap-2 text-amber-700">
+                        <AlertTriangle className="h-5 w-5" />
                         Risk Alerts
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <ul className="list-disc list-inside space-y-2 text-sm">
+                      <ul className="space-y-2">
                         {prediction.riskAlerts.map((alert, idx) => (
-                          <li key={idx} className="text-amber-600">{alert}</li>
+                          <li key={idx} className="flex items-start gap-2 text-amber-800 bg-white p-3 rounded border border-amber-100">
+                            <ArrowRight className="h-4 w-4 mt-1 flex-shrink-0" />
+                            {alert}
+                          </li>
                         ))}
                       </ul>
                     </CardContent>
                   </Card>
                 )}
 
-                <Card>
+                <Card className="border border-slate-200 shadow-sm">
                   <CardHeader>
-                    <CardTitle>Recommendations</CardTitle>
+                    <CardTitle className="flex items-center gap-2 text-emerald-700">
+                      <CheckCircle2 className="h-5 w-5" />
+                      Recommendations
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+                    <ul className="grid grid-cols-1 gap-3">
                       {prediction.recommendations.map((rec, idx) => (
-                        <li key={idx}>{rec}</li>
+                        <li key={idx} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg text-slate-700">
+                          <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold mt-0.5">
+                            {idx + 1}
+                          </span>
+                          {rec}
+                        </li>
                       ))}
                     </ul>
                   </CardContent>
@@ -263,4 +323,3 @@ const SoilHealthPrediction = () => {
 };
 
 export default SoilHealthPrediction;
-

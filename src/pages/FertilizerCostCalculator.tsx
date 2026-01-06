@@ -9,10 +9,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { fertilizerCostTranslations, commonTranslations } from "@/constants/allTranslations";
 import { buildApiUrl, parseJsonResponse } from "@/lib/api";
 import { saveFertilizerCostCalculation } from "@/services/firebase/reportService";
-import { Calculator, Plus, Trash2, Loader2, TrendingDown, IndianRupee } from "lucide-react";
+import { Calculator, Plus, Trash2, Loader2, TrendingDown, IndianRupee, Wallet, CheckCircle2, ArrowDown } from "lucide-react";
 import { formatCurrency } from "@/utils/currencyUtils";
 import { PageHero } from "@/components/shared/PageHero";
-import CostComparisonChart from "@/components/reports/CostComparisonChart";
 
 type Fertilizer = {
   name: string;
@@ -251,6 +250,7 @@ const FertilizerCostCalculator = () => {
                           onClick={() => removeFertilizer(index)}
                           size="sm"
                           variant="ghost"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -328,49 +328,86 @@ const FertilizerCostCalculator = () => {
               </CardContent>
             </Card>
 
-                <Button
-                  onClick={handleCalculate}
-                  disabled={isLoading}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30"
-                  size="lg"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t(commonTranslations.calculating)}
-                    </>
-                  ) : (
-                    <>
-                      <Calculator className="mr-2 h-4 w-4" />
-                      {t(fertilizerCostTranslations.calculate)}
-                    </>
-                  )}
-                </Button>
+            <Button
+              onClick={handleCalculate}
+              disabled={isLoading}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/30 py-6 text-lg"
+              size="lg"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  {t(commonTranslations.calculating)}
+                </>
+              ) : (
+                <>
+                  <Calculator className="mr-2 h-5 w-5" />
+                  {t(fertilizerCostTranslations.calculate)}
+                </>
+              )}
+            </Button>
 
             {calculation && (
-              <div className="space-y-6">
-                {/* Visual Cost Comparison Chart */}
-                <CostComparisonChart
-                  totalCost={calculation.totalCost}
-                  optimizedCost={calculation.optimizedCost}
-                  savings={calculation.savings}
-                />
-              </div>
-            )}
+              <div className="space-y-8 animate-fade-in-up">
+                {/* Visual Cost Analysis Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Total Cost */}
+                  <Card className="bg-slate-50 border-slate-200">
+                    <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+                      <span className="text-sm font-medium text-slate-500 mb-2">Total Current Cost</span>
+                      <span className="text-3xl font-bold text-slate-800">{formatCurrency(calculation.totalCost)}</span>
+                      <span className="text-xs text-slate-400 mt-1">Based on inputs</span>
+                    </CardContent>
+                  </Card>
 
-            {calculation && calculation.recommendations.length > 0 && (
-              <Card className="border border-border bg-card shadow-sm">
-                <CardHeader>
-                  <CardTitle>{t(fertilizerCostTranslations.recommendations)}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
-                    {calculation.recommendations.map((rec, idx) => (
-                      <li key={idx}>{rec}</li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+                  {/* Savings */}
+                  <Card className="bg-emerald-50 border-emerald-100 shadow-md transform md:-translate-y-2">
+                    <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+                      <div className="p-3 bg-emerald-100 rounded-full mb-2">
+                        <Wallet className="h-6 w-6 text-emerald-600" />
+                      </div>
+                      <span className="text-sm font-bold text-emerald-700 mb-1">{t(commonTranslations.potentialSavings)}</span>
+                      <span className="text-4xl font-extrabold text-emerald-600">{formatCurrency(calculation.savings)}</span>
+                      <div className="flex items-center gap-1 text-xs text-emerald-600 mt-2 font-medium bg-white px-2 py-1 rounded-full">
+                        <ArrowDown className="h-3 w-3" />
+                        Save Money
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Optimized Cost */}
+                  <Card className="bg-blue-50 border-blue-100">
+                    <CardContent className="p-6 flex flex-col items-center justify-center text-center">
+                      <span className="text-sm font-medium text-blue-600 mb-2">Optimized Cost</span>
+                      <span className="text-3xl font-bold text-blue-700">{formatCurrency(calculation.optimizedCost)}</span>
+                      <span className="text-xs text-blue-500 mt-1">Recommended Plan</span>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {calculation.recommendations.length > 0 && (
+                  <Card className="border border-slate-200 shadow-sm">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                        {t(fertilizerCostTranslations.recommendations)}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3">
+                        {calculation.recommendations.map((rec, idx) => (
+                          <li key={idx} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg text-slate-700">
+                            <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold mt-0.5">
+                              {idx + 1}
+                            </span>
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -380,4 +417,3 @@ const FertilizerCostCalculator = () => {
 };
 
 export default FertilizerCostCalculator;
-

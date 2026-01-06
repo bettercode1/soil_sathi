@@ -3,6 +3,7 @@ import { ChevronRight, Facebook, Leaf, Linkedin, Mail, Phone, Youtube, ExternalL
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Button } from "@/components/ui/button";
+import BettercodeLogo from "@/assets/bettercode-logo.png";
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -77,6 +78,15 @@ const Footer = () => {
                   <Linkedin className="h-4 w-4" />
                 </a>
               </div>
+            </div>
+            
+            <div className="flex items-center gap-3 pt-2 opacity-80 hover:opacity-100 transition-opacity">
+               <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Powered by</span>
+               <img 
+                 src={BettercodeLogo} 
+                 alt="Bettercode" 
+                 className="h-5 w-auto brightness-0 invert opacity-70" 
+               />
             </div>
           </div>
 
@@ -262,6 +272,7 @@ const Footer = () => {
                     </a>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>
