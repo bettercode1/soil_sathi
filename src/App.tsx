@@ -23,6 +23,7 @@ import SoilHealthPrediction from "./pages/SoilHealthPrediction";
 import FarmerCommunity from "./pages/FarmerCommunity";
 import ExpertConsultation from "./pages/ExpertConsultation";
 import SensorData from "./pages/SensorData";
+import Regions from "./pages/Regions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/farmer-community" element={<FarmerCommunity />} />
             <Route path="/expert-consultation" element={<ExpertConsultation />} />
             <Route path="/sensor-data" element={<SensorData />} />
+            <Route path="/regions" element={<Regions />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

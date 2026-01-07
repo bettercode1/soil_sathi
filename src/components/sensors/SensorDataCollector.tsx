@@ -134,105 +134,140 @@ export const SensorDataCollector: React.FC<SensorDataCollectorProps> = ({
     });
   };
 
+  const formatSensorName = (name: string) => {
+    return name
+      .replace(/_/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "bg-green-500";
+        return "bg-emerald-500";
       case "calibrating":
-        return "bg-yellow-500";
+        return "bg-amber-500";
       case "low_battery":
         return "bg-orange-500";
       case "error":
-        return "bg-red-500";
+        return "bg-rose-500";
       default:
-        return "bg-gray-500";
+        return "bg-slate-500";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "active":
-        return <CheckCircle2 className="h-4 w-4 text-white" />;
+        return <CheckCircle2 className="h-5 w-5 text-white" />;
       case "calibrating":
-        return <Loader2 className="h-4 w-4 text-white animate-spin" />;
+        return <Loader2 className="h-5 w-5 text-white animate-spin" />;
       case "low_battery":
-        return <Battery className="h-4 w-4 text-white" />;
+        return <Battery className="h-5 w-5 text-white" />;
       case "error":
-        return <AlertCircle className="h-4 w-4 text-white" />;
+        return <AlertCircle className="h-5 w-5 text-white" />;
       default:
-        return <Activity className="h-4 w-4 text-white" />;
+        return <Activity className="h-5 w-5 text-white" />;
     }
+  };
+
+  const getBatteryColor = (level: number) => {
+    if (level < 20) return "text-rose-500";
+    if (level < 50) return "text-amber-500";
+    return "text-emerald-500";
   };
 
   return (
     <div className="space-y-6">
       {/* Sensor Devices Status */}
-      <Card className="border-2 border-emerald-100 bg-gradient-to-br from-emerald-50/50 to-white shadow-lg">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-3 text-2xl">
-            <div className="p-2 bg-emerald-100 rounded-lg">
-              <Wifi className="h-6 w-6 text-emerald-600" />
+      <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
+        <div className="absolute top-0 left-0 w-2 h-full bg-emerald-500" />
+        <CardHeader className="pb-4 sm:pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <CardTitle className="text-2xl font-bold flex items-center gap-2 text-slate-800">
+                <Wifi className="h-6 w-6 text-emerald-600" />
+                {t(sensorTranslations.connectedSensors)}
+              </CardTitle>
+              <CardDescription className="text-slate-500 font-medium">
+                {devices.filter(d => d.status === "active").length} {t(sensorTranslations.activeSensorsReady)}
+              </CardDescription>
             </div>
-            <span>{t(sensorTranslations.connectedSensors)}</span>
-            <Badge variant="outline" className="ml-auto bg-emerald-50 text-emerald-700 border-emerald-200">
-              <Signal className="h-3 w-3 mr-1" />
-              {devices.filter(d => d.status === "active").length} {t(sensorTranslations.activeSensorsReady)}
+            <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-100 px-3 py-1 self-start sm:self-center">
+              <Signal className="h-3.5 w-3.5 mr-1.5" />
+              {t(sensorTranslations.systemOnline)}
             </Badge>
-          </CardTitle>
-          <CardDescription className="text-base flex items-center gap-2 mt-2">
-            <Sparkles className="h-4 w-4 text-emerald-500" />
-            {devices.filter(d => d.status === "active").length} {t(sensorTranslations.activeSensorsReady)}
-          </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {devices.map((device) => (
               <div
                 key={device.id}
-                className="group relative flex items-center justify-between p-4 border-2 rounded-xl hover:border-emerald-300 hover:shadow-md transition-all duration-300 bg-white hover:bg-gradient-to-br hover:from-emerald-50/30 hover:to-white"
+                className="group relative flex flex-col p-4 sm:p-5 border border-slate-100 rounded-2xl hover:border-emerald-200 hover:shadow-lg transition-all duration-300 bg-white"
               >
-                <div className="flex items-center gap-4 flex-1">
-                  <div className={`relative w-14 h-14 rounded-xl flex items-center justify-center shadow-md transition-transform group-hover:scale-110 ${getStatusColor(device.status)}`}>
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm transition-transform group-hover:scale-105 ${getStatusColor(device.status)}`}>
                     {getStatusIcon(device.status)}
                     {device.status === "active" && (
-                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-bold text-base text-slate-800 truncate">{device.name}</div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="outline" className="text-xs bg-slate-50">
-                        {device.type}
-                      </Badge>
-                      {device.batteryLevel && (
-                        <div className="flex items-center gap-1 text-xs text-slate-600">
-                          <Battery className={`h-3 w-3 ${device.batteryLevel < 20 ? 'text-red-500' : device.batteryLevel < 50 ? 'text-yellow-500' : 'text-green-500'}`} />
-                          <span className="font-semibold">{device.batteryLevel.toFixed(0)}%</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-2 ml-3">
-                  <Badge 
-                    variant={device.status === "active" ? "default" : "secondary"}
-                    className={`${device.status === "active" ? "bg-emerald-500 text-white" : ""} font-semibold`}
-                  >
-                    {device.status === "active" ? (
-                      <div className="flex items-center gap-1">
-                        <Radio className="h-3 w-3" />
-                        {t(sensorTranslations.active)}
+                      <div className="absolute top-0 right-0 w-3 h-3 bg-white rounded-full flex items-center justify-center -translate-y-1/3 translate-x-1/3 shadow-sm">
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                       </div>
-                    ) : (
-                      device.status
                     )}
-                  </Badge>
-                  {device.firmwareVersion && (
-                    <div className="text-[10px] text-slate-400 font-mono">
-                      {device.firmwareVersion}
-                    </div>
-                  )}
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <Badge 
+                      variant="outline"
+                      className={`
+                        ${device.status === "active" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : 
+                          device.status === "calibrating" ? "bg-amber-50 text-amber-700 border-amber-100" :
+                          device.status === "low_battery" ? "bg-orange-50 text-orange-700 border-orange-100" :
+                          "bg-slate-50 text-slate-600 border-slate-100"}
+                        capitalize font-semibold text-[10px] px-2 py-0
+                      `}
+                    >
+                      {device.status === "active" ? t(sensorTranslations.active) : 
+                       device.status === "calibrating" ? t(sensorTranslations.calibrating) :
+                       device.status === "low_battery" ? t(sensorTranslations.lowBattery) :
+                       device.status.replace('_', ' ')}
+                    </Badge>
+                    {device.firmwareVersion && (
+                      <span className="text-[10px] text-slate-400 font-mono tracking-tighter bg-slate-50 px-1.5 py-0.5 rounded">
+                        {device.firmwareVersion}
+                      </span>
+                    )}
+                  </div>
                 </div>
+
+                <div className="space-y-3">
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-slate-800 truncate text-lg group-hover:text-emerald-700 transition-colors">
+                      {formatSensorName(device.name)}
+                    </h4>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                    <div className="flex items-center gap-1.5">
+                      <div className="p-1 bg-slate-50 rounded-md">
+                        <Activity className="h-3 w-3 text-slate-400" />
+                      </div>
+                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">{device.type}</span>
+                    </div>
+
+                    {device.batteryLevel !== undefined && (
+                      <div className="flex items-center gap-1.5">
+                        <Battery className={`h-4 w-4 ${getBatteryColor(device.batteryLevel)}`} />
+                        <span className={`text-xs font-bold ${getBatteryColor(device.batteryLevel)}`}>
+                          {device.batteryLevel.toFixed(0)}%
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Hover decorative element */}
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0 h-1 bg-emerald-500 transition-all duration-300 group-hover:w-1/2 rounded-t-full" />
               </div>
             ))}
           </div>

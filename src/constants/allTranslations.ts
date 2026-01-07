@@ -3651,6 +3651,28 @@ export const indexTranslations: Record<string, TranslationSet> = {
   }
 };
 
+// Regions Translations
+export const regionsTranslations: Record<string, TranslationSet> = {
+  title: {
+    en: "Regional Insights",
+    hi: "क्षेत्रीय अंतर्दृष्टि",
+    pa: "ਖੇਤਰੀ ਜਾਣਕਾਰੀ",
+    ta: "மண்டல நுண்ணறிவு",
+    te: "ప్రాంతీయ అంతర్దృష్టులు",
+    bn: "আঞ্চলিক অন্তর্দৃষ্টি",
+    mr: "प्रादेशिक माहिती"
+  },
+  subtitle: {
+    en: "Agricultural data and recommendations specific to your region",
+    hi: "आपके क्षेत्र के लिए विशिष्ट कृषि डेटा और सिफारिशें",
+    pa: "ਤੁਹਾਡੇ ਖੇਤਰ ਲਈ ਵਿਸ਼ੇਸ਼ ਖੇਤੀਬाੜੀ ਡੇਟਾ ਅਤੇ ਸਿਫਾਰਸ਼ਾਂ",
+    ta: "உங்கள் பகுதிக்கு குறிப்பிட்ட விவசாய தரவு மற்றும் பரிந்துரைகள்",
+    te: "మీ ప్రాంతానికి సంబంధించిన వ్యవసాయ డేటా మరియు సిఫార్సులు",
+    bn: "আপনার অঞ্চলের জন্য নির্দিষ্ট কৃষি তথ্য এবং সুপারিশ",
+    mr: "तुमच्या प्रदेशासाठी विशिष्ट कृषी डेटा आणि शिफारसी"
+  }
+};
+
 // Sensor Analysis Translations moved to sensorAnalysisTranslations.ts
 
 // Export sensor translations

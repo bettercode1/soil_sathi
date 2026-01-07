@@ -336,33 +336,6 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Stats / Benefits - Icon only focus */}
-      <section className="py-16 bg-slate-900 text-white">
-        <div className="container mx-auto px-4">
-           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center divide-x divide-white/10">
-              <div className="p-4">
-                <Leaf className="w-8 h-8 text-emerald-400 mx-auto mb-4" />
-                <div className="text-3xl font-bold mb-1">10k+</div>
-                <div className="text-slate-400 text-sm">{t(indexTranslations.farmersHelped)}</div>
-              </div>
-              <div className="p-4">
-                <FileText className="w-8 h-8 text-blue-400 mx-auto mb-4" />
-                <div className="text-3xl font-bold mb-1">50k+</div>
-                <div className="text-slate-400 text-sm">{t(indexTranslations.reportsGenerated)}</div>
-              </div>
-              <div className="p-4">
-                <Map className="w-8 h-8 text-amber-400 mx-auto mb-4" />
-                <div className="text-3xl font-bold mb-1">500+</div>
-                <div className="text-slate-400 text-sm">{t(indexTranslations.regionsCovered)}</div>
-              </div>
-              <div className="p-4">
-                <Users className="w-8 h-8 text-purple-400 mx-auto mb-4" />
-                <div className="text-3xl font-bold mb-1">24/7</div>
-                <div className="text-slate-400 text-sm">{t(indexTranslations.expertSupport)}</div>
-              </div>
-           </div>
-        </div>
-      </section>
 
       {/* CTA Section */}
       <section className="relative py-20 overflow-hidden">

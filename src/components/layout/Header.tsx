@@ -155,6 +155,7 @@ const Header = () => {
     { key: "irrigation", href: "/irrigation-scheduler", icon: Droplets },
     { key: "farmingCalendar", href: "/farming-calendar", icon: Calendar },
     { key: "fertilizerCost", href: "/fertilizer-cost", icon: Calculator },
+    { key: "regionalInsights", href: "/regions", icon: Map },
     { key: "soilPrediction", href: "/soil-health-prediction", icon: AlertTriangle },
     { key: "farmerCommunity", href: "/farmer-community", icon: MessageCircle },
     { key: "expertConsultation", href: "/expert-consultation", icon: Users },
@@ -172,12 +173,12 @@ const Header = () => {
     });
 
   const NavigationLinks = () => (
-    <nav className="flex items-center gap-4 overflow-x-auto scrollbar-none">
+    <nav className="flex items-center gap-1 min-w-0 overflow-x-auto scrollbar-none py-1">
       {navItems.map(({ key, href, icon: Icon }) => (
         <Link
           key={key}
           to={href}
-          className="group flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium text-foreground/80 transition-all hover:bg-primary/10 hover:text-primary"
+          className="group flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-medium text-foreground/80 transition-all hover:bg-primary/10 hover:text-primary shrink-0"
         >
           <Icon className="h-4 w-4" />
           <span className="whitespace-nowrap">{getLabel(key)}</span>
@@ -190,9 +191,9 @@ const Header = () => {
   const LanguageSelector = () => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2">
+        <Button variant="ghost" size="sm" className="gap-2 shrink-0">
           <Globe className="h-4 w-4" />
-          <span className="hidden sm:inline-block">{getLanguageName(language)}</span>
+          <span className="hidden 2xl:inline-block">{getLanguageName(language)}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -244,9 +245,9 @@ const Header = () => {
         </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden xl:flex items-center gap-6">
+        <div className="hidden xl:flex items-center gap-4 flex-1 min-w-0 justify-end ml-4">
           <NavigationLinks />
-          <div className="flex items-center gap-3 pl-6 border-l">
+          <div className="flex items-center gap-3 pl-4 border-l shrink-0">
             <LanguageSelector />
             <LoginModal />
           </div>

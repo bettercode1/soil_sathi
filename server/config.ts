@@ -108,7 +108,7 @@ const getPort = () => {
 export const env = {
   nodeEnv: NODE_ENV ?? (process.env.npm_lifecycle_event?.includes("dev") ? "development" : "production"), // Default to production for Render, but dev for local scripts
   port: getPort(),
-  geminiModel: GEMINI_MODEL ?? "gemini-2.5-flash",
+  geminiModel: GEMINI_MODEL ?? "gemini-1.5-flash",
   geminiEmbedModel: GEMINI_EMBED_MODEL ?? "text-embedding-004",
   geminiApiKey: GEMINI_API_KEY,
   allowedOrigins: ALLOWED_ORIGINS ?? [],
