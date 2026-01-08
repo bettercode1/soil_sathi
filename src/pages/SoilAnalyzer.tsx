@@ -504,12 +504,12 @@ const SoilAnalyzer = () => {
                           step="0.1"
                           min="0"
                           max="14"
-                          placeholder="e.g. 6.5"
+                          placeholder={t(soilAnalyzerTranslations.phPlaceholder)}
                           value={manualValues.ph}
                           onChange={handleManualInputChange}
                         />
                         <p className="text-xs text-muted-foreground">
-                          Value typically between 0-14
+                          {t(soilAnalyzerTranslations.phHelperText)}
                         </p>
                       </div>
                       <div className="space-y-2">
@@ -520,7 +520,7 @@ const SoilAnalyzer = () => {
                           id="nitrogen"
                           name="nitrogen"
                           type="number"
-                          placeholder="e.g. 280"
+                          placeholder={t(soilAnalyzerTranslations.nitrogenPlaceholder)}
                           value={manualValues.nitrogen}
                           onChange={handleManualInputChange}
                         />
@@ -533,7 +533,7 @@ const SoilAnalyzer = () => {
                           id="phosphorus"
                           name="phosphorus"
                           type="number"
-                          placeholder="e.g. 45"
+                          placeholder={t(soilAnalyzerTranslations.phosphorusPlaceholder)}
                           value={manualValues.phosphorus}
                           onChange={handleManualInputChange}
                         />
@@ -546,7 +546,7 @@ const SoilAnalyzer = () => {
                           id="potassium"
                           name="potassium"
                           type="number"
-                          placeholder="e.g. 190"
+                          placeholder={t(soilAnalyzerTranslations.potassiumPlaceholder)}
                           value={manualValues.potassium}
                           onChange={handleManualInputChange}
                         />
@@ -560,7 +560,7 @@ const SoilAnalyzer = () => {
                           name="organic"
                           type="number"
                           step="0.1"
-                          placeholder="e.g. 2.1"
+                          placeholder={t(soilAnalyzerTranslations.organicPlaceholder)}
                           value={manualValues.organic}
                           onChange={handleManualInputChange}
                         />

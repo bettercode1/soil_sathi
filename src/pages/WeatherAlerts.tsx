@@ -248,7 +248,7 @@ const WeatherAlerts = () => {
                         <Thermometer className="h-6 w-6 text-orange-500" />
                       </div>
                       <span className="text-2xl font-bold text-slate-800">{weatherData.temperature}°C</span>
-                      <span className="text-xs text-slate-500">Temperature</span>
+                      <span className="text-xs text-slate-500">{t(weatherAlertsTranslations.temperature)}</span>
                     </CardContent>
                   </Card>
 
@@ -258,7 +258,7 @@ const WeatherAlerts = () => {
                         <Droplets className="h-6 w-6 text-blue-500" />
                       </div>
                       <span className="text-2xl font-bold text-slate-800">{weatherData.humidity}%</span>
-                      <span className="text-xs text-slate-500">Humidity</span>
+                      <span className="text-xs text-slate-500">{t(weatherAlertsTranslations.humidity)}</span>
                     </CardContent>
                   </Card>
 
@@ -268,7 +268,7 @@ const WeatherAlerts = () => {
                         <Wind className="h-6 w-6 text-slate-500" />
                       </div>
                       <span className="text-2xl font-bold text-slate-800">{weatherData.windSpeed || 0}</span>
-                      <span className="text-xs text-slate-500">km/h Wind</span>
+                      <span className="text-xs text-slate-500">{t(commonTranslations.kmhWind)}</span>
                     </CardContent>
                   </Card>
 
@@ -278,7 +278,7 @@ const WeatherAlerts = () => {
                         <Umbrella className="h-6 w-6 text-indigo-500" />
                       </div>
                       <span className="text-2xl font-bold text-slate-800">{weatherData.precipitation || 0}%</span>
-                      <span className="text-xs text-slate-500">Precipitation</span>
+                      <span className="text-xs text-slate-500">{t(commonTranslations.precipitation)}</span>
                     </CardContent>
                   </Card>
                 </div>

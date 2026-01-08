@@ -24,7 +24,8 @@ import {
 import { SoilAnalysis } from "@/types/soil-analysis";
 import BettercodeLogo from "@/assets/bettercode-logo.png";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { sensorTranslations } from "@/constants/sensorTranslations";
+import { sensorTranslations, commonTranslations, recommendationsTranslations } from "@/constants/allTranslations";
+import { sensorAnalysisTranslations } from "@/constants/sensorAnalysisTranslations";
 
 interface DetailedReportProps {
   analysis: SoilAnalysis;
@@ -49,6 +50,7 @@ interface NutrientCardProps {
 }
 
 const NutrientCard: React.FC<NutrientCardProps> = ({ item, index, getStatusIcon, getStatusColor }) => {
+  const { t } = useLanguage();
   const [showTooltip, setShowTooltip] = useState(false);
   const statusColor = getStatusColor(item.status);
   
@@ -87,7 +89,7 @@ const NutrientCard: React.FC<NutrientCardProps> = ({ item, index, getStatusIcon,
 
           <div className="flex items-center gap-2 relative">
             <div className="text-sm flex items-center gap-1">
-              <span className="font-semibold text-slate-500">Status: </span>
+              <span className="font-semibold text-slate-500">{t(commonTranslations.status)}: </span>
               <span className={`font-bold ${statusColor.replace('bg-', 'text-')}`}>
                 {item.status}
               </span>
@@ -113,7 +115,7 @@ const NutrientCard: React.FC<NutrientCardProps> = ({ item, index, getStatusIcon,
                     <div className="space-y-2">
                       <h4 className="font-semibold text-slate-800 flex items-center gap-2">
                         <Info className="h-4 w-4 text-emerald-600" />
-                        Recommendation
+                        {t(commonTranslations.recommendation)}
                       </h4>
                       <p className="text-sm text-slate-600 leading-relaxed">
                         {item.recommendation}
@@ -133,6 +135,7 @@ const NutrientCard: React.FC<NutrientCardProps> = ({ item, index, getStatusIcon,
 };
 
 const AnimatedRating = ({ score }: { score: number }) => {
+  const { t } = useLanguage();
   const [value, setValue] = useState(0);
   
   useEffect(() => {
@@ -217,7 +220,7 @@ const AnimatedRating = ({ score }: { score: number }) => {
             {value.toFixed(1)}
           </span>
           <span className="text-[9px] text-slate-400 font-bold uppercase">
-            Out of 10
+            {t(sensorTranslations.outOf10)}
           </span>
         </div>
       </div>
@@ -245,18 +248,30 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
     const rating = analysis.soilQuality.rating.toLowerCase();
     const score = Number(analysis.soilQuality.score);
     
-    // Trust text rating if positive
-    if (rating.includes("good") || rating.includes("excellent") || rating.includes("optimal") || rating.includes("adequate") || rating.includes("healthy") || rating.includes("high")) {
+    // Check against translated values
+    const goodLabel = t(sensorAnalysisTranslations.qualityGood).toLowerCase();
+    const averageLabel = t(sensorAnalysisTranslations.qualityAverage).toLowerCase();
+    const poorLabel = t(sensorAnalysisTranslations.qualityPoor).toLowerCase();
+    const optimalLabel = t(sensorAnalysisTranslations.optimal).toLowerCase();
+    const normalLabel = t(sensorAnalysisTranslations.normal).toLowerCase();
+
+    if (rating.includes(goodLabel) || rating.includes(optimalLabel) || rating.includes(normalLabel) || 
+        rating.includes("good") || rating.includes("excellent") || rating.includes("optimal")) {
       return true;
     }
     
     // Fallback to score
     return Number.isFinite(score) && score >= 60;
-  }, [analysis.soilQuality]);
+  }, [analysis.soilQuality, t]);
 
   const getStatusIcon = (status: string) => {
     const s = status.toLowerCase();
-    if (s.includes("optimal") || s.includes("good") || s.includes("adequate") || s.includes("medium") || s.includes("high")) {
+    const optimalLabel = t(sensorAnalysisTranslations.optimal).toLowerCase();
+    const goodLabel = t(sensorAnalysisTranslations.good).toLowerCase();
+    const normalLabel = t(sensorAnalysisTranslations.normal).toLowerCase();
+
+    if (s.includes(optimalLabel) || s.includes(goodLabel) || s.includes(normalLabel) || 
+        s.includes("optimal") || s.includes("good") || s.includes("adequate") || s.includes("medium") || s.includes("high")) {
       return <ThumbsUp className="h-6 w-6 text-white" fill="currentColor" />;
     }
     return <ThumbsDown className="h-6 w-6 text-white" fill="currentColor" />;
@@ -264,9 +279,15 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
 
   const getStatusColor = (status: string) => {
     const s = status.toLowerCase();
-    if (s.includes("optimal") || s.includes("good") || s.includes("adequate")) return "bg-green-500";
-    if (s.includes("medium")) return "bg-yellow-500";
-    if (s.includes("low") || s.includes("deficient")) return "bg-red-500";
+    const optimalLabel = t(sensorAnalysisTranslations.optimal).toLowerCase();
+    const goodLabel = t(sensorAnalysisTranslations.good).toLowerCase();
+    const normalLabel = t(sensorAnalysisTranslations.normal).toLowerCase();
+    const lowLabel = t(sensorAnalysisTranslations.low).toLowerCase();
+    const checkLabel = t(sensorAnalysisTranslations.check).toLowerCase();
+
+    if (s.includes(optimalLabel) || s.includes(goodLabel) || s.includes("optimal") || s.includes("good") || s.includes("adequate")) return "bg-green-500";
+    if (s.includes(normalLabel) || s.includes("medium")) return "bg-yellow-500";
+    if (s.includes(lowLabel) || s.includes(checkLabel) || s.includes("low") || s.includes("deficient")) return "bg-red-500";
     return "bg-orange-500";
   };
 
@@ -276,7 +297,7 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-white rounded-xl shadow-sm border border-slate-100">
         <div className="flex-1">
           <div className="flex items-center gap-3 flex-wrap">
-            <h2 className="text-xl font-bold text-slate-800">Detailed Soil Analysis</h2>
+            <h2 className="text-xl font-bold text-slate-800">{t(commonTranslations.detailedSoilAnalysis)}</h2>
             {dataSource === "sensor" && (
               <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 rounded-lg border-2 border-emerald-300">
                 <Wifi className="h-4 w-4 text-emerald-700" />
@@ -287,7 +308,7 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
             )}
           </div>
           <p className="text-sm text-slate-500 mt-1">
-            Comprehensive report generated on {analysis.analysisTimestamp.split("T")[0]}
+            {t(commonTranslations.reportGeneratedOn)} {analysis.analysisTimestamp.split("T")[0]}
             {sensorCollection && sensorCollection.readings && (
               <span className="ml-2 text-emerald-600 font-semibold">
                 • {sensorCollection.readings.length} {t(sensorTranslations.readings)} {t(sensorTranslations.from)} {sensorCollection.deviceInfo?.length || 0} {t(sensorTranslations.sensors)}
@@ -298,11 +319,11 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
         <div className="flex gap-3">
           <Button variant="outline" size="sm" onClick={onClear} className="gap-2">
             <RefreshCw className="h-4 w-4" />
-            Clear
+            {t(commonTranslations.clear)}
           </Button>
           <Button onClick={onDownload} disabled={isDownloading} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
             <Download className="h-4 w-4" />
-            {isDownloading ? "Downloading..." : "Download PDF"}
+            {isDownloading ? t(commonTranslations.downloading) : t(commonTranslations.downloadPDF)}
           </Button>
         </div>
       </div>
@@ -322,7 +343,7 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-3xl font-bold text-white mb-1">SoilSathi Analysis</h1>
+                  <h1 className="text-3xl font-bold text-white mb-1">{t(commonTranslations.soilSathiAnalysis)}</h1>
                   {dataSource === "sensor" && (
                     <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
                       <Activity className="h-3 w-3 mr-1" />
@@ -333,7 +354,7 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
                 <p className="text-emerald-50 opacity-90">
                   {dataSource === "sensor" 
                     ? t(sensorTranslations.comprehensiveAnalysis)
-                    : "Advanced AI Soil Health Report"}
+                    : t(commonTranslations.advancedAIReport)}
                 </p>
                 {sensorCollection && sensorCollection.startTime && (
                   <p className="text-emerald-50/80 text-sm mt-1 flex items-center gap-2">
@@ -388,7 +409,7 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
             <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col justify-center">
               <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
                 <FlaskConical className="h-5 w-5 text-emerald-600" />
-                Soil Health Overview
+                {t(commonTranslations.soilHealthSummary)}
               </h3>
               <p className="text-lg text-slate-700 leading-relaxed">
                 {analysis.overview}
@@ -398,7 +419,7 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
             <div className={`rounded-2xl p-6 border flex flex-col items-center justify-center text-center ${
               isGoodQuality ? 'bg-green-50 border-green-100' : 'bg-orange-50 border-orange-100'
             }`}>
-              <h3 className="text-xl font-bold text-slate-800 mb-4">Overall Quality</h3>
+              <h3 className="text-xl font-bold text-slate-800 mb-4">{t(commonTranslations.overallQuality)}</h3>
               
               <div className="flex flex-col sm:flex-row items-center justify-center gap-8 w-full">
                 {/* Thumbs Rating */}
@@ -434,7 +455,7 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
           <section data-pdf-export>
             <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
               <Sprout className="h-6 w-6 text-emerald-600" />
-              Nutrient Analysis
+              {t(commonTranslations.nutrientAnalysis)}
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -454,13 +475,13 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
           <section data-pdf-export>
             <h3 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
               <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-              Recommendations
+              {t(sensorTranslations.recommendations)}
             </h3>
 
             <Tabs defaultValue="chemical" className="w-full">
               <TabsList className="grid w-full grid-cols-2 max-w-md mb-6">
-                <TabsTrigger value="chemical">Chemical Plan</TabsTrigger>
-                <TabsTrigger value="organic">Organic Plan</TabsTrigger>
+                <TabsTrigger value="chemical">{t(commonTranslations.chemicalPlan)}</TabsTrigger>
+                <TabsTrigger value="organic">{t(commonTranslations.organicPlan)}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="chemical" className="space-y-4">
@@ -476,8 +497,8 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
                           {rec.quantity}
                         </div>
                         <div className="space-y-1 text-sm text-blue-800/80">
-                          <p><span className="font-semibold">When:</span> {rec.timing}</p>
-                          <p><span className="font-semibold">How:</span> {rec.application}</p>
+                          <p><span className="font-semibold">{t(recommendationsTranslations.timing)}:</span> {rec.timing}</p>
+                          <p><span className="font-semibold">{t(recommendationsTranslations.applicationMethod)}:</span> {rec.application}</p>
                         </div>
                       </div>
                     </div>
@@ -498,8 +519,8 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
                           {rec.quantity}
                         </div>
                         <div className="space-y-1 text-sm text-green-800/80">
-                          <p><span className="font-semibold">When:</span> {rec.timing}</p>
-                          <p><span className="font-semibold">How:</span> {rec.application}</p>
+                          <p><span className="font-semibold">{t(recommendationsTranslations.timing)}:</span> {rec.timing}</p>
+                          <p><span className="font-semibold">{t(recommendationsTranslations.applicationMethod)}:</span> {rec.application}</p>
                         </div>
                       </div>
                     </div>
@@ -514,7 +535,7 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                 <ArrowRight className="h-5 w-5 text-emerald-600" />
-                Action Plan
+                {t(commonTranslations.actionPlan)}
               </h3>
               <div className="space-y-3">
                 {analysis.improvementPlan.map((plan, idx) => (
@@ -534,7 +555,7 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
             <div className="space-y-4">
               <h3 className="text-xl font-bold text-amber-600 flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5" />
-                Warnings & Alerts
+                {t(commonTranslations.warningsAlerts)}
               </h3>
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
                 <ul className="space-y-4">
@@ -552,7 +573,7 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
 
         {/* Footer */}
         <div className="bg-slate-50 border-t border-slate-100 p-6 text-center text-slate-500 text-sm">
-          <p>Generated by SoilSathi AI • Simple farming advice for better yields.</p>
+          <p>{t(commonTranslations.generatedBySoilSathi)}</p>
         </div>
       </div>
     </div>

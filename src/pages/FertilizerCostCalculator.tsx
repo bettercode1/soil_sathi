@@ -161,8 +161,8 @@ const FertilizerCostCalculator = () => {
       });
     } catch (error) {
       toast({
-        title: "Error calculating",
-        description: error instanceof Error ? error.message : "Failed to calculate costs",
+        title: t(commonTranslations.errorCalculating),
+        description: error instanceof Error ? error.message : t(commonTranslations.failedToCalculateCosts),
         variant: "destructive",
       });
     } finally {
@@ -188,31 +188,31 @@ const FertilizerCostCalculator = () => {
               <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Crop Name *</label>
+                    <label className="text-sm font-medium">{t(commonTranslations.cropName)} *</label>
                     <Input
                       value={cropName}
                       onChange={(e) => setCropName(e.target.value)}
-                      placeholder="e.g., Tomato, Wheat"
+                      placeholder={t(commonTranslations.cropNamePlaceholder)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Region *</label>
+                    <label className="text-sm font-medium">{t(commonTranslations.region)} *</label>
                     <Input
                       value={region}
                       onChange={(e) => setRegion(e.target.value)}
-                      placeholder="e.g., Maharashtra"
+                      placeholder={t(commonTranslations.regionPlaceholder)}
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Farm Size *</label>
+                    <label className="text-sm font-medium">{t(commonTranslations.farmSize)} *</label>
                     <div className="flex gap-2">
                       <Input
                         type="number"
                         value={farmSizeValue}
                         onChange={(e) => setFarmSizeValue(e.target.value)}
-                        placeholder="Size"
+                        placeholder={t(commonTranslations.size)}
                         className="flex-1"
                       />
                       <Select value={farmSizeUnit} onValueChange={(v: "acre" | "hectare") => setFarmSizeUnit(v)}>
@@ -244,7 +244,7 @@ const FertilizerCostCalculator = () => {
                 {fertilizers.map((fertilizer, index) => (
                   <div key={index} className="border rounded-lg p-4 space-y-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Fertilizer {index + 1}</span>
+                      <span className="text-sm font-medium">{t(commonTranslations.fertilizer)} {index + 1}</span>
                       {fertilizers.length > 1 && (
                         <Button
                           onClick={() => removeFertilizer(index)}
@@ -258,15 +258,15 @@ const FertilizerCostCalculator = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Name *</label>
+                        <label className="text-sm font-medium">{t(commonTranslations.name)} *</label>
                         <Input
                           value={fertilizer.name}
                           onChange={(e) => updateFertilizer(index, "name", e.target.value)}
-                          placeholder="e.g., Urea, DAP"
+                          placeholder={t(commonTranslations.fertilizerPlaceholder)}
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Type</label>
+                        <label className="text-sm font-medium">{t(commonTranslations.type)}</label>
                         <Select
                           value={fertilizer.type}
                           onValueChange={(v: "chemical" | "organic") => updateFertilizer(index, "type", v)}
@@ -275,13 +275,13 @@ const FertilizerCostCalculator = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="chemical">Chemical</SelectItem>
-                            <SelectItem value="organic">Organic</SelectItem>
+                            <SelectItem value="chemical">{t(commonTranslations.chemical)}</SelectItem>
+                            <SelectItem value="organic">{t(commonTranslations.organic)}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Quantity *</label>
+                        <label className="text-sm font-medium">{t(commonTranslations.quantity)} *</label>
                         <Input
                           type="number"
                           min="0"
@@ -291,7 +291,7 @@ const FertilizerCostCalculator = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium">Unit</label>
+                        <label className="text-sm font-medium">{t(commonTranslations.unit)}</label>
                         <Select
                           value={fertilizer.unit}
                           onValueChange={(v) => updateFertilizer(index, "unit", v)}
@@ -300,9 +300,9 @@ const FertilizerCostCalculator = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="kg">kg</SelectItem>
-                            <SelectItem value="quintal">Quintal</SelectItem>
-                            <SelectItem value="bag">Bag</SelectItem>
+                            <SelectItem value="kg">{t(commonTranslations.kg)}</SelectItem>
+                            <SelectItem value="quintal">{t(commonTranslations.quintal)}</SelectItem>
+                            <SelectItem value="bag">{t(commonTranslations.bag)}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -354,9 +354,9 @@ const FertilizerCostCalculator = () => {
                   {/* Total Cost */}
                   <Card className="bg-slate-50 border-slate-200">
                     <CardContent className="p-6 flex flex-col items-center justify-center text-center">
-                      <span className="text-sm font-medium text-slate-500 mb-2">Total Current Cost</span>
+                      <span className="text-sm font-medium text-slate-500 mb-2">{t(fertilizerCostTranslations.totalCurrentCost)}</span>
                       <span className="text-3xl font-bold text-slate-800">{formatCurrency(calculation.totalCost)}</span>
-                      <span className="text-xs text-slate-400 mt-1">Based on inputs</span>
+                      <span className="text-xs text-slate-400 mt-1">{t(fertilizerCostTranslations.basedOnInputs)}</span>
                     </CardContent>
                   </Card>
 
@@ -370,7 +370,7 @@ const FertilizerCostCalculator = () => {
                       <span className="text-4xl font-extrabold text-emerald-600">{formatCurrency(calculation.savings)}</span>
                       <div className="flex items-center gap-1 text-xs text-emerald-600 mt-2 font-medium bg-white px-2 py-1 rounded-full">
                         <ArrowDown className="h-3 w-3" />
-                        Save Money
+                        {t(fertilizerCostTranslations.saveMoney)}
                       </div>
                     </CardContent>
                   </Card>
@@ -378,9 +378,9 @@ const FertilizerCostCalculator = () => {
                   {/* Optimized Cost */}
                   <Card className="bg-blue-50 border-blue-100">
                     <CardContent className="p-6 flex flex-col items-center justify-center text-center">
-                      <span className="text-sm font-medium text-blue-600 mb-2">Optimized Cost</span>
+                      <span className="text-sm font-medium text-blue-600 mb-2">{t(fertilizerCostTranslations.optimizedCost)}</span>
                       <span className="text-3xl font-bold text-blue-700">{formatCurrency(calculation.optimizedCost)}</span>
-                      <span className="text-xs text-blue-500 mt-1">Recommended Plan</span>
+                      <span className="text-xs text-blue-500 mt-1">{t(fertilizerCostTranslations.recommendedPlan)}</span>
                     </CardContent>
                   </Card>
                 </div>

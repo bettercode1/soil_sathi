@@ -239,9 +239,7 @@ const CropDiseaseIdentifier = () => {
                   {t(cropDiseaseTranslations.uploadImage)}
                 </CardTitle>
                 <CardDescription>
-                  {language === "en" 
-                    ? "Provide crop information and upload an image for analysis" 
-                    : "विश्लेषण के लिए फसल की जानकारी प्रदान करें और एक छवि अपलोड करें"}
+                  {t(cropDiseaseTranslations.subtitle)}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -326,7 +324,7 @@ const CropDiseaseIdentifier = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <h2 className="text-2xl font-bold flex items-center gap-2">
                     <Activity className="h-6 w-6 text-emerald-500" />
-                    Analysis Results
+                    {t(cropDiseaseTranslations.analysisResultsHeading)}
                   </h2>
                   <Button
                     onClick={handleSaveReport}
@@ -337,7 +335,7 @@ const CropDiseaseIdentifier = () => {
                     {isSaving ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
+                        {t(cropDiseaseTranslations.saving)}
                       </>
                     ) : (
                       <>
@@ -353,7 +351,7 @@ const CropDiseaseIdentifier = () => {
                   {/* Diagnosis Card */}
                   <Card className="border-l-4 border-l-emerald-500 shadow-md">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-lg text-slate-500 font-medium">Diagnosis</CardTitle>
+                      <CardTitle className="text-lg text-slate-500 font-medium">{t(cropDiseaseTranslations.diagnosis)}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <h3 className="text-3xl font-bold text-slate-800 mb-2">{analysis.diseaseName}</h3>
@@ -362,7 +360,7 @@ const CropDiseaseIdentifier = () => {
                           {analysis.diseaseType.replace("_", " ")}
                         </Badge>
                         <Badge variant="secondary" className="text-sm">
-                          {analysis.confidence.toFixed(0)}% Confidence
+                          {analysis.confidence.toFixed(0)}% {t(cropDiseaseTranslations.confidenceSuffix)}
                         </Badge>
                       </div>
                     </CardContent>
@@ -371,7 +369,7 @@ const CropDiseaseIdentifier = () => {
                   {/* Severity Card */}
                   <Card className={`border-l-4 shadow-md ${analysis.severity === 'critical' ? 'border-l-red-500 bg-red-50/50' : analysis.severity === 'high' ? 'border-l-orange-500 bg-orange-50/50' : analysis.severity === 'medium' ? 'border-l-yellow-500 bg-yellow-50/50' : 'border-l-emerald-500 bg-emerald-50/50'}`}>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-lg text-slate-500 font-medium">Severity Level</CardTitle>
+                      <CardTitle className="text-lg text-slate-500 font-medium">{t(cropDiseaseTranslations.severityLevel)}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-3 mb-2">
@@ -392,7 +390,7 @@ const CropDiseaseIdentifier = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Info className="h-5 w-5 text-blue-500" />
-                      About this Condition
+                      {t(cropDiseaseTranslations.aboutCondition)}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Droplets, Sprout, FlaskConical, Leaf, Activity, ArrowRight, Gauge, Mountain, Wifi, Badge } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { sensorTranslations } from "@/constants/sensorTranslations";
+import { commonTranslations } from "@/constants/allTranslations";
 import { SoilAnalysis } from "@/types/soil-analysis";
 
 interface SimplifiedReportProps {
@@ -22,6 +23,12 @@ const SimplifiedReport: React.FC<SimplifiedReportProps> = ({ analysis, onKnowMor
       return "N/A";
     }
 
+    const nitrogenLabel = t(commonTranslations.nitrogen).toLowerCase();
+    const phosphorusLabel = t(commonTranslations.phosphorus).toLowerCase();
+    const potassiumLabel = t(commonTranslations.potassium).toLowerCase();
+    const organicLabel = t(commonTranslations.organicMatter).toLowerCase();
+    const phLabel = t(commonTranslations.phLevel).toLowerCase();
+
     const nutrient = analysis.nutrientAnalysis.find(n => {
       // Safety check for n and n.parameter
       if (!n || !n.parameter) return false;
@@ -29,21 +36,21 @@ const SimplifiedReport: React.FC<SimplifiedReportProps> = ({ analysis, onKnowMor
       const param = n.parameter.toLowerCase();
       const search = name.toLowerCase();
 
-      // Robust matching logic for English and Marathi
+      // Robust matching logic using translated labels
       if (search === "nitrogen") {
-        return param.includes("nitrogen") || param.includes("n") || param.includes("नायट्रोजन") || param.includes("नत्र");
+        return param.includes("nitrogen") || param.includes("n") || param.includes(nitrogenLabel);
       }
       if (search === "phosphorus") {
-        return param.includes("phosphorus") || param.includes("p") || param.includes("फॉस्फरस") || param.includes("स्फुरद");
+        return param.includes("phosphorus") || param.includes("p") || param.includes(phosphorusLabel);
       }
       if (search === "potassium") {
-        return param.includes("potassium") || param.includes("k") || param.includes("पोटॅशियम") || param.includes("पालाश");
+        return param.includes("potassium") || param.includes("k") || param.includes(potassiumLabel);
       }
       if (search === "organic") {
-        return param.includes("organic") || param.includes("oc") || param.includes("om") || param.includes("सेंद्रिय") || param.includes("कर्ब");
+        return param.includes("organic") || param.includes("oc") || param.includes("om") || param.includes(organicLabel);
       }
       if (search === "ph") {
-        return param.includes("ph") || param.includes("सामू");
+        return param.includes("ph") || param.includes(phLabel);
       }
       
       return param.includes(search);
@@ -54,42 +61,42 @@ const SimplifiedReport: React.FC<SimplifiedReportProps> = ({ analysis, onKnowMor
 
   const metrics = [
     {
-      label: "pH Level",
+      label: t(commonTranslations.phLevel),
       value: getNutrientValue("ph"),
       icon: FlaskConical,
       color: "text-blue-500",
       bg: "bg-blue-50"
     },
     {
-      label: "Nitrogen",
+      label: t(commonTranslations.nitrogen),
       value: getNutrientValue("nitrogen"),
       icon: Leaf,
       color: "text-emerald-600",
       bg: "bg-emerald-50"
     },
     {
-      label: "Phosphorus",
+      label: t(commonTranslations.phosphorus),
       value: getNutrientValue("phosphorus"),
       icon: Sprout,
       color: "text-amber-600",
       bg: "bg-amber-50"
     },
     {
-      label: "Potassium",
+      label: t(commonTranslations.potassium),
       value: getNutrientValue("potassium"),
       icon: Activity, // Potassium regulates metabolic activities
       color: "text-purple-600",
       bg: "bg-purple-50"
     },
     {
-      label: "Organic Matter",
+      label: t(commonTranslations.organicMatter),
       value: getNutrientValue("organic"),
       icon: Mountain, // Representing soil/earth
       color: "text-amber-800",
       bg: "bg-amber-100"
     },
     {
-      label: "Soil Quality",
+      label: t(commonTranslations.soilQuality),
       value: analysis.soilQuality.rating,
       icon: Gauge,
       color: "text-slate-700",
@@ -102,7 +109,7 @@ const SimplifiedReport: React.FC<SimplifiedReportProps> = ({ analysis, onKnowMor
       <CardHeader className="text-center pb-2 bg-gradient-to-b from-emerald-50/50 to-transparent">
         <div className="flex items-center justify-center gap-3 mb-2">
           <CardTitle className="text-2xl sm:text-3xl font-bold text-slate-800">
-            Your Soil Analysis
+            {t(commonTranslations.yourSoilAnalysis)}
           </CardTitle>
           {dataSource === "sensor" && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 rounded-lg border-2 border-emerald-300">
@@ -114,7 +121,7 @@ const SimplifiedReport: React.FC<SimplifiedReportProps> = ({ analysis, onKnowMor
           )}
         </div>
         <CardDescription className="text-base sm:text-lg text-slate-600 font-medium">
-          AI insights explaining your soil health in simple terms.
+          {t(commonTranslations.aiInsightsDescription)}
         </CardDescription>
       </CardHeader>
       
@@ -144,7 +151,7 @@ const SimplifiedReport: React.FC<SimplifiedReportProps> = ({ analysis, onKnowMor
               <Leaf className="w-6 h-6 text-emerald-700" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-emerald-900 mb-2">Soil Health Summary</h3>
+              <h3 className="text-lg font-bold text-emerald-900 mb-2">{t(commonTranslations.soilHealthSummary)}</h3>
               <p className="text-slate-700 leading-relaxed text-base">
                 {analysis.soilQuality.description || analysis.overview.split('.')[0] + '.'}
               </p>
@@ -158,7 +165,7 @@ const SimplifiedReport: React.FC<SimplifiedReportProps> = ({ analysis, onKnowMor
           onClick={onKnowMore}
           className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-6 px-8 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 text-lg group"
         >
-          Know More
+          {t(commonTranslations.knowMore)}
           <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
         </Button>
       </CardFooter>

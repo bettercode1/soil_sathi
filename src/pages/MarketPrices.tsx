@@ -302,7 +302,7 @@ const MarketPrices = () => {
                               );
                             })()}
                             <span className="text-xs text-slate-400">
-                              Confidence: {priceData.pricePrediction.confidence.toFixed(0)}%
+                              {t(commonTranslations.confidence)}: {priceData.pricePrediction.confidence.toFixed(0)}%
                             </span>
                           </div>
                         </div>
@@ -323,14 +323,14 @@ const MarketPrices = () => {
                     <div className="flex-1 text-center md:text-left">
                       <h3 className="text-lg font-bold text-amber-900 mb-1">{t(marketPricesTranslations.bestTimeToSell)}</h3>
                       <p className="text-3xl font-bold text-amber-700 mb-2">
-                        {new Date(priceData.bestTimeToSell.recommendedDate).toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                        {new Date(priceData.bestTimeToSell.recommendedDate).toLocaleDateString(language === 'en' ? 'en-US' : language, { weekday: 'long', month: 'long', day: 'numeric' })}
                       </p>
                       <p className="text-amber-800 leading-relaxed">
                         {priceData.bestTimeToSell.reason}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-amber-800 font-medium uppercase tracking-wide">Expected Price</p>
+                      <p className="text-sm text-amber-800 font-medium uppercase tracking-wide">{t(marketPricesTranslations.expectedPrice)}</p>
                       <p className="text-2xl font-bold text-amber-900">
                         {formatCurrencyWithUnit(priceData.bestTimeToSell.expectedPrice, priceData.currentPrice.unit)}
                       </p>
@@ -343,7 +343,7 @@ const MarketPrices = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <TrendingUp className="h-5 w-5 text-emerald-500" />
-                      Recent Price Trends
+                      {t(marketPricesTranslations.recentPriceTrends)}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>

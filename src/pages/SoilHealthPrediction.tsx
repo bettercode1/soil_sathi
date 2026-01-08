@@ -104,10 +104,10 @@ const SoilHealthPrediction = () => {
   };
 
   const getHealthStatus = (score: number) => {
-    if (score >= 80) return { label: "Excellent", color: "text-emerald-600", bg: "bg-emerald-100", border: "border-emerald-200" };
-    if (score >= 60) return { label: "Good", color: "text-blue-600", bg: "bg-blue-100", border: "border-blue-200" };
-    if (score >= 40) return { label: "Fair", color: "text-yellow-600", bg: "bg-yellow-100", border: "border-yellow-200" };
-    return { label: "Poor", color: "text-red-600", bg: "bg-red-100", border: "border-red-200" };
+    if (score >= 80) return { label: t(commonTranslations.excellent), color: "text-emerald-600", bg: "bg-emerald-100", border: "border-emerald-200" };
+    if (score >= 60) return { label: t(commonTranslations.good), color: "text-blue-600", bg: "bg-blue-100", border: "border-blue-200" };
+    if (score >= 40) return { label: t(commonTranslations.fair), color: "text-yellow-600", bg: "bg-yellow-100", border: "border-yellow-200" };
+    return { label: t(commonTranslations.poor), color: "text-red-600", bg: "bg-red-100", border: "border-red-200" };
   };
 
   return (
@@ -164,7 +164,7 @@ const SoilHealthPrediction = () => {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">pH</label>
+                    <label className="text-sm font-medium">{t(commonTranslations.phLevel)}</label>
                     <Input
                       type="number"
                       value={soilData.pH}
@@ -173,7 +173,7 @@ const SoilHealthPrediction = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Nitrogen (N)</label>
+                    <label className="text-sm font-medium">{t(commonTranslations.nitrogen)}</label>
                     <Input
                       type="number"
                       value={soilData.nitrogen}
@@ -182,7 +182,7 @@ const SoilHealthPrediction = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Phosphorus (P)</label>
+                    <label className="text-sm font-medium">{t(commonTranslations.phosphorus)}</label>
                     <Input
                       type="number"
                       value={soilData.phosphorus}
@@ -191,7 +191,7 @@ const SoilHealthPrediction = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Potassium (K)</label>
+                    <label className="text-sm font-medium">{t(commonTranslations.potassium)}</label>
                     <Input
                       type="number"
                       value={soilData.potassium}
@@ -227,7 +227,7 @@ const SoilHealthPrediction = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card className={`border-l-4 shadow-md ${getHealthStatus(prediction.predictedHealthScore).border} ${getHealthStatus(prediction.predictedHealthScore).bg.replace('100', '50/50')}`}>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-lg text-slate-600">Predicted Health Score</CardTitle>
+                      <CardTitle className="text-lg text-slate-600">{t(commonTranslations.predictedHealthScore)}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex items-center gap-4">
@@ -240,7 +240,7 @@ const SoilHealthPrediction = () => {
                           </span>
                           <span className="text-slate-400 text-xl font-light">/100</span>
                           <p className={`font-medium ${getHealthStatus(prediction.predictedHealthScore).color}`}>
-                            {getHealthStatus(prediction.predictedHealthScore).label} Condition
+                            {getHealthStatus(prediction.predictedHealthScore).label} {t(commonTranslations.condition)}
                           </p>
                         </div>
                       </div>
@@ -249,21 +249,21 @@ const SoilHealthPrediction = () => {
 
                   <Card className="border-l-4 border-l-blue-400 shadow-md bg-blue-50/30">
                      <CardHeader className="pb-2">
-                      <CardTitle className="text-lg text-slate-600">Forecast Overview</CardTitle>
+                      <CardTitle className="text-lg text-slate-600">{t(commonTranslations.forecastOverview)}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="flex flex-col gap-2">
                         <div className="flex justify-between items-center p-2 bg-white rounded border border-blue-100">
-                          <span className="text-sm text-slate-500">Forecast Period</span>
-                          <span className="font-bold text-blue-700">{forecastMonths} Months</span>
+                          <span className="text-sm text-slate-500">{t(commonTranslations.forecastPeriod)}</span>
+                          <span className="font-bold text-blue-700">{forecastMonths} {t(commonTranslations.months)}</span>
                         </div>
                         <div className="flex justify-between items-center p-2 bg-white rounded border border-blue-100">
-                          <span className="text-sm text-slate-500">Region</span>
+                          <span className="text-sm text-slate-500">{t(commonTranslations.region)}</span>
                           <span className="font-bold text-slate-700">{region}</span>
                         </div>
                          {cropName && (
                           <div className="flex justify-between items-center p-2 bg-white rounded border border-blue-100">
-                            <span className="text-sm text-slate-500">Crop</span>
+                            <span className="text-sm text-slate-500">{t(commonTranslations.crop)}</span>
                             <span className="font-bold text-slate-700">{cropName}</span>
                           </div>
                         )}
@@ -277,7 +277,7 @@ const SoilHealthPrediction = () => {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2 text-amber-700">
                         <AlertTriangle className="h-5 w-5" />
-                        Risk Alerts
+                        {t(commonTranslations.riskAlerts)}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -297,7 +297,7 @@ const SoilHealthPrediction = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-emerald-700">
                       <CheckCircle2 className="h-5 w-5" />
-                      Recommendations
+                      {t(sensorTranslations.recommendations)}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>

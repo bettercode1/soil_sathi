@@ -2773,7 +2773,7 @@ const FarmerHelpDesk = () => {
 
         if (!response.ok) {
           let errorMessage = `Server responded with ${response.status}`;
-          let errorTitle = t(recommendationsTranslations.assistantErrorTitle);
+          let errorTitle = t(recommendationsTranslations.assistantUnavailableTitle);
           
           try {
             // Parse the response text directly to avoid parseJsonResponse throwing
@@ -2806,7 +2806,7 @@ const FarmerHelpDesk = () => {
             // Handle 503 Service Unavailable (model overloaded)
             if (response.status === 503 || errorPayload.status === "UNAVAILABLE" || 
                 (typeof errorPayload.error === "object" && errorPayload.error?.status === "UNAVAILABLE")) {
-              errorTitle = t(recommendationsTranslations.assistantErrorTitle);
+              errorTitle = t(recommendationsTranslations.assistantUnavailableTitle);
               errorMessage = extractedMessage || errorPayload.details || errorPayload.message || 
                 "The model is currently overloaded. Please wait a moment and try again.";
             } else {
@@ -2895,7 +2895,7 @@ const FarmerHelpDesk = () => {
       } catch (error) {
         let message =
           error instanceof Error ? error.message : "Failed to get advice from Gemini assistant.";
-        const errorTitle = (error as Error & { title?: string })?.title || t(recommendationsTranslations.assistantErrorTitle);
+        const errorTitle = (error as Error & { title?: string })?.title || t(recommendationsTranslations.assistantUnavailableTitle);
         const statusCode = (error as Error & { statusCode?: number })?.statusCode;
         
         // Clean up any JSON strings that might be in the error message

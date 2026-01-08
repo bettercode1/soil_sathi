@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { soilAnalyzerTranslations, soilHealthTranslations } from "@/constants/allTranslations";
+import { soilAnalyzerTranslations, soilHealthTranslations, commonTranslations } from "@/constants/allTranslations";
 import { Timer, Plus, ArrowUpRight, ArrowDownRight, Minus, FlaskConical, Leaf, Sprout } from "lucide-react";
 import soilHealthHero from "@/assets/soil-health-hero.jpg";
 
@@ -224,7 +224,7 @@ const SoilHealth = () => {
       </div>
       <div className="flex items-center gap-1 mt-2 text-sm font-medium opacity-80 bg-white/50 w-fit px-2 py-1 rounded">
         {trend}
-        <span>Vs Last Test</span>
+        <span>{t(commonTranslations.vsLastTest)}</span>
       </div>
     </div>
   );

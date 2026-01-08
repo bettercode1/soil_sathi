@@ -11,21 +11,21 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { recommendationsTranslations } from "@/constants/allTranslations";
+import { recommendationsTranslations, commonTranslations } from "@/constants/allTranslations";
 import { buildApiUrl, parseJsonResponse, parseErrorResponse } from "@/lib/api";
 import { 
   Leaf, 
   Sprout, 
   Droplets, 
   TrendingUp, 
-  Calendar, 
-  MapPin,
-  Loader2,
-  CheckCircle2,
   AlertCircle,
-  ArrowRight,
+  MapPin,
+  Calendar,
+  CheckCircle2,
+  Sparkles,
+  Loader2,
   Beaker,
-  Sparkles
+  ArrowRight
 } from "lucide-react";
 
 interface RecommendationData {
@@ -60,6 +60,7 @@ interface RecommendationResult {
 const Recommendations = () => {
   const { toast } = useToast();
   const { t, language } = useLanguage();
+
   const [isLoading, setIsLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<RecommendationResult | null>(null);
   
@@ -77,38 +78,81 @@ const Recommendations = () => {
   });
 
   const soilTypes = [
-    "Alluvial", "Black (Regur)", "Red", "Laterite", "Desert", "Mountain", "Clayey", "Sandy", "Loamy"
+    { value: "Alluvial", label: t(commonTranslations.alluvial) },
+    { value: "Black (Regur)", label: t(commonTranslations.blackRegur) },
+    { value: "Red", label: t(commonTranslations.red) },
+    { value: "Laterite", label: t(commonTranslations.laterite) },
+    { value: "Desert", label: t(commonTranslations.desert) },
+    { value: "Mountain", label: t(commonTranslations.mountain) },
+    { value: "Clayey", label: t(commonTranslations.clayey) },
+    { value: "Sandy", label: t(commonTranslations.sandy) },
+    { value: "Loamy", label: t(commonTranslations.loamy) }
   ];
 
   const regions = [
-    "Punjab", "Haryana", "Uttar Pradesh", "Bihar", "West Bengal", "Maharashtra", 
-    "Karnataka", "Tamil Nadu", "Andhra Pradesh", "Telangana", "Kerala", "Gujarat", "Rajasthan", "Madhya Pradesh"
+    { value: "Punjab", label: t(commonTranslations.punjab) },
+    { value: "Haryana", label: t(commonTranslations.haryana) },
+    { value: "Uttar Pradesh", label: t(commonTranslations.uttarPradesh) },
+    { value: "Bihar", label: t(commonTranslations.bihar) },
+    { value: "West Bengal", label: t(commonTranslations.westBengal) },
+    { value: "Maharashtra", label: t(commonTranslations.maharashtra) },
+    { value: "Karnataka", label: t(commonTranslations.karnataka) },
+    { value: "Tamil Nadu", label: t(commonTranslations.tamilNadu) },
+    { value: "Andhra Pradesh", label: t(commonTranslations.andhraPradesh) },
+    { value: "Telangana", label: t(commonTranslations.telangana) },
+    { value: "Kerala", label: t(commonTranslations.kerala) },
+    { value: "Gujarat", label: t(commonTranslations.gujarat) },
+    { value: "Rajasthan", label: t(commonTranslations.rajasthan) },
+    { value: "Madhya Pradesh", label: t(commonTranslations.madhyaPradesh) }
   ];
 
   const crops = [
-    "Rice", "Wheat", "Maize", "Cotton", "Sugarcane", "Soybean", "Potato", "Tomato",
-    "Onion", "Mango", "Banana", "Groundnut", "Mustard", "Chickpea", "Pulses"
+    { value: "Rice", label: t(commonTranslations.rice) },
+    { value: "Wheat", label: t(commonTranslations.wheat) },
+    { value: "Maize", label: t(commonTranslations.maize) },
+    { value: "Cotton", label: t(commonTranslations.cotton) },
+    { value: "Sugarcane", label: t(commonTranslations.sugarcane) },
+    { value: "Soybean", label: t(commonTranslations.soybean) },
+    { value: "Potato", label: t(commonTranslations.potato) },
+    { value: "Tomato", label: t(commonTranslations.tomato) },
+    { value: "Onion", label: t(commonTranslations.onion) },
+    { value: "Mango", label: t(commonTranslations.mango) },
+    { value: "Banana", label: t(commonTranslations.banana) },
+    { value: "Groundnut", label: t(commonTranslations.groundnut) },
+    { value: "Mustard", label: t(commonTranslations.mustard) },
+    { value: "Chickpea", label: t(commonTranslations.chickpea) },
+    { value: "Pulses", label: t(commonTranslations.pulses) }
   ];
 
   const cropStages = [
-    { value: "sowing", label: "Sowing/Planting" },
-    { value: "vegetative", label: "Vegetative Growth" },
-    { value: "flowering", label: "Flowering" },
-    { value: "fruiting", label: "Fruiting/Grain Filling" },
-    { value: "harvest", label: "Pre-Harvest" }
+    { value: "sowing", label: t(commonTranslations.sowing) },
+    { value: "vegetative", label: t(commonTranslations.vegetative) },
+    { value: "flowering", label: t(commonTranslations.flowering) },
+    { value: "fruiting", label: t(commonTranslations.fruiting) },
+    { value: "harvest", label: t(commonTranslations.harvest) }
   ];
 
   const irrigationMethods = [
-    "Drip Irrigation", "Sprinkler", "Flood/Furrow", "Rainfed"
+    { value: "Drip Irrigation", label: t(commonTranslations.dripIrrigation) },
+    { value: "Sprinkler", label: t(commonTranslations.sprinkler) },
+    { value: "Flood/Furrow", label: t(commonTranslations.floodFurrow) },
+    { value: "Rainfed", label: t(commonTranslations.rainfed) }
   ];
 
   const farmingGoals = [
-    "Maximum Yield", "Cost Reduction", "Organic Transition", "Soil Health Improvement"
+    { value: "Maximum Yield", label: t(commonTranslations.maximumYield) },
+    { value: "Cost Reduction", label: t(commonTranslations.costReduction) },
+    { value: "Organic Transition", label: t(commonTranslations.organicTransition) },
+    { value: "Soil Health Improvement", label: t(commonTranslations.soilHealthImprovement) }
   ];
 
   const commonChallenges = [
-    "Low crop yield", "Soil nutrient deficiency", "Pest/disease issues", 
-    "Water scarcity", "Poor soil drainage", "Soil salinity"
+    { value: "Low crop yield", label: t(commonTranslations.lowCropYield) },
+    { value: "Soil nutrient deficiency", label: t(commonTranslations.soilNutrientDeficiency) },
+    { value: "Pest/disease issues", label: t(commonTranslations.pestDiseaseIssues) },
+    { value: "Water scarcity", label: t(commonTranslations.waterScarcity) },
+    { value: "Poor soil drainage", label: t(commonTranslations.poorSoilDrainage) },
+    { value: "Soil salinity", label: t(commonTranslations.soilSalinity) }
   ];
 
   const handleInputChange = (field: keyof RecommendationData, value: string) => {
@@ -127,8 +171,8 @@ const Recommendations = () => {
   const validateForm = (): boolean => {
     if (!formData.soilType || !formData.region || !formData.crop || !formData.cropStage) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in Soil Type, Region, Crop, and Crop Stage.",
+        title: t(recommendationsTranslations.missingInformationTitle),
+        description: t(recommendationsTranslations.missingInformationDescription),
         variant: "destructive",
       });
       return false;
@@ -218,14 +262,14 @@ const Recommendations = () => {
       setRecommendations(result);
       
       toast({
-        title: "Recommendations Ready",
-        description: "Your personalized fertilizer recommendations have been generated.",
+        title: t(recommendationsTranslations.recommendationsReadyTitle),
+        description: t(recommendationsTranslations.recommendationsReadyDescription),
       });
     } catch (error) {
       console.error("[Recommendations] Error:", error);
       toast({
         title: t(recommendationsTranslations.assistantErrorTitle),
-        description: "Failed to generate recommendations.",
+        description: t(recommendationsTranslations.failedToGenerate),
         variant: "destructive",
       });
     } finally {
@@ -244,7 +288,7 @@ const Recommendations = () => {
           <div className="text-center text-white">
             <Badge variant="outline" className="mb-4 bg-white/10 text-white border-white/30 backdrop-blur-sm">
               <Sparkles className="w-3 h-3 mr-1" />
-              AI-Powered Insights
+              {t(commonTranslations.newAIPoweredFeatures)}
             </Badge>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 tracking-tight">
               {t(recommendationsTranslations.title)}
@@ -284,11 +328,11 @@ const Recommendations = () => {
                       </label>
                       <Select value={formData.soilType} onValueChange={(val) => handleInputChange("soilType", val)}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select soil type" />
+                          <SelectValue placeholder={t(commonTranslations.selectSoilType)} />
                         </SelectTrigger>
                         <SelectContent>
                           {soilTypes.map(type => (
-                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                            <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -301,11 +345,11 @@ const Recommendations = () => {
                       </label>
                       <Select value={formData.region} onValueChange={(val) => handleInputChange("region", val)}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select region" />
+                          <SelectValue placeholder={t(commonTranslations.selectRegion)} />
                         </SelectTrigger>
                         <SelectContent>
                           {regions.map(region => (
-                            <SelectItem key={region} value={region}>{region}</SelectItem>
+                            <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -318,11 +362,11 @@ const Recommendations = () => {
                       </label>
                       <Select value={formData.crop} onValueChange={(val) => handleInputChange("crop", val)}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select crop" />
+                          <SelectValue placeholder={t(commonTranslations.selectCrop)} />
                         </SelectTrigger>
                         <SelectContent>
                           {crops.map(crop => (
-                            <SelectItem key={crop} value={crop}>{crop}</SelectItem>
+                            <SelectItem key={crop.value} value={crop.value}>{crop.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -335,7 +379,7 @@ const Recommendations = () => {
                       </label>
                       <Select value={formData.cropStage} onValueChange={(val) => handleInputChange("cropStage", val)}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select stage" />
+                          <SelectValue placeholder={t(commonTranslations.selectStage)} />
                         </SelectTrigger>
                         <SelectContent>
                           {cropStages.map(stage => (
@@ -383,7 +427,7 @@ const Recommendations = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {irrigationMethods.map(method => (
-                            <SelectItem key={method} value={method}>{method}</SelectItem>
+                            <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -417,7 +461,7 @@ const Recommendations = () => {
                       </SelectTrigger>
                       <SelectContent>
                         {farmingGoals.map(goal => (
-                          <SelectItem key={goal} value={goal}>{goal}</SelectItem>
+                          <SelectItem key={goal.value} value={goal.value}>{goal.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -447,17 +491,17 @@ const Recommendations = () => {
                     <p className="text-xs text-slate-500">{t(recommendationsTranslations.challengesHelper)}</p>
                     <div className="grid sm:grid-cols-2 gap-3">
                       {commonChallenges.map(challenge => (
-                        <div key={challenge} className="flex items-center space-x-2">
+                        <div key={challenge.value} className="flex items-center space-x-2">
                           <Checkbox
-                            id={challenge}
-                            checked={formData.challenges.includes(challenge)}
-                            onCheckedChange={() => handleChallengeToggle(challenge)}
+                            id={challenge.value}
+                            checked={formData.challenges.includes(challenge.value)}
+                            onCheckedChange={() => handleChallengeToggle(challenge.value)}
                           />
                           <label
-                            htmlFor={challenge}
+                            htmlFor={challenge.value}
                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                           >
-                            {challenge}
+                            {challenge.label}
                           </label>
                         </div>
                       ))}
@@ -508,28 +552,28 @@ const Recommendations = () => {
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2 text-emerald-800">
                     <CheckCircle2 className="w-5 h-5" />
-                    What You'll Get
+                    {t(recommendationsTranslations.whatYouGet)}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-start gap-3">
                     <Beaker className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-slate-700">Chemical fertilizer recommendations with precise quantities</p>
+                    <p className="text-sm text-slate-700">{t(recommendationsTranslations.chemicalQuantityInfo)}</p>
                   </div>
                   <Separator />
                   <div className="flex items-start gap-3">
                     <Leaf className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-slate-700">Organic alternatives for sustainable farming</p>
+                    <p className="text-sm text-slate-700">{t(recommendationsTranslations.organicSustainableInfo)}</p>
                   </div>
                   <Separator />
                   <div className="flex items-start gap-3">
                     <Calendar className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-slate-700">Timing and application methods</p>
+                    <p className="text-sm text-slate-700">{t(recommendationsTranslations.timingMethodsInfo)}</p>
                   </div>
                   <Separator />
                   <div className="flex items-start gap-3">
                     <Sprout className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-slate-700">Crop-specific insights and warnings</p>
+                    <p className="text-sm text-slate-700">{t(recommendationsTranslations.cropInsightsInfo)}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -538,14 +582,14 @@ const Recommendations = () => {
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Droplets className="w-5 h-5 text-blue-600" />
-                    Quick Tips
+                    {t(recommendationsTranslations.quickTips)}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm text-slate-600">
-                  <p>• More details = better recommendations</p>
-                  <p>• Select all relevant challenges</p>
-                  <p>• Mention local conditions in notes</p>
-                  <p>• Update for each crop stage</p>
+                  <p>• {t(recommendationsTranslations.moreDetailsBetter)}</p>
+                  <p>• {t(recommendationsTranslations.selectAllChallenges)}</p>
+                  <p>• {t(recommendationsTranslations.mentionLocalConditions)}</p>
+                  <p>• {t(recommendationsTranslations.updateCropStage)}</p>
                 </CardContent>
               </Card>
             </div>
@@ -560,7 +604,7 @@ const Recommendations = () => {
                     <div>
                       <CardTitle className="text-2xl mb-2">{t(recommendationsTranslations.yourRecommendations)}</CardTitle>
                       <CardDescription className="text-emerald-100">
-                        Personalized for {formData.crop} • {formData.region} • {formData.farmSize} {formData.farmSizeUnit}
+                        {t(recommendationsTranslations.personalizedFor)} {formData.crop} • {formData.region} • {formData.farmSize} {formData.farmSizeUnit}
                       </CardDescription>
                     </div>
                     <div className="hidden sm:block">
@@ -574,11 +618,11 @@ const Recommendations = () => {
                     <TabsList className="grid w-full grid-cols-2 mb-6">
                       <TabsTrigger value="chemical" className="gap-2">
                         <Beaker className="w-4 h-4" />
-                        Chemical Fertilizers
+                        {t(recommendationsTranslations.chemicalFertilizers)}
                       </TabsTrigger>
                       <TabsTrigger value="organic" className="gap-2">
                         <Leaf className="w-4 h-4" />
-                        Organic Alternatives
+                        {t(recommendationsTranslations.organicAlternatives)}
                       </TabsTrigger>
                     </TabsList>
 
@@ -596,23 +640,23 @@ const Recommendations = () => {
                           <CardContent className="space-y-3">
                             <div className="grid sm:grid-cols-2 gap-4">
                               <div>
-                                <p className="text-xs font-medium text-slate-500 mb-1">Quantity</p>
+                                <p className="text-xs font-medium text-slate-500 mb-1">{t(recommendationsTranslations.quantity)}</p>
                                 <p className="text-sm font-semibold text-slate-800">{rec.quantity}</p>
                               </div>
                               <div>
-                                <p className="text-xs font-medium text-slate-500 mb-1">Timing</p>
+                                <p className="text-xs font-medium text-slate-500 mb-1">{t(recommendationsTranslations.timing)}</p>
                                 <p className="text-sm font-semibold text-slate-800">{rec.timing}</p>
                               </div>
                             </div>
                             <div>
-                              <p className="text-xs font-medium text-slate-500 mb-1">Application Method</p>
+                              <p className="text-xs font-medium text-slate-500 mb-1">{t(recommendationsTranslations.applicationMethod)}</p>
                               <p className="text-sm text-slate-700">{rec.application}</p>
                             </div>
                             {rec.notes && (
                               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                                 <p className="text-xs font-medium text-amber-900 mb-1 flex items-center gap-1">
                                   <AlertCircle className="w-3 h-3" />
-                                  Important Note
+                                  {t(recommendationsTranslations.importantNote)}
                                 </p>
                                 <p className="text-sm text-amber-800">{rec.notes}</p>
                               </div>
@@ -636,23 +680,23 @@ const Recommendations = () => {
                           <CardContent className="space-y-3">
                             <div className="grid sm:grid-cols-2 gap-4">
                               <div>
-                                <p className="text-xs font-medium text-slate-500 mb-1">Quantity</p>
+                                <p className="text-xs font-medium text-slate-500 mb-1">{t(recommendationsTranslations.quantity)}</p>
                                 <p className="text-sm font-semibold text-slate-800">{rec.quantity}</p>
                               </div>
                               <div>
-                                <p className="text-xs font-medium text-slate-500 mb-1">Timing</p>
+                                <p className="text-xs font-medium text-slate-500 mb-1">{t(recommendationsTranslations.timing)}</p>
                                 <p className="text-sm font-semibold text-slate-800">{rec.timing}</p>
                               </div>
                             </div>
                             <div>
-                              <p className="text-xs font-medium text-slate-500 mb-1">Application Method</p>
+                              <p className="text-xs font-medium text-slate-500 mb-1">{t(recommendationsTranslations.applicationMethod)}</p>
                               <p className="text-sm text-slate-700">{rec.application}</p>
                             </div>
                             {rec.notes && (
                               <div className="bg-emerald-100 border border-emerald-300 rounded-lg p-3">
                                 <p className="text-xs font-medium text-emerald-900 mb-1 flex items-center gap-1">
                                   <Leaf className="w-3 h-3" />
-                                  Eco-Friendly Tip
+                                  {t(recommendationsTranslations.ecoFriendlyTip)}
                                 </p>
                                 <p className="text-sm text-emerald-800">{rec.notes}</p>
                               </div>
@@ -668,7 +712,7 @@ const Recommendations = () => {
                     <div className="mt-8 p-6 bg-blue-50 border border-blue-200 rounded-xl">
                       <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
                         <Sparkles className="w-5 h-5" />
-                        Key Insights
+                        {t(recommendationsTranslations.keyInsights)}
                       </h3>
                       <ul className="space-y-2">
                         {recommendations.keyInsights.map((insight, idx) => (
@@ -686,7 +730,7 @@ const Recommendations = () => {
                     <div className="mt-6 p-6 bg-amber-50 border border-amber-200 rounded-xl">
                       <h3 className="font-semibold text-amber-900 mb-3 flex items-center gap-2">
                         <AlertCircle className="w-5 h-5" />
-                        Important Warnings
+                        {t(recommendationsTranslations.importantWarnings)}
                       </h3>
                       <ul className="space-y-2">
                         {recommendations.warnings.map((warning, idx) => (
@@ -704,7 +748,7 @@ const Recommendations = () => {
                     <div className="mt-6 p-6 bg-emerald-50 border border-emerald-200 rounded-xl">
                       <h3 className="font-semibold text-emerald-900 mb-3 flex items-center gap-2">
                         <CheckCircle2 className="w-5 h-5" />
-                        Next Steps
+                        {t(recommendationsTranslations.nextSteps)}
                       </h3>
                       <ol className="space-y-2">
                         {recommendations.nextSteps.map((step, idx) => (

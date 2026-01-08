@@ -171,6 +171,11 @@ export const simulateSensorCollection = async (
  */
 const getCurrentLocation = (): Promise<{ latitude: number; longitude: number }> => {
   return new Promise((resolve) => {
+    const defaultLocation = {
+      latitude: 19.0760,
+      longitude: 72.8777,
+    };
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -180,19 +185,14 @@ const getCurrentLocation = (): Promise<{ latitude: number; longitude: number }> 
           });
         },
         () => {
-          // Fallback to default location (Mumbai, India)
-          resolve({
-            latitude: 19.0760,
-            longitude: 72.8777,
-          });
-        }
+          // Fallback to default location on error
+          resolve(defaultLocation);
+        },
+        { timeout: 5000 } // Add 5 second timeout
       );
     } else {
-      // Fallback to default location
-      resolve({
-        latitude: 19.0760,
-        longitude: 72.8777,
-      });
+      // Fallback to default location if no geolocation
+      resolve(defaultLocation);
     }
   });
 };

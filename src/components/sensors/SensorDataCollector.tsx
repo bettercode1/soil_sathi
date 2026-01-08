@@ -135,6 +135,32 @@ export const SensorDataCollector: React.FC<SensorDataCollectorProps> = ({
   };
 
   const formatSensorName = (name: string) => {
+    // Expected format: "SensorType Sensor N" e.g., "PH Sensor 1"
+    const parts = name.split(' ');
+    // Handle cases where name might be just "PH" or "PH Sensor"
+    // We want to translate the type and keep numbers
+    
+    // Extract numbers/identifiers
+    const identifier = parts.filter(p => !isNaN(Number(p))).join(' ');
+    
+    // Extract type (approximate)
+    // Simplified mapping based on known types
+    let typeKey = "";
+    const lowerName = name.toLowerCase();
+    
+    if (lowerName.includes("ph")) typeKey = "sensorNamePH";
+    else if (lowerName.includes("moisture")) typeKey = "sensorNameMoisture";
+    else if (lowerName.includes("temperature")) typeKey = "sensorNameTemperature";
+    else if (lowerName.includes("nitrogen")) typeKey = "sensorNameNitrogen";
+    else if (lowerName.includes("phosphorus")) typeKey = "sensorNamePhosphorus";
+    else if (lowerName.includes("potassium")) typeKey = "sensorNamePotassium";
+    else if (lowerName.includes("organic")) typeKey = "sensorNameOrganicMatter";
+    
+    if (typeKey && (sensorTranslations as any)[typeKey]) {
+      const translatedName = t((sensorTranslations as any)[typeKey]);
+      return identifier ? `${translatedName} ${identifier}` : translatedName;
+    }
+
     return name
       .replace(/_/g, ' ')
       .split(' ')
@@ -228,8 +254,8 @@ export const SensorDataCollector: React.FC<SensorDataCollectorProps> = ({
                       `}
                     >
                       {device.status === "active" ? t(sensorTranslations.active) : 
-                       device.status === "calibrating" ? t(sensorTranslations.calibrating) :
-                       device.status === "low_battery" ? t(sensorTranslations.lowBattery) :
+                       device.status === "calibrating" ? t(sensorTranslations.calibratingStatus) || t(sensorTranslations.calibrating) :
+                       device.status === "low_battery" ? t(sensorTranslations.lowBatteryStatus) || t(sensorTranslations.lowBattery) :
                        device.status.replace('_', ' ')}
                     </Badge>
                     {device.firmwareVersion && (

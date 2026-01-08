@@ -10,6 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { commonTranslations } from "@/constants/siteTranslations";
 import { sensorTranslations, sensorAnalysisTranslations } from "@/constants/allTranslations";
 import { SensorDataCollector } from "@/components/sensors/SensorDataCollector";
 import { SensorDataVisualization } from "@/components/sensors/SensorDataVisualization";
@@ -54,7 +55,7 @@ const SensorData = () => {
         setIsDownloading(true);
         const sourceElement = reportRef.current;
         clonedReport = sourceElement.cloneNode(true) as HTMLElement;
-  
+
         clonedReport.style.width = "794px"; // ~210mm at 96dpi
         clonedReport.style.margin = "0 auto";
         clonedReport.style.background = "#ffffff";
@@ -62,7 +63,7 @@ const SensorData = () => {
         clonedReport.style.boxSizing = "border-box";
         clonedReport.style.maxWidth = "unset";
         clonedReport.classList.add("pdf-report");
-  
+
         clonedReport.querySelectorAll("[data-pdf-block]").forEach((element) => {
           const block = element as HTMLElement;
           block.style.breakInside = "avoid";
@@ -70,48 +71,48 @@ const SensorData = () => {
           (block.style as any).webkitColumnBreakInside = "avoid";
           block.style.marginBottom = block.style.marginBottom || "12px";
         });
-  
+
         document.body.appendChild(clonedReport);
-  
+
         const pdf = new jsPDF("p", "mm", "a4");
         const margins = { top: 16, right: 14, bottom: 18, left: 14 };
         const usableWidth = pdf.internal.pageSize.getWidth() - margins.left - margins.right;
         const usableHeight = pdf.internal.pageSize.getHeight() - margins.top - margins.bottom;
-  
+
         const exportNodes = Array.from(
           clonedReport.querySelectorAll<HTMLElement>("[data-pdf-export]")
         );
         const nodesToRender =
           exportNodes.length > 0 ? exportNodes : Array.from(clonedReport.children) as HTMLElement[];
-  
+
         let yOffset = 0;
-  
+
         for (const section of nodesToRender) {
           section.style.width = "100%";
           section.style.maxWidth = "100%";
           section.style.margin = "0 auto 16px";
-  
+
           const canvas = await html2canvas(section, {
             scale: 2,
             useCORS: true,
             backgroundColor: "#ffffff",
           });
-  
+
           let renderWidth = usableWidth;
           let renderHeight = (canvas.height * usableWidth) / canvas.width;
           const imgData = canvas.toDataURL("image/png");
-  
+
           if (renderHeight > usableHeight) {
             const scaleFactor = usableHeight / renderHeight;
             renderHeight = usableHeight;
             renderWidth *= scaleFactor;
           }
-  
+
           if (yOffset + renderHeight > usableHeight && yOffset !== 0) {
             pdf.addPage();
             yOffset = 0;
           }
-  
+
           pdf.addImage(
             imgData,
             "PNG",
@@ -122,16 +123,16 @@ const SensorData = () => {
             undefined,
             "FAST"
           );
-  
+
           yOffset += renderHeight + 8;
         }
-  
+
         pdf.save(`sensor-analysis-${Date.now()}.pdf`);
       } catch (error) {
         console.error("PDF generation failed", error);
         toast({
-            title: "Download Failed",
-            description: "Could not generate PDF report",
+            title: t(commonTranslations.downloadFailed),
+            description: t(commonTranslations.couldNotGeneratePDF),
             variant: "destructive"
         });
       } finally {
@@ -180,36 +181,36 @@ const SensorData = () => {
       },
       nutrientAnalysis: [
         {
-          parameter: "pH Level", // Keeping parameter names in English for technical consistency or add translations if needed
+          parameter: t(commonTranslations.phLevel),
           value: manualValues.ph || "7.0",
           status: ph >= 6.5 && ph <= 7.5 ? t(sensorAnalysisTranslations.optimal) : t(sensorAnalysisTranslations.check),
           impact: t(sensorAnalysisTranslations.optimalNutrientUptake),
           recommendation: ph < 6.5 ? t(sensorAnalysisTranslations.applyLime) : ph > 7.5 ? t(sensorAnalysisTranslations.applySulfur) : t(sensorAnalysisTranslations.maintainCurrent)
         },
         {
-          parameter: "Nitrogen (N)",
-          value: (manualValues.nitrogen || "0") + " kg/ha",
+          parameter: t(commonTranslations.nitrogen),
+          value: `${manualValues.nitrogen || "0"} ${t(commonTranslations.kgPerHa)}`,
           status: t(sensorAnalysisTranslations.normal),
           impact: t(sensorAnalysisTranslations.goodLeafGrowth),
           recommendation: t(sensorAnalysisTranslations.monitorRegularly)
         },
         {
-          parameter: "Phosphorus (P)",
-          value: (manualValues.phosphorus || "0") + " kg/ha",
+          parameter: t(commonTranslations.phosphorus),
+          value: `${manualValues.phosphorus || "0"} ${t(commonTranslations.kgPerHa)}`,
           status: t(sensorAnalysisTranslations.normal),
           impact: t(sensorAnalysisTranslations.essentialRootDev),
           recommendation: t(sensorAnalysisTranslations.adequateLevels)
         },
         {
-          parameter: "Potassium (K)",
-          value: (manualValues.potassium || "0") + " kg/ha",
+          parameter: t(commonTranslations.potassium),
+          value: `${manualValues.potassium || "0"} ${t(commonTranslations.kgPerHa)}`,
           status: t(sensorAnalysisTranslations.normal),
           impact: t(sensorAnalysisTranslations.importantHealth),
           recommendation: t(sensorAnalysisTranslations.maintainLevels)
         },
         {
-          parameter: "Organic Matter",
-          value: (manualValues.organic || "0") + "%",
+          parameter: t(commonTranslations.organicMatter),
+          value: `${manualValues.organic || "0"}${t(commonTranslations.percent)}`,
           status: organic > 0.75 ? t(sensorAnalysisTranslations.good) : t(sensorAnalysisTranslations.low),
           impact: t(sensorAnalysisTranslations.affectsStructure),
           recommendation: organic > 0.75 ? t(sensorAnalysisTranslations.maintainLevels) : t(sensorAnalysisTranslations.addCompost)
@@ -217,17 +218,17 @@ const SensorData = () => {
       ],
       fertilizerRecommendations: { 
         chemical: [
-            { name: t(sensorAnalysisTranslations.urea), quantity: "100 kg/ha", timing: t(sensorAnalysisTranslations.topDressing), application: t(sensorAnalysisTranslations.broadcast), notes: t(sensorAnalysisTranslations.splitApplication) },
-            { name: t(sensorAnalysisTranslations.dap), quantity: "50 kg/ha", timing: t(sensorAnalysisTranslations.basal), application: t(sensorAnalysisTranslations.soilIncorporation), notes: t(sensorAnalysisTranslations.applyBeforeSowing) }
+            { name: t(sensorAnalysisTranslations.urea), quantity: `100 ${t(commonTranslations.kgPerHa)}`, timing: t(sensorAnalysisTranslations.topDressing), application: t(sensorAnalysisTranslations.broadcast), notes: t(sensorAnalysisTranslations.splitApplication) },
+            { name: t(sensorAnalysisTranslations.dap), quantity: `50 ${t(commonTranslations.kgPerHa)}`, timing: t(sensorAnalysisTranslations.basal), application: t(sensorAnalysisTranslations.soilIncorporation), notes: t(sensorAnalysisTranslations.applyBeforeSowing) }
         ], 
         organic: [
-            { name: t(sensorAnalysisTranslations.fym), quantity: "10 tons/ha", timing: t(sensorAnalysisTranslations.preSowing), application: t(sensorAnalysisTranslations.spreadEvenly), notes: t(sensorAnalysisTranslations.mixWell) },
-            { name: t(sensorAnalysisTranslations.vermicompost), quantity: "2 tons/ha", timing: t(sensorAnalysisTranslations.earlyGrowth), application: t(sensorAnalysisTranslations.rootZone), notes: t(sensorAnalysisTranslations.keepMoist) }
+            { name: t(sensorAnalysisTranslations.fym), quantity: `10 ${t(commonTranslations.tonsPerHa)}`, timing: t(sensorAnalysisTranslations.preSowing), application: t(sensorAnalysisTranslations.spreadEvenly), notes: t(sensorAnalysisTranslations.mixWell) },
+            { name: t(sensorAnalysisTranslations.vermicompost), quantity: `2 ${t(commonTranslations.tonsPerHa)}`, timing: t(sensorAnalysisTranslations.earlyGrowth), application: t(sensorAnalysisTranslations.rootZone), notes: t(sensorAnalysisTranslations.keepMoist) }
         ] 
       },
       improvementPlan: [
-          { action: t(sensorAnalysisTranslations.cropRotationAction), benefit: t(sensorAnalysisTranslations.cropRotationBenefit), priority: "High" },
-          { action: t(sensorAnalysisTranslations.greenManuringAction), benefit: t(sensorAnalysisTranslations.greenManuringBenefit), priority: "Medium" }
+          { action: t(sensorAnalysisTranslations.cropRotationAction), benefit: t(sensorAnalysisTranslations.cropRotationBenefit), priority: t(commonTranslations.priorityHigh) },
+          { action: t(sensorAnalysisTranslations.greenManuringAction), benefit: t(sensorAnalysisTranslations.greenManuringBenefit), priority: t(commonTranslations.priorityMedium) }
       ],
       warnings: [
           t(sensorAnalysisTranslations.warningCalibrate),
@@ -239,8 +240,8 @@ const SensorData = () => {
           t(sensorAnalysisTranslations.nextStepMonitor)
       ],
       sectionTitles: {
-          overview: "Overview", soilQuality: "Soil Quality", nutrientAnalysis: "Nutrient Analysis", chemicalPlan: "Chemical Plan",
-          organicPlan: "Organic Plan", improvementPlan: "Improvement Plan", warnings: "Warnings", nextSteps: "Next Steps"
+          overview: t(commonTranslations.overview), soilQuality: t(commonTranslations.soilQuality), nutrientAnalysis: t(commonTranslations.nutrientAnalysis), chemicalPlan: t(commonTranslations.chemicalPlan),
+          organicPlan: t(commonTranslations.organicPlan), improvementPlan: t(commonTranslations.improvementPlan), warnings: t(commonTranslations.warnings), nextSteps: t(commonTranslations.nextSteps)
       },
       analysisTimestamp: new Date().toISOString()
     };
@@ -262,13 +263,13 @@ const SensorData = () => {
                 <h1 className="text-xl font-bold text-slate-800">
                   {t(sensorTranslations.sensorDataTab)}
                 </h1>
-                <p className="text-xs text-slate-500 font-medium">Real-time Monitoring Dashboard</p>
+                <p className="text-xs text-slate-500 font-medium">{t(commonTranslations.realtimeMonitoring)}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
                  <Radio className="h-3 w-3 mr-1 animate-pulse" />
-                 System Online
+                 {t(sensorTranslations.systemOnline)}
               </Badge>
             </div>
           </div>
