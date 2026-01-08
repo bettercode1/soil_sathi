@@ -38,18 +38,18 @@ const HeroSection: React.FC = () => {
             </span>
 
             <h1 className="mb-5 text-3xl font-extrabold leading-tight sm:text-4xl md:text-5xl expressive-heading high-contrast-text">
-            {t({
-              en: "Smart Soil Helper for Farmers",
-              hi: "किसानों के लिए स्मार्ट मिट्टी सहायक",
-              pa: "ਕਿਸਾਨਾਂ ਲਈ ਸਮਾਰਟ ਮਿੱਟੀ ਸਹਾਇਕ",
-              ta: "விவசாயிகளுக்கான ஸ்மார்ட் மண் உதவியாளர்",
-              te: "రైతులకు స్మార్ట్ నేల సహాయకుడు",
-              bn: "কৃষকদের জন্য স্মার্ট মাটি সহায়ক",
-              mr: "शेतकऱ्यांसाठी स्मार्ट माती सहाय्यक"
-            })}
-          </h1>
+              {t({
+                en: "Smart Soil Helper for Farmers",
+                hi: "किसानों के लिए स्मार्ट मिट्टी सहायक",
+                pa: "ਕਿਸਾਨਾਂ ਲਈ ਸਮਾਰਟ ਮਿੱਟੀ ਸਹਾਇਕ",
+                ta: "விவசாயிகளுக்கான ஸ்மார்ட் மண் உதவியாளர்",
+                te: "రైతులకు స్మార్ట్ నేల సహాయకుడు",
+                bn: "কৃষকদের জন্য স্মার্ট মাটি সহায়ক",
+                mr: "शेतकऱ्यांसाठी स्मार्ट माती सहाय्यक"
+              })}
+            </h1>
 
-          <p className="mb-8 text-base text-slate-200/80 md:text-lg">
+            <p className="mb-8 text-base text-slate-200/80 md:text-lg">
             {t({
               en: "Upload your soil report or just tell us about your soil. We'll help you grow better crops with the right fertilizers.",
               hi: "अपनी मिट्टी की रिपोर्ट अपलोड करें या बस हमें अपनी मिट्टी के बारे में बताएं। हम आपको सही उर्वरकों के साथ बेहतर फसल उगाने में मदद करेंगे।",

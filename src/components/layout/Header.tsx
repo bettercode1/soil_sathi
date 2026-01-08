@@ -43,6 +43,7 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { LoginModal } from "@/components/auth/LoginModal";
+import betterCodeLogo from "@/assets/bettercode-logo.png";
 
 const Header = () => {
   const isMobile = useIsMobile();
@@ -231,30 +232,34 @@ const Header = () => {
           : "border-transparent bg-transparent"
       )}
     >
-      <div className="container flex h-16 items-center justify-between px-4 md:px-6">
+      <div className="container flex h-16 items-center justify-between px-1 md:px-2">
         {/* Logo Section */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 shrink-0 -ml-1 md:-ml-2">
           <Link to="/" className="flex items-center gap-2">
-            <div className="rounded-full bg-primary/10 p-2">
+            <img 
+              src={betterCodeLogo} 
+              alt="Better Code Logo" 
+              className="h-5 md:h-6 w-auto object-contain"
+            />
+            <div className="h-5 w-[1px] bg-border/40 mx-1" />
+            <div className="flex items-center gap-2">
               <Leaf className="h-6 w-6 text-primary" />
-            </div>
-            <div className="hidden md:block">
-              <h1 className="text-xl font-bold tracking-tight text-foreground">SoilSathi</h1>
+              <h1 className="text-xl md:text-2xl font-black tracking-tight text-foreground">SoilSathi</h1>
             </div>
           </Link>
         </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden xl:flex items-center gap-4 flex-1 min-w-0 justify-end ml-4">
+        <div className="hidden lg:flex items-center gap-2 flex-1 min-w-0 justify-end ml-2">
           <NavigationLinks />
-          <div className="flex items-center gap-3 pl-4 border-l shrink-0">
+          <div className="flex items-center gap-2 pl-2 border-l shrink-0">
             <LanguageSelector />
             <LoginModal />
           </div>
         </div>
 
         {/* Mobile/Tablet Navigation */}
-        <div className="flex items-center gap-3 xl:hidden">
+        <div className="flex items-center gap-3 lg:hidden">
           <LanguageSelector />
           <Sheet>
             <SheetTrigger asChild>
