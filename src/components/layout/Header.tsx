@@ -38,6 +38,7 @@ import {
   AlertTriangle,
   MessageCircle,
   Users,
+  Map,
   type LucideIcon,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -269,9 +270,17 @@ const Header = () => {
             </SheetTrigger>
             <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <SheetHeader>
-                <SheetTitle className="flex items-center gap-2">
-                  <Leaf className="h-5 w-5 text-primary" />
-                  SoilSathi
+                <SheetTitle className="flex items-center gap-3">
+                  <img 
+                    src={betterCodeLogo} 
+                    alt="Better Code Logo" 
+                    className="h-6 w-auto object-contain"
+                  />
+                  <div className="h-4 w-[1px] bg-border/40" />
+                  <div className="flex items-center gap-2">
+                    <Leaf className="h-5 w-5 text-primary" />
+                    <span className="text-xl font-black tracking-tight">SoilSathi</span>
+                  </div>
                 </SheetTitle>
                 <SheetDescription>
                   {t({ 
