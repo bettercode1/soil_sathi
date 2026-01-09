@@ -86,12 +86,14 @@ const API_KEY = env.geminiApiKey;
 
 // Optimized fallback models - prioritize fastest working models
 // Removed unavailable models: gemini-2.5-flash-tts (404), learnlm-2.0-flash-experimental (404), gemini-2.0-flash-exp (429 quota)
+// Removed: gemini-1.5-flash (404 - not found for API version v1beta), gemini-1.5-pro (404 - not found for API version v1beta)
+// gemini-2.0-flash has quota issues (429), so prioritizing gemini-2.5-flash which works but needs more timeout
 // Tries models in parallel - whichever responds fastest wins
 const FALLBACK_MODELS = [
-  "gemini-1.5-flash", // Stable, fast, production-ready
-  "gemini-2.0-flash", // New stable flash
-  "gemini-1.5-pro",   // High reasoning, stable
-  MODEL_NAME, 
+  MODEL_NAME, // Primary model (usually gemini-2.5-flash)
+  "gemini-2.0-flash", // New stable flash (may have quota issues)
+  // Removed: "gemini-1.5-flash" - returns 404 (not found for API version v1beta)
+  // Removed: "gemini-1.5-pro" - returns 404 (not found for API version v1beta)
 ].filter((model, index, self) => model && self.indexOf(model) === index);
 
 // Initialize Gemini client - automatically reads GEMINI_API_KEY from environment
@@ -340,7 +342,7 @@ const queueGeminiRequest = <T>(execute: () => Promise<T>): Promise<T> => {
       }
     }
     
-    requestQueue.push({ resolve, reject, execute });
+    requestQueue.push({ resolve: resolve as (value: unknown) => void, reject, execute });
     
     // Start processing queue if not already running
     if (!isProcessingQueue) {
@@ -744,29 +746,47 @@ const generateJsonResponse = async <T>({
   try {
     const config = buildGenerationConfig(schema, maxOutputTokens);
     if (isDev) {
-      console.log("[Gemini] Calling genAI.models.generateContent...");
+      console.log("[Gemini] Calling getGenerativeModel().generateContent...");
+      console.log("[Gemini] Model:", model);
       console.log("[Gemini] Max output tokens:", maxOutputTokens ?? 4096);
+      console.log("[Gemini] Parts count:", parts.length);
     }
     
     // Queue the request to prevent rate limit errors (ensures 1.2s between requests)
     // Use retry logic with exponential backoff (optimized for speed)
     // API format per official docs: https://ai.google.dev/gemini-api/docs/quickstart
+    // Official SDK pattern: getGenerativeModel() then generateContent()
     const result = await queueGeminiRequest(async () => {
       return await retryWithBackoff(async () => {
         try {
-          // Format contents according to official API spec
-          // @google/genai v1.29.0 format - use config parameter for generation config
-          const apiCall = genAI!.models.generateContent({
+          // Format contents according to official @google/genai SDK v1.29.0+
+          // Official docs: https://ai.google.dev/gemini-api/docs/quickstart
+          // Correct API: genAI.models.generateContent() - NOT getGenerativeModel()
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:763',message:'before models.generateContent',data:{model,configKeys:Object.keys(config),partsCount:parts.length,hasImage:parts.some(p=>'inlineData' in p),timeoutMs,hasModelsProperty:!!(genAI as any)?.models},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
+          // Use the correct SDK API: models.generateContent with model and config
+          const responsePromise = genAI!.models.generateContent({
             model,
             contents: [{ role: "user" as const, parts }],
             config, // Generation config with schema for structured output
           });
           
-          return await withTimeout(
-            apiCall,
+          // Apply timeout to the promise
+          const apiCallStartTime = Date.now();
+          const response = await withTimeout(
+            responsePromise,
             timeoutMs,
             `Gemini API request timed out after ${timeoutMs / 1000} seconds`
           );
+          const apiCallDuration = Date.now() - apiCallStartTime;
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:779',message:'generateContent response received',data:{model,duration:apiCallDuration,responseType:typeof response,responseKeys:response&&typeof response==='object'?Object.keys(response):[],hasResponse:(response as any)?.response},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['A','B']})}).catch(()=>{});
+          // #endregion
+          
+          // The response object has a .response property with the actual response
+          // Return the full response object for proper extraction
+          return response;
       } catch (apiError: unknown) {
         // Enhanced error logging for debugging
         if (isDev) {
@@ -865,41 +885,143 @@ const generateJsonResponse = async <T>({
     console.log("[Gemini] ====================================");
 
     // Extract text from response per @google/genai SDK format
-    // The SDK returns GenerateContentResponse with candidates[].content.parts[]
-    // But the content might also have a direct text property or method
+    // Based on logs: response has keys: ["sdkHttpResponse","candidates","modelVersion","responseId","usageMetadata"]
+    // The actual response structure is: { candidates: [...], responseId: ..., usageMetadata: ... }
     let textValue: string | undefined;
     
     try {
-      // Method 1: Try result.text() if it's a method (SDK might provide this)
-      // The @google/genai SDK GenerateContentResponse has a .text() method
-      if (result && typeof result === 'object') {
-        const resultAny = result as any;
+      const resultAny = result as any;
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:893',message:'starting text extraction',data:{resultKeys:result&&typeof result==='object'?Object.keys(result):[],hasCandidates:!!resultAny?.candidates,candidatesLength:resultAny?.candidates?.length,hasResponse:!!resultAny?.response,hasTextMethod:typeof resultAny?.text==='function'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      
+      // Method 0: Try result.text() method first (SDK might provide this at top level)
+      if (typeof resultAny?.text === 'function') {
+        try {
+          textValue = await resultAny.text();
+          if (textValue && textValue.trim().length > 0) {
+            console.log("[Gemini] ✅ Extracted text from result.text() method, length:", textValue.length);
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:898',message:'text extraction success via result.text()',data:{textLength:textValue.length,firstChars:textValue.substring(0,100)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
+          }
+        } catch (e) {
+          if (isDev) {
+            console.log("[Gemini] result.text() method failed:", e);
+          }
+        }
+      }
+      
+      // Method 1: Try SDK's .text() method first (most reliable)
+      // Check if candidate has a .text() method that returns full text
+      if (resultAny?.candidates && Array.isArray(resultAny.candidates) && resultAny.candidates.length > 0) {
+        const candidate = resultAny.candidates[0];
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:898',message:'checking candidate structure',data:{hasCandidate:!!candidate,hasContent:!!candidate?.content,hasParts:!!candidate?.content?.parts,partsLength:candidate?.content?.parts?.length,hasTextMethod:typeof candidate?.text==='function',hasContentTextMethod:typeof candidate?.content?.text==='function',finishReason:candidate?.finishReason},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         
-        // Check for .text() method on the response object
+        // Try candidate.text() method if available (SDK might provide this)
+        if (typeof candidate?.text === 'function') {
+          try {
+            const candidateText = await candidate.text();
+            if (candidateText && candidateText.trim().length > 0) {
+              textValue = candidateText;
+              console.log("[Gemini] ✅ Extracted text from candidate.text() method, length:", textValue.length);
+              // #region agent log
+              fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:906',message:'text extraction success via candidate.text()',data:{textLength:textValue.length,firstChars:textValue.substring(0,100)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+              // #endregion
+            }
+          } catch (e) {
+            if (isDev) {
+              console.log("[Gemini] candidate.text() method failed:", e);
+            }
+          }
+        }
+        
+        // Try content.text() method if available
+        if (!textValue && candidate?.content && typeof candidate.content.text === 'function') {
+          try {
+            const contentText = await candidate.content.text();
+            if (contentText && contentText.trim().length > 0) {
+              textValue = contentText;
+              console.log("[Gemini] ✅ Extracted text from candidate.content.text() method, length:", textValue.length);
+              // #region agent log
+              fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:918',message:'text extraction success via content.text()',data:{textLength:textValue.length,firstChars:textValue.substring(0,100)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+              // #endregion
+            }
+          } catch (e) {
+            if (isDev) {
+              console.log("[Gemini] candidate.content.text() method failed:", e);
+            }
+          }
+        }
+        
+        // Method 2: Direct candidates access - extract ALL parts (fallback if methods don't work)
+        if (!textValue && candidate?.content?.parts && Array.isArray(candidate.content.parts)) {
+          const partsText: string[] = [];
+          for (const part of candidate.content.parts) {
+            if (part?.text) {
+              // Part.text might be a string or a function
+              if (typeof part.text === 'function') {
+                try {
+                  const partText = await part.text();
+                  if (partText) partsText.push(partText);
+                } catch (e) {
+                  if (isDev) console.log("[Gemini] part.text() failed:", e);
+                }
+              } else if (typeof part.text === 'string') {
+                partsText.push(part.text);
+              }
+            }
+          }
+          if (partsText.length > 0) {
+            textValue = partsText.join('');
+            console.log("[Gemini] ✅ Extracted text from candidates[0].content.parts (all parts), length:", textValue.length);
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:937',message:'text extraction success via parts (all)',data:{textLength:textValue.length,partsCount:partsText.length,firstChars:textValue.substring(0,100)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion
+          }
+        }
+      }
+      
+      // Method 2: Try response.response.text() if response property exists
+      if (!textValue && resultAny?.response) {
+        try {
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:909',message:'trying response.response extraction',data:{hasResponse:!!resultAny.response,hasTextMethod:typeof resultAny.response.text==='function',hasCandidates:!!resultAny.response.candidates,candidatesLength:resultAny.response.candidates?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
+          // Try the .text() method on response.response
+          if (typeof resultAny.response.text === 'function') {
+            textValue = await resultAny.response.text();
+            if (textValue && textValue.trim().length > 0) {
+              console.log("[Gemini] ✅ Extracted text from response.response.text() method, length:", textValue.length);
+              // #region agent log
+              fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:915',message:'text extraction success via response.response.text()',data:{textLength:textValue.length,firstChars:textValue.substring(0,100)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+              // #endregion
+            }
+          }
+        } catch (e) {
+          if (isDev) {
+            console.log("[Gemini] response.response extraction failed:", e);
+          }
+          // #region agent log
+          fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:922',message:'response.response extraction failed',data:{errorMessage:e instanceof Error?e.message:String(e)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+          // #endregion
+        }
+      }
+      
+      // Method 2: Try result.text() if it's a method (fallback)
+      if (!textValue && result && typeof result === 'object') {
         if (typeof resultAny.text === 'function') {
           try {
             textValue = await resultAny.text();
             if (textValue && textValue.trim().length > 0) {
               console.log("[Gemini] ✅ Extracted text from result.text() method, length:", textValue.length);
-              // Skip other methods if this worked
             }
           } catch (e) {
             if (isDev) {
               console.log("[Gemini] result.text() method failed:", e);
-            }
-          }
-        }
-        
-        // Also try .response?.text() if it exists
-        if (!textValue && resultAny.response && typeof resultAny.response.text === 'function') {
-          try {
-            textValue = await resultAny.response.text();
-            if (textValue && textValue.trim().length > 0) {
-              console.log("[Gemini] ✅ Extracted text from result.response.text() method, length:", textValue.length);
-            }
-          } catch (e) {
-            if (isDev) {
-              console.log("[Gemini] result.response.text() method failed:", e);
             }
           }
         }
@@ -1108,6 +1230,9 @@ const generateJsonResponse = async <T>({
       const candidates = (result as { candidates?: Array<{ finishReason?: string }> }).candidates;
       if (candidates && candidates.length > 0 && candidates[0]?.finishReason) {
         finishReason = candidates[0].finishReason;
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:1163',message:'finishReason detected',data:{finishReason,textLength:textValue?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
       }
     }
 
@@ -1118,14 +1243,12 @@ const generateJsonResponse = async <T>({
       console.error("[Gemini] Finish reason:", finishReason);
       console.error("[Gemini] Full response object:", JSON.stringify(result, null, 2));
       console.error("[Gemini] Response keys:", result && typeof result === 'object' ? Object.keys(result) : 'N/A');
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:1114',message:'EMPTY RESPONSE detected',data:{resultType:typeof result,resultKeys:result&&typeof result==='object'?Object.keys(result):[],finishReason,hasResponse:(result as any)?.response,responseKeys:(result as any)?.response&&typeof (result as any).response==='object'?Object.keys((result as any).response):[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       
-      // Check if it's a MAX_TOKENS issue
-      if (finishReason === "MAX_TOKENS") {
-        const maxTokensError = new Error("Response was truncated due to token limit. The analysis is too complex. Please try with fewer parameters or contact support.") as Error & { statusCode?: number; apiError?: unknown };
-        maxTokensError.statusCode = 500;
-        maxTokensError.apiError = { code: 500, message: "Response truncated due to MAX_TOKENS", status: "MAX_TOKENS" };
-        throw maxTokensError;
-      }
+      // Check if it's a MAX_TOKENS issue - but don't throw yet, let JSON repair try first
+      // We'll handle MAX_TOKENS after attempting JSON parse
       
       // Try one more time with deep inspection
       if (result && typeof result === 'object') {
@@ -1161,6 +1284,10 @@ const generateJsonResponse = async <T>({
     // Clean the JSON response before parsing
     let cleanedText = textValue.trim();
     
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:1214',message:'before JSON cleaning',data:{textLength:textValue.length,firstChars:textValue.substring(0,200),lastChars:textValue.substring(Math.max(0,textValue.length-200)),finishReason},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
     // Remove markdown code blocks if present
     cleanedText = cleanedText.replace(/^```(?:json)?\s*\n?/gm, '').replace(/\n?```\s*$/gm, '');
     
@@ -1173,12 +1300,75 @@ const generateJsonResponse = async <T>({
       cleanedText = jsonMatch[0];
     }
     
+    // If finishReason is MAX_TOKENS, try to repair incomplete JSON
+    if (finishReason === "MAX_TOKENS") {
+      // Try to close incomplete JSON structures
+      // Count open braces/brackets and close them
+      let openBraces = 0;
+      let openBrackets = 0;
+      let inString = false;
+      let escapeNext = false;
+      
+      for (let i = 0; i < cleanedText.length; i++) {
+        const char = cleanedText[i];
+        if (escapeNext) {
+          escapeNext = false;
+          continue;
+        }
+        if (char === '\\') {
+          escapeNext = true;
+          continue;
+        }
+        if (char === '"' && !escapeNext) {
+          inString = !inString;
+          continue;
+        }
+        if (!inString) {
+          if (char === '{') openBraces++;
+          else if (char === '}') openBraces--;
+          else if (char === '[') openBrackets++;
+          else if (char === ']') openBrackets--;
+        }
+      }
+      
+      // Close incomplete structures
+      if (openBrackets > 0) {
+        cleanedText += ']'.repeat(openBrackets);
+      }
+      if (openBraces > 0) {
+        // Before closing braces, check if we're in the middle of a property value
+        const lastChar = cleanedText.trimEnd().slice(-1);
+        if (lastChar !== ',' && lastChar !== '}' && lastChar !== ']' && lastChar !== '"') {
+          // We might be in the middle of a string or value, try to close it
+          if (inString) {
+            cleanedText += '"';
+          }
+        }
+        cleanedText += '}'.repeat(openBraces);
+      } else if (inString) {
+        // If we're still in a string, close it
+        cleanedText += '"';
+        // Then close any remaining structures
+        if (openBrackets > 0) {
+          cleanedText += ']'.repeat(openBrackets);
+        }
+        if (openBraces > 0) {
+          cleanedText += '}'.repeat(openBraces);
+        }
+      }
+      
+      console.log("[Gemini] ⚠️ MAX_TOKENS detected - attempted JSON repair");
+    }
+    
     // Log the cleaned text in development for debugging
     if (isDev) {
       console.log("[Gemini] Cleaned JSON text length:", cleanedText.length);
       console.log("[Gemini] First 500 chars:", cleanedText.substring(0, 500));
       console.log("[Gemini] Last 500 chars:", cleanedText.substring(Math.max(0, cleanedText.length - 500)));
     }
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:1270',message:'before JSON parse',data:{cleanedLength:cleanedText.length,firstChars:cleanedText.substring(0,500),lastChars:cleanedText.substring(Math.max(0,cleanedText.length-500)),finishReason,wasRepaired:finishReason==='MAX_TOKENS'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
 
     try {
       const parsed = JSON.parse(cleanedText) as T;
@@ -1202,6 +1392,17 @@ const generateJsonResponse = async <T>({
     } catch (parseError) {
       console.error("[Gemini] ❌ JSON parsing failed!");
       console.error("[Gemini] Parse error:", parseError);
+      
+      // If finishReason is MAX_TOKENS and parsing failed, throw a specific error
+      if (finishReason === "MAX_TOKENS") {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:1391',message:'MAX_TOKENS JSON parse failed',data:{textLength:textValue.length,cleanedLength:cleanedText.length,parseError:parseError instanceof Error?parseError.message:String(parseError)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+        const maxTokensError = new Error("Response was truncated due to token limit. The analysis is too complex. Please try with fewer parameters or contact support.") as Error & { statusCode?: number; apiError?: unknown };
+        maxTokensError.statusCode = 500;
+        maxTokensError.apiError = { code: 500, message: "Response truncated due to MAX_TOKENS - increased maxOutputTokens to 8192 but still insufficient", status: "MAX_TOKENS" };
+        throw maxTokensError;
+      }
       
       // Log the problematic text for debugging
       if (isDev) {
@@ -2640,6 +2841,9 @@ const tryMultipleModels = async (
   maxOutputTokens?: number,
   useCache?: boolean
 ): Promise<Record<string, unknown>> => {
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:2660',message:'tryMultipleModels entry',data:{modelsCount:models.length,models,timeoutMs,hasImage:parts.some(p=>'inlineData' in p),partsCount:parts.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['A','C','D','H']})}).catch(()=>{});
+  // #endregion
   // Filter out empty models
   const validModels = models.filter(m => m && m.trim().length > 0);
   if (validModels.length === 0) {
@@ -2670,9 +2874,13 @@ const tryMultipleModels = async (
   
   // Create promises for ALL models simultaneously - race condition!
   const modelPromises = validModels.map(async (model, index) => {
+    const modelStartTime = Date.now();
     try {
       const modelTimeout = getModelTimeout(model, baseTimeout);
       console.log(`[SoilSathi] 🔄 Model ${index + 1}/${validModels.length}: Starting ${model}... (timeout: ${modelTimeout}ms)`);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:2697',message:'model attempt start',data:{model,index,modelTimeout,baseTimeout},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['A','C','D']})}).catch(()=>{});
+      // #endregion
       
       const result = await generateJsonResponse<Record<string, unknown>>({
         model,
@@ -2683,9 +2891,14 @@ const tryMultipleModels = async (
         useCache,
       });
       
+      const modelDuration = Date.now() - modelStartTime;
       console.log(`[SoilSathi] ✅ Model ${model} succeeded!`);
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:2712',message:'model success',data:{model,duration:modelDuration,resultKeys:result?Object.keys(result):[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       return { success: true, model, result };
     } catch (error) {
+      const modelDuration = Date.now() - modelStartTime;
       const statusCode = (error as Error & { statusCode?: number })?.statusCode;
       const errorMsg = error instanceof Error ? error.message : String(error);
       
@@ -2693,6 +2906,9 @@ const tryMultipleModels = async (
       if (!errorMsg.toLowerCase().includes("timeout")) {
         console.log(`[SoilSathi] ❌ Model ${model} failed (${statusCode || 'unknown'}): ${errorMsg.substring(0, 100)}`);
       }
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:2728',message:'model failure',data:{model,duration:modelDuration,statusCode,errorMessage:errorMsg.substring(0,200),errorType:typeof error,apiError:(error as any)?.apiError,isTimeout:errorMsg.toLowerCase().includes('timeout')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['A','C','D','E']})}).catch(()=>{});
+      // #endregion
       
       return { 
         success: false, 
@@ -2729,6 +2945,9 @@ const tryMultipleModels = async (
             errors.forEach(({ model, statusCode, error }) => {
               console.error(`  - ${model}: ${statusCode || 'unknown'} - ${error.message.substring(0, 100)}`);
             });
+            // #region agent log
+            fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:2752',message:'all models failed',data:{modelsCount:validModels.length,errors:errors.map(e=>({model:e.model,statusCode:e.statusCode,message:e.error.message.substring(0,100)})),all503:errors.every(e=>e.statusCode===503),all429:errors.every(e=>e.statusCode===429),all404:errors.every(e=>e.statusCode===404)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['C','D','E']})}).catch(()=>{});
+            // #endregion
 
             const all503 = errors.every(e => e.statusCode === 503);
             const all429 = errors.every(e => e.statusCode === 429);
@@ -3894,9 +4113,15 @@ const buildCropDiseasePrompt = (
 
 app.post("/api/identify-disease", async (req, res) => {
   const isDev = env.nodeEnv === "development";
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:3920',message:'identify-disease endpoint entry',data:{genAIConfigured:!!genAI,hasBody:!!req.body,bodyKeys:req.body?Object.keys(req.body):[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['A','C','F']})}).catch(()=>{});
+  // #endregion
 
   if (!genAI) {
     console.error("[SoilSathi] ❌ Gemini API client not initialized for identify-disease!");
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:3923',message:'genAI not initialized error',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     res.status(500).json({
       error: "Gemini API key missing. Please configure GEMINI_API_KEY.",
     });
@@ -3974,14 +4199,20 @@ app.post("/api/identify-disease", async (req, res) => {
     }
 
     // Use parallel model execution with fallbacks for reliability
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:4002',message:'calling tryMultipleModels',data:{models:FALLBACK_MODELS,partsCount:parts.length,hasImage:parts.some(p=>'inlineData' in p),timeout:30000,base64Length:base64Data.length,mimeType},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['A','B','D','H']})}).catch(()=>{});
+    // #endregion
     const payload = await tryMultipleModels(
       FALLBACK_MODELS,
       parts,
       cropDiseaseSchema,
       30000, // 30 seconds base timeout for image analysis
-      2048, // Limit tokens for faster generation
+      8192, // Increased from 2048 to 8192 to prevent MAX_TOKENS truncation (logs show finishReason: MAX_TOKENS with 2048)
       false // Disable cache for image requests
     ) as Record<string, unknown>;
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:4010',message:'tryMultipleModels success',data:{payloadKeys:payload?Object.keys(payload):[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
 
     if (isDev) {
       console.log("[SoilSathi] ✅ Disease identification completed successfully");
@@ -3992,68 +4223,130 @@ app.post("/api/identify-disease", async (req, res) => {
     console.error("\n========== [SoilSathi] IDENTIFY-DISEASE ERROR ==========");
     console.error("[SoilSathi] Timestamp:", new Date().toISOString());
     console.error("[SoilSathi] Identification failed:", error);
-    console.error("[SoilSathi] Error type:", typeof error);
-    console.error("[SoilSathi] Error constructor:", error?.constructor?.name);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:4016',message:'identify-disease catch block',data:{errorType:typeof error,errorMessage:error instanceof Error?error.message:String(error),errorName:error instanceof Error?error.name:undefined,statusCode:(error as any)?.statusCode,apiError:(error as any)?.apiError},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['C','D','E']})}).catch(()=>{});
+    // #endregion
     
-    if (error instanceof Error) {
-      console.error("[SoilSathi] Error name:", error.name);
-      console.error("[SoilSathi] Error message:", error.message);
-      console.error("[SoilSathi] Error stack:", error.stack);
+    try {
+      if (error instanceof Error) {
+        console.error("[SoilSathi] Error message:", error.message);
+        console.error("[SoilSathi] Error stack:", error.stack);
+      }
       
-      // Log all error properties
-      const errorKeys = Object.keys(error);
-      console.error("[SoilSathi] Error properties:", errorKeys);
-      errorKeys.forEach((key) => {
-        try {
-          const value = (error as unknown as Record<string, unknown>)[key];
-          console.error(`[SoilSathi] Error.${key}:`, value);
-        } catch (e) {
-          console.error(`[SoilSathi] Error.${key}: [Cannot access]`);
+      // Extract error info using the helper function to ensure proper detection
+      const errorInfo = extractErrorInfo(error);
+      
+      // Check if it's a 503/UNAVAILABLE error
+      const statusCode = (error as Error & { statusCode?: number })?.statusCode;
+      const apiError = (error as Error & { apiError?: { code?: number; message?: string; status?: string; allModelsFailed?: boolean } })?.apiError;
+      
+      // Check if all models failed (our custom error from tryMultipleModels)
+      const allModelsFailed = apiError?.allModelsFailed === true;
+      
+      // Use extracted error info if available, otherwise fall back to direct properties
+      const isServiceOverloaded = 
+        errorInfo?.code === 503 || 
+        errorInfo?.status === "UNAVAILABLE" ||
+        statusCode === 503 || 
+        apiError?.status === "UNAVAILABLE" ||
+        apiError?.code === 503;
+      
+      const isQuotaExceeded = 
+        errorInfo?.code === 429 ||
+        errorInfo?.status === "RESOURCE_EXHAUSTED" ||
+        statusCode === 429 ||
+        apiError?.status === "RESOURCE_EXHAUSTED" ||
+        apiError?.code === 429 ||
+        (error instanceof Error && (
+          error.message.toLowerCase().includes("quota") ||
+          error.message.toLowerCase().includes("rate limit") ||
+          error.message.toLowerCase().includes("exceeded")
+        ));
+      
+      const isMaxTokens = 
+        errorInfo?.status === "MAX_TOKENS" ||
+        apiError?.status === "MAX_TOKENS" ||
+        (error instanceof Error && (
+          error.message.toLowerCase().includes("max_tokens") ||
+          error.message.toLowerCase().includes("token limit") ||
+          error.message.toLowerCase().includes("truncated")
+        ));
+      
+      // If all models failed, return user-friendly 500 error (not 503)
+      if (allModelsFailed) {
+        if (!res.headersSent) {
+          const errorMessage = error instanceof Error ? error.message : "Unable to process request at this time. Please try again later.";
+          res.status(500).json({
+            error: errorMessage,
+            details: apiError?.message || errorMessage || "All AI models are currently unavailable. Please try again in a few moments.",
+            code: 500,
+            status: "SERVICE_UNAVAILABLE",
+            retry: true,
+          });
         }
-      });
-    } else {
-      console.error("[SoilSathi] Non-Error object details:", JSON.stringify(error, null, 2));
+        return;
+      }
+      
+      if (isQuotaExceeded) {
+        if (!res.headersSent) {
+          res.status(429).json({
+            error: "API quota exceeded. Please wait a moment and try again.",
+            details: errorInfo?.message || apiError?.message || "You've reached the API request limit. Please wait before trying again.",
+            code: 429,
+            status: "RESOURCE_EXHAUSTED",
+          });
+        }
+        return;
+      }
+      
+      if (isMaxTokens) {
+        if (!res.headersSent) {
+          res.status(500).json({
+            error: "Response was too long. Please try simplifying your request or contact support.",
+            details: errorInfo?.message || apiError?.message || "The response exceeded the maximum token limit. Try reducing the number of challenges or notes.",
+            code: 500,
+            status: "MAX_TOKENS",
+          });
+        }
+        return;
+      }
+      
+      // Don't return 503 to users - convert to 500 with friendly message
+      if (isServiceOverloaded) {
+        if (!res.headersSent) {
+          res.status(500).json({
+            error: "Service temporarily unavailable. Please try again in a few moments.",
+            details: errorInfo?.message || apiError?.message || "The AI service is currently busy. Please wait a moment and try again.",
+            code: 500,
+            status: "SERVICE_UNAVAILABLE",
+            retry: true,
+          });
+        }
+        return;
+      }
+
+      const httpStatus = (statusCode && statusCode >= 400 && statusCode < 600) ? statusCode : 500;
+      
+      // Ensure response hasn't been sent yet
+      if (!res.headersSent) {
+        res.status(httpStatus).json({
+          error: "Failed to identify crop disease. Please try again later.",
+          details:
+            error instanceof Error
+              ? error.message
+              : "Unknown error occurred while contacting Gemini API.",
+          ...(apiError && { apiError }),
+        });
+      }
+    } catch (handlerError) {
+      console.error("[SoilSathi] Error in error handler:", handlerError);
+      if (!res.headersSent) {
+        res.status(500).json({
+          error: "Unable to process request at this time. Please try again later.",
+          details: "An unexpected error occurred while processing your request.",
+        });
+      }
     }
-
-    const statusCode = (error as Error & { statusCode?: number })?.statusCode;
-    const apiError = (error as Error & {
-      apiError?: { code?: number; message?: string; status?: string };
-    })?.apiError;
-
-    // Check error message for overload/unavailable indicators
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const isOverloaded = 
-      statusCode === 503 || 
-      apiError?.status === "UNAVAILABLE" ||
-      errorMessage.toLowerCase().includes("overloaded") ||
-      errorMessage.toLowerCase().includes("unavailable") ||
-      errorMessage.toLowerCase().includes("503");
-
-    if (isOverloaded) {
-      console.error("[SoilSathi] Returning 503 Service Unavailable response");
-      res.status(503).json({
-        error: "The model is overloaded. Please try again later.",
-        details:
-          apiError?.message ||
-          errorMessage ||
-          "The Gemini API is currently unavailable. Please wait a moment and try again.",
-        code: apiError?.code || 503,
-        status: apiError?.status || "UNAVAILABLE",
-      });
-      return;
-    }
-
-    const httpStatus =
-      statusCode && statusCode >= 400 && statusCode < 600 ? statusCode : 500;
-    console.error("[SoilSathi] Returning", httpStatus, "response");
-    res.status(httpStatus).json({
-      error: "Failed to identify crop disease. Please try again later.",
-      details:
-        error instanceof Error
-          ? error.message
-          : "Unknown error occurred while contacting Gemini API.",
-      ...(apiError && { apiError }),
-    });
   }
 });
 
@@ -4203,9 +4496,15 @@ const buildWeatherAlertsPrompt = (
 
 app.post("/api/weather-alerts", async (req, res) => {
   const isDev = env.nodeEnv === "development";
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:4495',message:'weather-alerts endpoint entry',data:{genAIConfigured:!!genAI,hasBody:!!req.body,bodyKeys:req.body?Object.keys(req.body):[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['A','C','F']})}).catch(()=>{});
+  // #endregion
 
   if (!genAI) {
     console.error("[SoilSathi] ❌ Gemini API client not initialized for weather-alerts!");
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:4499',message:'genAI not initialized error',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     res.status(500).json({
       error: "Gemini API key missing. Please configure GEMINI_API_KEY.",
     });
@@ -4216,6 +4515,9 @@ app.post("/api/weather-alerts", async (req, res) => {
 
   if (!parsed.success) {
     console.error("[SoilSathi] ❌ Validation failed for weather-alerts:", parsed.error.errors);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:4509',message:'validation failed',data:{errors:parsed.error.errors},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+    // #endregion
     handleValidationFailure(res, parsed.error);
     return;
   }
@@ -4287,14 +4589,20 @@ app.post("/api/weather-alerts", async (req, res) => {
     }
 
     // Use parallel model execution with fallbacks for reliability
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:4581',message:'calling tryMultipleModels for weather-alerts',data:{models:FALLBACK_MODELS,partsCount:parts.length,hasImage:parts.some(p=>'inlineData' in p),timeout:30000,maxOutputTokens:4096},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['A','B','D','H']})}).catch(()=>{});
+    // #endregion
     const payload = await tryMultipleModels(
       FALLBACK_MODELS,
       parts,
       weatherAlertSchema,
-      15000, // 15 seconds base timeout - optimized for faster response
-      1024, // Limit tokens for faster generation
+      30000, // Increased from 15 to 30 seconds - gemini-2.5-flash needs more time (logs show timeout at 15s)
+      4096, // Increased from 1024 to 4096 to prevent truncation (similar to identify-disease fix)
       true // Enable caching for same requests
     ) as Record<string, unknown>;
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:4589',message:'tryMultipleModels success for weather-alerts',data:{payloadKeys:payload?Object.keys(payload):[]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
 
     if (isDev) {
       console.log("[SoilSathi] ✅ Weather alerts generated successfully");
@@ -4305,6 +4613,9 @@ app.post("/api/weather-alerts", async (req, res) => {
     console.error("\n========== [SoilSathi] WEATHER-ALERTS ERROR ==========");
     console.error("[SoilSathi] Weather alerts failed:", error);
     console.error("[SoilSathi] Error type:", typeof error);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:4596',message:'weather-alerts catch block',data:{errorType:typeof error,errorMessage:error instanceof Error?error.message:String(error),errorName:error instanceof Error?error.name:undefined,statusCode:(error as any)?.statusCode,apiError:(error as any)?.apiError},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['C','D','E']})}).catch(()=>{});
+    // #endregion
     if (error instanceof Error) {
       console.error("[SoilSathi] Error message:", error.message);
       console.error("[SoilSathi] Error stack:", error.stack);
@@ -4509,17 +4820,89 @@ app.post("/api/analyze-growth", async (req, res) => {
     res.json(payload);
   } catch (error) {
     console.error("[SoilSathi] Crop growth analysis failed:", error);
-    const statusCode = (error as Error & { statusCode?: number })?.statusCode;
-    const apiError = (error as Error & {
-      apiError?: { code?: number; message?: string; status?: string };
-    })?.apiError;
+    
+    try {
+      // Extract error info using the helper function to ensure proper detection
+      const errorInfo = extractErrorInfo(error);
+      
+      const statusCode = (error as Error & { statusCode?: number })?.statusCode;
+      const apiError = (error as Error & { apiError?: { code?: number; message?: string; status?: string; allModelsFailed?: boolean } })?.apiError;
+      
+      // Check if all models failed (our custom error from tryMultipleModels)
+      const allModelsFailed = apiError?.allModelsFailed === true;
+      
+      const isServiceOverloaded = 
+        errorInfo?.code === 503 || 
+        errorInfo?.status === "UNAVAILABLE" ||
+        statusCode === 503 || 
+        apiError?.status === "UNAVAILABLE" ||
+        apiError?.code === 503;
+      
+      const isQuotaExceeded = 
+        errorInfo?.code === 429 ||
+        errorInfo?.status === "RESOURCE_EXHAUSTED" ||
+        statusCode === 429 ||
+        apiError?.status === "RESOURCE_EXHAUSTED" ||
+        apiError?.code === 429;
+      
+      // If all models failed, return user-friendly 500 error
+      if (allModelsFailed) {
+        if (!res.headersSent) {
+          const errorMessage = error instanceof Error ? error.message : "Unable to process request at this time. Please try again later.";
+          res.status(500).json({
+            error: errorMessage,
+            details: apiError?.message || errorMessage || "All AI models are currently unavailable. Please try again in a few moments.",
+            code: 500,
+            status: "SERVICE_UNAVAILABLE",
+            retry: true,
+          });
+        }
+        return;
+      }
+      
+      if (isQuotaExceeded) {
+        if (!res.headersSent) {
+          res.status(429).json({
+            error: "API quota exceeded. Please wait a moment and try again.",
+            details: errorInfo?.message || apiError?.message || "You've reached the API request limit. Please wait before trying again.",
+            code: 429,
+            status: "RESOURCE_EXHAUSTED",
+          });
+        }
+        return;
+      }
+      
+      if (isServiceOverloaded) {
+        if (!res.headersSent) {
+          res.status(500).json({
+            error: "Service temporarily unavailable. Please try again in a few moments.",
+            details: errorInfo?.message || apiError?.message || "The AI service is currently busy. Please wait a moment and try again.",
+            code: 500,
+            status: "SERVICE_UNAVAILABLE",
+            retry: true,
+          });
+        }
+        return;
+      }
 
-    const httpStatus = statusCode && statusCode >= 400 && statusCode < 600 ? statusCode : 500;
-    res.status(httpStatus).json({
-      error: "Failed to analyze crop growth. Please try again later.",
-      details: error instanceof Error ? error.message : "Unknown error occurred.",
-      ...(apiError && { apiError }),
-    });
+      const httpStatus = (statusCode && statusCode >= 400 && statusCode < 600) ? statusCode : 500;
+      
+      if (!res.headersSent) {
+        res.status(httpStatus).json({
+          error: "Failed to analyze crop growth. Please try again later.",
+          details: error instanceof Error ? error.message : "Unknown error occurred.",
+          ...(apiError && { apiError }),
+        });
+      }
+    } catch (handlerError) {
+      console.error("[SoilSathi] Error in error handler:", handlerError);
+      if (!res.headersSent) {
+        res.status(500).json({
+          error: "Unable to process request at this time. Please try again later.",
+          details: "An unexpected error occurred while processing your request.",
+        });
+      }
+    }
   }
 });
 
@@ -4665,21 +5048,35 @@ const buildMarketPricesPrompt = (
 };
 
 app.get("/api/market-prices", async (req, res) => {
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:5050',message:'market-prices endpoint entry',data:{hasGenAI:!!genAI,queryKeys:Object.keys(req.query),rawLanguage:req.query.language,rawCropName:req.query.cropName,rawRegion:req.query.region,rawDays:req.query.days},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['A','C','F']})}).catch(()=>{});
+  // #endregion
   if (!genAI) {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:5051',message:'genAI not initialized',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+    // #endregion
     res.status(500).json({
       error: "Gemini API key missing. Please configure GEMINI_API_KEY.",
     });
     return;
   }
 
+  const rawDays = req.query.days;
+  const parsedDays = rawDays ? parseInt(String(rawDays), 10) : undefined;
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:5062',message:'before schema parse',data:{rawLanguage:req.query.language,rawCropName:req.query.cropName,rawRegion:req.query.region,rawDays,parsedDays,isNaN:parsedDays!==undefined&&isNaN(parsedDays)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['A','B','C']})}).catch(()=>{});
+  // #endregion
   const parsed = marketPricesRequestSchema.safeParse({
     language: req.query.language,
     cropName: req.query.cropName,
     region: req.query.region,
-    days: req.query.days ? Number(req.query.days) : undefined,
+    days: parsedDays,
   });
 
   if (!parsed.success) {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:5065',message:'schema validation failed',data:{errors:parsed.error.errors,errorCount:parsed.error.errors.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
     handleValidationFailure(res, parsed.error);
     return;
   }
@@ -4690,22 +5087,40 @@ app.get("/api/market-prices", async (req, res) => {
     region,
     days = 30,
   } = parsed.data;
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:5075',message:'after schema parse success',data:{language,cropName,cropNameLength:cropName?.length,region,days},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['A','B','C']})}).catch(()=>{});
+  // #endregion
 
   try {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:5077',message:'before buildMarketPricesPrompt',data:{language,cropName,region,days},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
     const parts = buildMarketPricesPrompt(language, cropName, region, days);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:5078',message:'after buildMarketPricesPrompt',data:{partsCount:parts?.length,firstPartTextLength:parts?.[0]?.text?.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion
 
     // Use parallel model execution with fallbacks for reliability
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:5081',message:'before tryMultipleModels',data:{modelsCount:FALLBACK_MODELS.length,models:FALLBACK_MODELS,partsCount:parts.length,timeout:15000},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     const payload = await tryMultipleModels(
       FALLBACK_MODELS,
       parts,
       marketPricesSchema,
       15000, // 15 seconds base timeout - optimized for faster response
-      1024, // Limit tokens for faster generation
+      4096, // Increased from 1024 to handle complex market prices schema (currentPrice, priceHistory, pricePrediction, bestTimeToSell, regionalComparison)
       true // Enable caching for similar requests
     ) as Record<string, unknown>;
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:5088',message:'tryMultipleModels success',data:{payloadKeys:payload?Object.keys(payload):[],hasPayload:!!payload},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
 
     res.json(payload);
   } catch (error) {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:5091',message:'market-prices catch block',data:{errorMessage:error instanceof Error?error.message:String(error),errorType:typeof error,statusCode:(error as any)?.statusCode,apiError:(error as any)?.apiError,stack:error instanceof Error?error.stack?.substring(0,500):undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['D','E']})}).catch(()=>{});
+    // #endregion
     console.error("[SoilSathi] Market prices failed:", error);
     const statusCode = (error as Error & { statusCode?: number })?.statusCode;
     const apiError = (error as Error & {

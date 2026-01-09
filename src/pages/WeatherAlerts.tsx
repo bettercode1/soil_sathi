@@ -268,7 +268,7 @@ const WeatherAlerts = () => {
                         <Wind className="h-6 w-6 text-slate-500" />
                       </div>
                       <span className="text-2xl font-bold text-slate-800">{weatherData.windSpeed || 0}</span>
-                      <span className="text-xs text-slate-500">{t(commonTranslations.kmhWind)}</span>
+                      <span className="text-xs text-slate-500">{commonTranslations.kmhWind ? t(commonTranslations.kmhWind) : "km/h"}</span>
                     </CardContent>
                   </Card>
 
@@ -278,7 +278,7 @@ const WeatherAlerts = () => {
                         <Umbrella className="h-6 w-6 text-indigo-500" />
                       </div>
                       <span className="text-2xl font-bold text-slate-800">{weatherData.precipitation || 0}%</span>
-                      <span className="text-xs text-slate-500">{t(commonTranslations.precipitation)}</span>
+                      <span className="text-xs text-slate-500">{commonTranslations.precipitation ? t(commonTranslations.precipitation) : "Precipitation"}</span>
                     </CardContent>
                   </Card>
                 </div>

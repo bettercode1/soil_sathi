@@ -13,7 +13,7 @@ import { buildApiUrl, parseJsonResponse } from "@/lib/api";
 import { saveCropDiseaseReport } from "@/services/firebase/reportService";
 import { useFirebaseStorage } from "@/hooks/useFirebaseStorage";
 import { fileToBase64, compressImage } from "@/utils/imageUtils";
-import { AlertTriangle, Leaf, FlaskConical, Shield, Save, Loader2, Bug, Search, Activity, AlertCircle, Info } from "lucide-react";
+import { AlertTriangle, Leaf, FlaskConical, Shield, Save, Loader2, Bug, Search, Activity, AlertCircle, Info, CheckCircle2 } from "lucide-react";
 import type { CropDiseaseReport } from "@/types/firebase";
 import { PageHero } from "@/components/shared/PageHero";
 

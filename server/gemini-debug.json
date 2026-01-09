@@ -1,7 +1,7 @@
 {
-  "error": "Expected ',' or '}' after property value in JSON at position 113 (line 6 column 19)",
-  "position": 113,
-  "context": "{\n  \"language\": \"EN\",\n  \"predictedHealthScore\": 10,\n  \"predictedParameters\": {\n    \"pH\": 13.5,\n    \"nitrogen\": 19",
-  "fullJson": "{\n  \"language\": \"EN\",\n  \"predictedHealthScore\": 10,\n  \"predictedParameters\": {\n    \"pH\": 13.5,\n    \"nitrogen\": 19",
-  "timestamp": "2026-01-07T06:09:21.745Z"
+  "error": "Unterminated string in JSON at position 188 (line 7 column 62)",
+  "position": 188,
+  "context": "{\n  \"language\": \"MR\",\n  \"diseaseName\": \"पाने खाणारे किडे\",\n  \"diseaseType\": \"pest\",\n  \"severity\": \"low\",\n  \"confidence\": 80.0,\n  \"description\": \"आपल्या सोयाबीन पिकाच्या काही पानांवर किड्या",
+  "fullJson": "{\n  \"language\": \"MR\",\n  \"diseaseName\": \"पाने खाणारे किडे\",\n  \"diseaseType\": \"pest\",\n  \"severity\": \"low\",\n  \"confidence\": 80.0,\n  \"description\": \"आपल्या सोयाबीन पिकाच्या काही पानांवर किड्या",
+  "timestamp": "2026-01-09T06:45:11.961Z"
 }

@@ -30,8 +30,12 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({
   const [language, setLanguage] = useState<Language>("mr"); // Default to Marathi
 
   // Updated translation function to handle multiple languages
-  const t = (translations: Record<Language, string>) => {
-    return translations[language] || translations.en; // Fallback to English if translation not found
+  const t = (translations: Record<Language, string> | undefined) => {
+    if (!translations) {
+      console.warn("[LanguageContext] Translation is undefined");
+      return ""; // Return empty string if translation is undefined
+    }
+    return translations[language] || translations.en || ""; // Fallback to English if translation not found, then empty string
   };
 
   // Function to get the language name from code

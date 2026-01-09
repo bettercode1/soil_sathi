@@ -2795,6 +2795,24 @@ export const commonTranslations: Record<string, TranslationSet> = {
     bn: "স্থিতি",
     mr: "स्थिती"
   },
+  kmhWind: {
+    en: "km/h",
+    hi: "किमी/घंटा",
+    pa: "ਕਿਮੀ/ਘੰਟਾ",
+    ta: "கிமீ/மணி",
+    te: "కిమీ/గంట",
+    bn: "কিমি/ঘণ্টা",
+    mr: "किमी/तास"
+  },
+  precipitation: {
+    en: "Precipitation",
+    hi: "वर्षा",
+    pa: "ਬਾਰਸ਼",
+    ta: "மழை",
+    te: "వర్షపాతం",
+    bn: "বৃষ্টিপাত",
+    mr: "पर्जन्य"
+  },
   recommendation: {
     en: "Recommendation",
     hi: "सिफारिश",

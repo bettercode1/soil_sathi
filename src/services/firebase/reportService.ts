@@ -236,8 +236,20 @@ export const saveWeatherAlert = async (
   alert: Omit<WeatherAlert, "id" | "createdAt">
 ): Promise<string> => {
   try {
+    // Remove undefined fields - Firebase doesn't accept undefined values
+    const cleanedAlert = { ...alert };
+    if (cleanedAlert.location === undefined) {
+      delete cleanedAlert.location;
+    }
+    // Remove other undefined fields if any
+    Object.keys(cleanedAlert).forEach(key => {
+      if (cleanedAlert[key as keyof typeof cleanedAlert] === undefined) {
+        delete cleanedAlert[key as keyof typeof cleanedAlert];
+      }
+    });
+    
     const docRef = await addDoc(collection(db, WEATHER_ALERTS_COLLECTION), {
-      ...alert,
+      ...cleanedAlert,
       createdAt: Timestamp.now(),
     });
     return docRef.id;
