@@ -1,47 +1,33 @@
 
 import React, { createContext, useState, useContext, ReactNode } from "react";
-
-// Expanded language support for Indian languages including Marathi
-type Language = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
+import {
+  type Language,
+  type TranslationSet,
+  LANGUAGE_NATIVE_NAMES,
+  resolveTranslation,
+} from "@/constants/languages";
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (translations: Record<Language, string>) => string;
+  t: (translations: Partial<Record<Language, string>> | TranslationSet | undefined) => string;
   getLanguageName: (code: Language) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// Language names in their native script
-const languageNames: Record<Language, string> = {
-  en: "English",
-  hi: "हिंदी",
-  pa: "ਪੰਜਾਬੀ",
-  ta: "தமிழ்",
-  te: "తెలుగు",
-  bn: "বাংলা",
-  mr: "मराठी"
-};
+export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [language, setLanguage] = useState<Language>("mr");
 
-export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ 
-  children 
-}) => {
-  const [language, setLanguage] = useState<Language>("mr"); // Default to Marathi
-
-  // Updated translation function to handle multiple languages
-  const t = (translations: Record<Language, string> | undefined) => {
+  const t = (translations: Partial<Record<Language, string>> | TranslationSet | undefined) => {
     if (!translations) {
       console.warn("[LanguageContext] Translation is undefined");
-      return ""; // Return empty string if translation is undefined
+      return "";
     }
-    return translations[language] || translations.en || ""; // Fallback to English if translation not found, then empty string
+    return resolveTranslation(translations, language);
   };
 
-  // Function to get the language name from code
-  const getLanguageName = (code: Language) => {
-    return languageNames[code];
-  };
+  const getLanguageName = (code: Language) => LANGUAGE_NATIVE_NAMES[code];
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t, getLanguageName }}>
@@ -57,3 +43,5 @@ export const useLanguage = () => {
   }
   return context;
 };
+
+export type { Language };

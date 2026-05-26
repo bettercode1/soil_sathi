@@ -1,9 +1,3 @@
-// Ensure environment variables are loaded first
-console.log("[SoilSathi] Loading environment variables...");
-import { config as loadEnv } from "dotenv";
-loadEnv();
-console.log("[SoilSathi] Environment variables loaded");
-
 console.log("[SoilSathi] Importing dependencies...");
 import fs from "node:fs";
 import path from "node:path";
@@ -84,17 +78,44 @@ app.use("/api/", apiRateLimiter);
 const MODEL_NAME = env.geminiModel;
 const API_KEY = env.geminiApiKey;
 
-// Optimized fallback models - prioritize fastest working models
-// Removed unavailable models: gemini-2.5-flash-tts (404), learnlm-2.0-flash-experimental (404), gemini-2.0-flash-exp (429 quota)
-// Removed: gemini-1.5-flash (404 - not found for API version v1beta), gemini-1.5-pro (404 - not found for API version v1beta)
-// gemini-2.0-flash has quota issues (429), so prioritizing gemini-2.5-flash which works but needs more timeout
-// Tries models in parallel - whichever responds fastest wins
+// Per https://ai.google.dev/gemini-api/docs/quickstart — current flash model is gemini-3.5-flash
+const SUPPORTED_GEMINI_MODELS = [
+  "gemini-3.5-flash",
+  "gemini-2.5-flash",
+  "gemini-flash-latest",
+  "gemini-2.0-flash",
+] as const;
+
 const FALLBACK_MODELS = [
-  MODEL_NAME, // Primary model (usually gemini-2.5-flash)
-  "gemini-2.0-flash", // New stable flash (may have quota issues)
-  // Removed: "gemini-1.5-flash" - returns 404 (not found for API version v1beta)
-  // Removed: "gemini-1.5-pro" - returns 404 (not found for API version v1beta)
+  MODEL_NAME,
+  ...SUPPORTED_GEMINI_MODELS,
 ].filter((model, index, self) => model && self.indexOf(model) === index);
+
+const isAllModelsFailedError = (error: unknown): boolean =>
+  (error as Error & { apiError?: { allModelsFailed?: boolean } })?.apiError
+    ?.allModelsFailed === true;
+
+const shouldUseDemoFallback = (error: unknown): boolean => {
+  if (env.nodeEnv !== "development") return false;
+  if (!isAllModelsFailedError(error)) return false;
+
+  const apiError = (error as Error & {
+    apiError?: { code?: number; detail?: string; message?: string };
+  }).apiError;
+  const detail = `${apiError?.detail ?? ""} ${apiError?.message ?? ""}`.toLowerCase();
+
+  // Do not mask image/format errors with a fake report
+  if (
+    detail.includes("unable to process input image") ||
+    detail.includes("invalid image") ||
+    apiError?.code === 400
+  ) {
+    return false;
+  }
+
+  // Demo only when Gemini account/quota blocks access
+  return apiError?.code === 403 || apiError?.code === 429;
+};
 
 // Initialize Gemini client - automatically reads GEMINI_API_KEY from environment
 // Per official docs: https://ai.google.dev/gemini-api/docs/quickstart
@@ -115,7 +136,7 @@ if (API_KEY && API_KEY !== "your_gemini_api_key_here" && API_KEY.length > 20) {
 }
 
 const MAX_REPORT_TEXT_LENGTH = 10_000;
-const MAX_IMAGE_CHAR_LENGTH = 8_000_000; // ~6 MB base64
+const MAX_REPORT_FILE_CHAR_LENGTH = 14_000_000; // ~10 MB base64 for PDFs
 const MAX_MANUAL_ENTRIES = 50;
 const MAX_MANUAL_KEY_LENGTH = 50;
 const MAX_MANUAL_VALUE_LENGTH = 120;
@@ -136,10 +157,13 @@ const analyzeRequestSchema = z.object({
   manualValues: z.record(z.union([z.string(), z.number()])).optional(),
   reportImage: z
     .object({
-      data: z.string().min(1).max(MAX_IMAGE_CHAR_LENGTH),
+      data: z.string().min(1).max(MAX_REPORT_FILE_CHAR_LENGTH),
       mimeType: z
         .string()
-        .regex(/^image\/[a-zA-Z0-9.+-]+$/, "Invalid MIME type for report image.")
+        .regex(
+          /^(image\/[a-zA-Z0-9.+-]+|application\/pdf)$/,
+          "Invalid MIME type for report file."
+        )
         .optional(),
     })
     .optional(),
@@ -194,12 +218,46 @@ const sanitizeManualValues = (manualValues: Record<string, string | number>): Re
   ) as Record<string, string>;
 };
 
-const validateImageData = (data: string) => {
-  const [, encodedPayload = data] = data.split(",");
-  if (!BASE64_REGEX.test(encodedPayload)) {
-    throw new Error("reportImage.data must be base64 encoded.");
+const ALLOWED_REPORT_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "application/pdf",
+]);
+
+const validateReportMediaData = (data: string) => {
+  const dataUrlMatch = data.match(/^data:([^;]+);base64,(.+)$/s);
+  const mimeType = dataUrlMatch?.[1]?.toLowerCase();
+  const encodedPayload = (dataUrlMatch?.[2] ?? data.split(",").pop() ?? data).replace(/\s/g, "");
+
+  if (!encodedPayload || !BASE64_REGEX.test(encodedPayload)) {
+    throw new Error("Report file must be base64 encoded.");
   }
-  return encodedPayload;
+
+  const sizeBytes = Math.floor((encodedPayload.length * 3) / 4);
+  const isPdf = mimeType === "application/pdf";
+  const maxBytes = isPdf ? 10 * 1024 * 1024 : 4 * 1024 * 1024;
+  const maxLabel = isPdf ? "10MB" : "4MB";
+
+  if (sizeBytes > maxBytes) {
+    throw new Error(
+      `File is too large (${Math.round(sizeBytes / 1024 / 1024)}MB). Please use a file under ${maxLabel}.`
+    );
+  }
+
+  if (mimeType && !ALLOWED_REPORT_MIME_TYPES.has(mimeType)) {
+    throw new Error(
+      `Unsupported file type (${mimeType}). Please upload JPEG, PNG, WebP, or PDF.`
+    );
+  }
+
+  return {
+    base64: encodedPayload,
+    mimeType: mimeType ?? "image/jpeg",
+    isPdf,
+  };
 };
 
 // Improved request queue with concurrency support for Gemini API
@@ -2199,8 +2257,11 @@ const generateDemoAnalysis = (
   manualValues: Record<string, string>,
   reportText?: string
 ): Record<string, unknown> => {
-  const isMarathi = language === "mr" || language === "hi";
-  
+  const isMarathi =
+    language === "mr" ||
+    language === "hi" ||
+    ["ne", "brx", "as", "bn", "mni", "pa", "lus", "kha"].includes(language);
+
   // Extract values from manual input
   const ph = manualValues.ph || manualValues.pH || "6.5";
   const nitrogen = manualValues.nitrogen || manualValues.N || "25";
@@ -2332,6 +2393,9 @@ const generateDemoAnalysis = (
           "Retest after 3 months",
         ],
     analysisTimestamp: new Date().toISOString(),
+    isDemo: true,
+    demoNotice:
+      "Sample report — Gemini API unavailable. Your Google project may be denied (403) or over quota (429). Create a new key at https://aistudio.google.com/apikey",
   };
 };
 
@@ -2501,7 +2565,7 @@ const buildPrompt = (
         "- Provide localized section titles inside the sectionTitles object.",
         "- Populate every array with at least one item; if data is missing, infer from typical agronomy knowledge but note assumptions.",
         "- When writing text content, ensure all quotes are escaped: use \\\" instead of \"",
-        "- CRITICAL: Extract soil parameters from the image or text. Look for: pH, Nitrogen (N), Phosphorus (P), Potassium (K), Organic Matter (OC/OM), EC, Zinc, Iron, etc.",
+        "- CRITICAL: Extract soil parameters from the uploaded image or PDF lab report. Look for: pH, Nitrogen (N), Phosphorus (P), Potassium (K), Organic Matter (OC/OM), EC, Zinc, Iron, etc.",
         "- If values are found, put them in the nutrientAnalysis array with their exact value (e.g., \"6.5\", \"240 kg/ha\").",
         "- If values are NOT found, do NOT return N/A. Instead, infer typical values based on the soil quality summary or mark as \"Not Available\" only if absolutely unknown.",
         "",
@@ -2899,7 +2963,11 @@ const tryMultipleModels = async (
       return { success: true, model, result };
     } catch (error) {
       const modelDuration = Date.now() - modelStartTime;
-      const statusCode = (error as Error & { statusCode?: number })?.statusCode;
+      const err = error as Error & {
+        statusCode?: number;
+        apiError?: { code?: number };
+      };
+      const statusCode = err.statusCode ?? err.apiError?.code;
       const errorMsg = error instanceof Error ? error.message : String(error);
       
       // Only log if it's not a timeout (timeouts are expected for slower models)
@@ -2949,27 +3017,74 @@ const tryMultipleModels = async (
             fetch('http://127.0.0.1:7243/ingest/db18677a-be1f-477e-8dbf-bddb97961225',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server/index.ts:2752',message:'all models failed',data:{modelsCount:validModels.length,errors:errors.map(e=>({model:e.model,statusCode:e.statusCode,message:e.error.message.substring(0,100)})),all503:errors.every(e=>e.statusCode===503),all429:errors.every(e=>e.statusCode===429),all404:errors.every(e=>e.statusCode===404)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:['C','D','E']})}).catch(()=>{});
             // #endregion
 
-            const all503 = errors.every(e => e.statusCode === 503);
-            const all429 = errors.every(e => e.statusCode === 429);
-            const all404 = errors.every(e => e.statusCode === 404);
-            
-            const userFriendlyError = new Error(
-              all503 
-                ? "All AI models are currently busy. Please try again in a few moments."
-                : all429
-                ? "API quota limit reached. Please wait a moment and try again."
-                : all404
-                ? "AI models are not available. Please check your configuration."
-                : "Unable to process request at this time. Please try again later."
-            ) as Error & { statusCode?: number; apiError?: unknown };
-            
-            userFriendlyError.statusCode = 500;
+            const errorMsg = (e: { error: Error }) => e.error.message.toLowerCase();
+            const all503 = errors.every((e) => e.statusCode === 503);
+            const all429 = errors.every((e) => e.statusCode === 429);
+            const all404 = errors.every((e) => e.statusCode === 404);
+            const any403 = errors.some(
+              (e) =>
+                e.statusCode === 403 ||
+                errorMsg(e).includes("denied access") ||
+                errorMsg(e).includes("permission_denied")
+            );
+            const any429 = errors.some(
+              (e) =>
+                e.statusCode === 429 ||
+                errorMsg(e).includes("quota") ||
+                errorMsg(e).includes("rate limit") ||
+                errorMsg(e).includes("resource_exhausted")
+            );
+            const firstDetail = errors[0]?.error.message ?? "";
+
+            const all400 = errors.every((e) => e.statusCode === 400);
+            const anyImageError = errors.some((e) =>
+              e.error.message.toLowerCase().includes("unable to process input image")
+            );
+
+            let httpStatus = 500;
+            let message =
+              "Unable to process request at this time. Please try again later.";
+
+            if (anyImageError || (all400 && errors.some((e) => e.error.message.includes("image")))) {
+              httpStatus = 400;
+              message =
+                "Could not read the uploaded file. Use JPEG, PNG, or PDF under 10MB, or use Manual Entry.";
+            } else if (any403) {
+              httpStatus = 403;
+              message =
+                "Your Google Cloud project is denied access to Gemini. Create a new API key in a new project at https://aistudio.google.com/apikey (see https://ai.google.dev/gemini-api/docs/quickstart).";
+            } else if (all503) {
+              httpStatus = 503;
+              message =
+                "All AI models are currently busy. Please try again in a few moments.";
+            } else if (all429 || any429) {
+              httpStatus = 429;
+              message =
+                "Gemini API quota exceeded. Enable billing or wait, then try again.";
+            } else if (all404) {
+              httpStatus = 404;
+              message =
+                "AI models are not available. Set GEMINI_MODEL=gemini-2.5-flash on the server.";
+            }
+
+            const userFriendlyError = new Error(message) as Error & {
+              statusCode?: number;
+              apiError?: unknown;
+            };
+
+            userFriendlyError.statusCode = httpStatus;
             userFriendlyError.apiError = {
-              code: 500,
+              code: httpStatus,
               message: userFriendlyError.message,
-              status: "SERVICE_UNAVAILABLE",
+              status:
+                httpStatus === 403
+                  ? "PERMISSION_DENIED"
+                  : httpStatus === 429
+                    ? "RESOURCE_EXHAUSTED"
+                    : "SERVICE_UNAVAILABLE",
               allModelsFailed: true,
-              attemptedModels: validModels
+              attemptedModels: validModels,
+              detail: firstDetail,
             };
             
             reject(userFriendlyError);
@@ -3013,6 +3128,8 @@ app.post("/api/analyze-soil", async (req, res) => {
       if (!res.headersSent) {
         res.status(500).json({
           error: "Gemini API key missing. Please configure GEMINI_API_KEY.",
+          details:
+            "Add GEMINI_API_KEY to soil_sathi/.env (project root), save the file, and restart npm run dev.",
         });
       }
       return;
@@ -3075,30 +3192,28 @@ app.post("/api/analyze-soil", async (req, res) => {
       }
 
       if (reportImage?.data) {
-        let base64Data: string;
+        let mediaPayload: { base64: string; mimeType: string; isPdf: boolean };
         try {
-          base64Data = validateImageData(reportImage.data);
+          mediaPayload = validateReportMediaData(reportImage.data);
         } catch (validationError) {
           res.status(400).json({
             error:
               validationError instanceof Error
                 ? validationError.message
-                : "Invalid report image data.",
+                : "Invalid report file data.",
           });
           return;
         }
-        const mimeType =
-          reportImage.mimeType ||
-          (reportImage.data.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,/)?.[1] ?? "image/png");
+        const mimeType = reportImage.mimeType || mediaPayload.mimeType;
 
-        const imagePart: Part = {
+        const mediaPart: Part = {
           inlineData: {
-            data: base64Data,
+            data: mediaPayload.base64,
             mimeType,
           },
         };
 
-        parts.push(imagePart);
+        parts.push(mediaPart);
       }
 
       // Validate model name and parts before API call
@@ -3132,29 +3247,34 @@ app.post("/api/analyze-soil", async (req, res) => {
           FALLBACK_MODELS,
           parts,
           analysisSchema,
-          reportImage?.data ? 60000 : 30000, // 60 seconds for image analysis, 30s for text-only
+          reportImage?.data ? 90000 : 30000, // PDF/image needs more time than text-only
           reportImage?.data ? 8192 : 8192, // Increased to 8192 for manual-only to prevent MAX_TOKENS truncation
           !reportImage?.data // Disable cache for image requests
         );
       } catch (generateError) {
-        // Check if all models failed - if so, generate demo report
-        const apiError = (generateError as Error & { apiError?: { allModelsFailed?: boolean } })?.apiError;
-        if (apiError?.allModelsFailed) {
-          console.log("[SoilSathi] 🎭 All models failed - generating demo analysis based on user input...");
-          payload = generateDemoAnalysis(language, sanitizedManualValues, trimmedReportText);
-          console.log("[SoilSathi] ✅ Demo analysis generated successfully");
-          console.log("[SoilSathi] 📤 Sending demo report to user...");
+        if (shouldUseDemoFallback(generateError)) {
+          console.log(
+            "[SoilSathi] Gemini blocked (dev) — returning demo analysis fallback"
+          );
+          payload = generateDemoAnalysis(
+            language,
+            sanitizedManualValues,
+            trimmedReportText
+          );
         } else {
-          // If it's a different error, log and throw it
-          console.error("[SoilSathi] ❌ generateJsonResponse failed:", generateError);
+          console.error("[SoilSathi] ❌ Soil analysis generation failed:", generateError);
           if (isDev) {
             console.error("[SoilSathi] Error details:", {
               errorType: typeof generateError,
-              errorMessage: generateError instanceof Error ? generateError.message : String(generateError),
-              errorStack: generateError instanceof Error ? generateError.stack : undefined,
+              errorMessage:
+                generateError instanceof Error
+                  ? generateError.message
+                  : String(generateError),
+              errorStack:
+                generateError instanceof Error ? generateError.stack : undefined,
             });
           }
-          throw generateError; // Re-throw to be handled by outer catch
+          throw generateError;
         }
       }
 
@@ -3248,16 +3368,56 @@ app.post("/api/analyze-soil", async (req, res) => {
           return;
         }
 
+        const isPermissionDenied =
+          statusCode === 403 ||
+          apiError?.code === 403 ||
+          apiError?.status === "PERMISSION_DENIED" ||
+          (error instanceof Error &&
+            (error.message.toLowerCase().includes("denied access") ||
+              error.message.toLowerCase().includes("permission_denied")));
+
+        const isImageError =
+          statusCode === 400 ||
+          apiError?.code === 400 ||
+          (error instanceof Error &&
+            error.message.toLowerCase().includes("unable to process input image"));
+
+        if (isImageError) {
+          sendJsonError(400, {
+            error: "Could not read the uploaded soil report file.",
+            details:
+              "Use a clear JPEG, PNG, or PDF under 10MB, or switch to the Manual Entry tab.",
+            code: 400,
+            status: "INVALID_ARGUMENT",
+          });
+          return;
+        }
+
+        if (isPermissionDenied) {
+          sendJsonError(403, {
+            error:
+              error instanceof Error
+                ? error.message
+                : "Gemini API access denied for this key.",
+            details:
+              "Create a new API key at https://aistudio.google.com/apikey and update GEMINI_API_KEY in soil_sathi/.env, then restart npm run dev.",
+            code: 403,
+            status: "PERMISSION_DENIED",
+          });
+          return;
+        }
+
         const httpStatus = (statusCode && statusCode >= 400 && statusCode < 600) ? statusCode : 500;
+        const userMessage =
+          error instanceof Error
+            ? error.message
+            : "Unknown error occurred while contacting Gemini API.";
         
         // Ensure response hasn't been sent yet
         if (!res.headersSent) {
           sendJsonError(httpStatus, {
-            error: "Failed to generate soil analysis. Please try again later.",
-            details:
-              error instanceof Error
-                ? error.message
-                : "Unknown error occurred while contacting Gemini API.",
+            error: userMessage,
+            details: userMessage,
             ...(apiError && { apiError }),
           });
         }
@@ -3448,10 +3608,10 @@ app.post("/api/recommendations", async (req, res) => {
           true // Enable caching for same requests
         );
       } catch (generateError) {
-        // Check if all models failed - if so, generate demo report
-        const apiError = (generateError as Error & { apiError?: { allModelsFailed?: boolean } })?.apiError;
-        if (apiError?.allModelsFailed) {
-          console.log("[SoilSathi] 🎭 All models failed - generating demo recommendations based on user input...");
+        if (shouldUseDemoFallback(generateError)) {
+          console.log(
+            "[SoilSathi] All models failed (dev) — returning demo recommendations fallback"
+          );
           payload = generateDemoRecommendations(language, {
             soilType,
             region,
@@ -3463,19 +3623,20 @@ app.post("/api/recommendations", async (req, res) => {
             challenges,
             notes,
           });
-          console.log("[SoilSathi] ✅ Demo recommendations generated successfully");
-          console.log("[SoilSathi] 📤 Sending demo recommendations to user...");
         } else {
-          // If it's a different error, log and throw it
-          console.error("[SoilSathi] ❌ generateJsonResponse failed:", generateError);
+          console.error("[SoilSathi] ❌ Recommendations generation failed:", generateError);
           if (isDev) {
             console.error("[SoilSathi] Error details:", {
               errorType: typeof generateError,
-              errorMessage: generateError instanceof Error ? generateError.message : String(generateError),
-              errorStack: generateError instanceof Error ? generateError.stack : undefined,
+              errorMessage:
+                generateError instanceof Error
+                  ? generateError.message
+                  : String(generateError),
+              errorStack:
+                generateError instanceof Error ? generateError.stack : undefined,
             });
           }
-          throw generateError; // Re-throw to be handled by outer catch
+          throw generateError;
         }
       }
 
@@ -3985,7 +4146,7 @@ const cropDiseaseRequestSchema = z.object({
   imageData: z
     .string()
     .min(1, "Image data is required.")
-    .max(MAX_IMAGE_CHAR_LENGTH),
+    .max(MAX_REPORT_FILE_CHAR_LENGTH),
   imageMimeType: z
     .string()
     .regex(/^image\/[a-zA-Z0-9.+-]+$/, "Invalid MIME type for image.")
@@ -4657,7 +4818,7 @@ const cropGrowthRequestSchema = z.object({
   cropName: z.string().min(1).max(100),
   cropType: z.string().max(100).optional(),
   region: z.string().max(100).optional(),
-  imageData: z.string().min(1).max(MAX_IMAGE_CHAR_LENGTH),
+  imageData: z.string().min(1).max(MAX_REPORT_FILE_CHAR_LENGTH),
   imageMimeType: z.string().regex(/^image\/[a-zA-Z0-9.+-]+$/).optional(),
   previousGrowthStage: z.string().max(100).optional(),
 });
@@ -5611,7 +5772,19 @@ app.post("/api/fertilizer-cost", async (req, res) => {
   } = parsed.data;
 
   try {
-    const parts = buildFertilizerCostPrompt(language, cropName, region, farmSize, fertilizers);
+    const parts = buildFertilizerCostPrompt(
+      language,
+      cropName,
+      region,
+      farmSize,
+      fertilizers.map((f) => ({
+        name: f.name,
+        type: f.type,
+        quantity: f.quantity,
+        unit: f.unit,
+        pricePerUnit: f.pricePerUnit,
+      }))
+    );
 
     // Use parallel model execution with fallbacks for reliability
     const payload = await tryMultipleModels(
@@ -6240,6 +6413,48 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
   }
 });
 
+const verifyGeminiApiKey = async () => {
+  if (!genAI || !API_KEY) return;
+
+  try {
+    const response = await genAI.models.generateContent({
+      model: MODEL_NAME,
+      contents: "Reply with exactly: OK",
+    });
+    const text =
+      response.candidates?.[0]?.content?.parts?.[0]?.text ??
+      (response as { text?: string }).text ??
+      "OK";
+    console.log(
+      `[SoilSathi] ✅ Gemini API verified (model: ${MODEL_NAME}, response: ${String(text).slice(0, 40)})`
+    );
+  } catch (error) {
+    const err = error as Error & { statusCode?: number; apiError?: { message?: string } };
+    const msg = err.apiError?.message ?? err.message ?? String(error);
+    console.error("[SoilSathi] ❌ Gemini API verification failed:");
+    console.error(`[SoilSathi]    ${msg}`);
+    if (msg.toLowerCase().includes("denied access")) {
+      console.error(
+        "[SoilSathi]    → Your Google Cloud project is blocked. Create a NEW key in a NEW project:"
+      );
+      console.error(
+        "[SoilSathi]      https://aistudio.google.com/apikey"
+      );
+      console.error(
+        "[SoilSathi]      Docs: https://ai.google.dev/gemini-api/docs/quickstart"
+      );
+    } else if (msg.toLowerCase().includes("quota") || err.statusCode === 429) {
+      console.error(
+        "[SoilSathi]    → Quota exceeded. Enable billing or wait, then retry."
+      );
+    } else if (msg.toLowerCase().includes("not valid")) {
+      console.error(
+        "[SoilSathi]    → Invalid API key. Check GEMINI_API_KEY in .env (one variable per line)."
+      );
+    }
+  }
+};
+
 // Start server with error handling
 // Render requires binding to 0.0.0.0, not just localhost
 try {
@@ -6254,6 +6469,7 @@ try {
     // Verify server is actually listening
     if (server.listening) {
       console.log(`[SoilSathi] ✅ Server is listening and ready!\n`);
+      void verifyGeminiApiKey();
     } else {
       console.error(`[SoilSathi] ⚠️ Warning: Server may not be listening properly\n`);
     }

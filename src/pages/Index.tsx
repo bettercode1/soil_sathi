@@ -28,12 +28,12 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { homePageTranslations } from "@/constants/translations";
+import { getHomePageCopy } from "@/constants/translations";
 import { commonTranslations, sensorTranslations, indexTranslations } from "@/constants/allTranslations";
 
 const Index = () => {
   const { language, t } = useLanguage();
-  const translations = homePageTranslations[language];
+  const translations = getHomePageCopy(language);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   const BentoCard = ({ 

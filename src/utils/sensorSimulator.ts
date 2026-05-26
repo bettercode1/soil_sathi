@@ -10,6 +10,7 @@ import type {
   SensorType,
   SensorStatus 
 } from "@/types/sensor-data";
+import type { SensorRecommendationKey } from "@/utils/sensorLanguageHelpers";
 
 /**
  * Generate realistic sensor readings based on sensor type
@@ -210,12 +211,12 @@ export const analyzeSensorData = (collection: SensorDataCollection) => {
     readingsByType.get(reading.sensorType)!.push(reading);
   });
 
-  const analysis: Record<string, any> = {
+  const analysis: Record<string, unknown> = {
     averageValues: {},
     minValues: {},
     maxValues: {},
     trends: {},
-    recommendations: [],
+    recommendations: [] as SensorRecommendationKey[],
     qualityScore: 0,
     dataCompleteness: 0,
   };
@@ -260,22 +261,24 @@ export const analyzeSensorData = (collection: SensorDataCollection) => {
     (readingsByType.size / collection.deviceInfo.length) * 100
   );
 
-  // Generate recommendations based on data
-  if (analysis.averageValues.pH) {
-    const pH = analysis.averageValues.pH.value;
+  const recs = analysis.recommendations as SensorRecommendationKey[];
+  const avgValues = analysis.averageValues as Record<string, { value: number }>;
+
+  if (avgValues.pH) {
+    const pH = avgValues.pH.value;
     if (pH < 6.5) {
-      analysis.recommendations.push("Soil pH is slightly acidic. Consider adding lime to raise pH.");
+      recs.push("recPhAcidic");
     } else if (pH > 7.5) {
-      analysis.recommendations.push("Soil pH is slightly alkaline. Consider adding organic matter to lower pH.");
+      recs.push("recPhAlkaline");
     }
   }
 
-  if (analysis.averageValues.moisture) {
-    const moisture = analysis.averageValues.moisture.value;
+  if (avgValues.moisture) {
+    const moisture = avgValues.moisture.value;
     if (moisture < 30) {
-      analysis.recommendations.push("Soil moisture is low. Irrigation recommended.");
+      recs.push("recMoistureLow");
     } else if (moisture > 70) {
-      analysis.recommendations.push("Soil moisture is high. Ensure proper drainage.");
+      recs.push("recMoistureHigh");
     }
   }
 

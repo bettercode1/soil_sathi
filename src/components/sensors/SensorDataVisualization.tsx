@@ -25,6 +25,10 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { sensorTranslations } from "@/constants/sensorTranslations";
+import {
+  translateSensorRecommendation,
+  translateSensorType,
+} from "@/utils/sensorLanguageHelpers";
 import type { SensorDataCollection, SensorReading } from "@/types/sensor-data";
 import { analyzeSensorData } from "@/utils/sensorSimulator";
 
@@ -280,7 +284,7 @@ export const SensorDataVisualization: React.FC<SensorDataVisualizationProps> = (
                         1000
                     )
                   : 0}
-                <span className="text-lg">s</span>
+                <span className="text-lg">{t(sensorTranslations.secondsUnit)}</span>
               </div>
               <div className="text-xs text-slate-500">{t(sensorTranslations.totalTime)}</div>
             </div>
@@ -343,7 +347,7 @@ export const SensorDataVisualization: React.FC<SensorDataVisualizationProps> = (
                           {getSensorIcon(type)}
                         </div>
                         <div>
-                          <span className="font-bold text-base capitalize text-slate-800">{type.replace("_", " ")}</span>
+                          <span className="font-bold text-base text-slate-800">{translateSensorType(type, t)}</span>
                           <div className="flex items-center gap-1 mt-1">
                             {isGoodSensor ? (
                               <ThumbsUp className="h-4 w-4 text-emerald-600" />
@@ -380,8 +384,8 @@ export const SensorDataVisualization: React.FC<SensorDataVisualizationProps> = (
                     {/* Range Bar */}
                     <div className="mb-3">
                       <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-                        <span>Min: {min?.toFixed(2)}</span>
-                        <span>Max: {max?.toFixed(2)}</span>
+                        <span>{t(sensorTranslations.minLabel)}: {min?.toFixed(2)}</span>
+                        <span>{t(sensorTranslations.maxLabel)}: {max?.toFixed(2)}</span>
                       </div>
                       <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
                         <div 
@@ -441,7 +445,9 @@ export const SensorDataVisualization: React.FC<SensorDataVisualizationProps> = (
                   <div className="p-1.5 bg-blue-100 rounded-full mt-0.5">
                     <div className="w-2 h-2 rounded-full bg-blue-600"></div>
                   </div>
-                  <span className="text-sm font-medium text-slate-700 flex-1">{rec}</span>
+                  <span className="text-sm font-medium text-slate-700 flex-1">
+                    {translateSensorRecommendation(rec, t)}
+                  </span>
                   <ThumbsUp className="h-4 w-4 text-blue-500 flex-shrink-0" />
                 </li>
               ))}
@@ -486,7 +492,9 @@ export const SensorDataVisualization: React.FC<SensorDataVisualizationProps> = (
                       <div className="p-2 bg-orange-100 rounded-lg">
                         <BarChart3 className="h-5 w-5 text-orange-600" />
                       </div>
-                      <div className="font-bold text-lg text-slate-800">{t(sensorTranslations.depth)}: {depth} cm</div>
+                      <div className="font-bold text-lg text-slate-800">
+                        {t(sensorTranslations.depth)}: {depth}{t(sensorTranslations.cmUnit)}
+                      </div>
                       <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
                         {depthReadings.length} {t(sensorTranslations.readings)}
                       </Badge>
@@ -501,8 +509,8 @@ export const SensorDataVisualization: React.FC<SensorDataVisualizationProps> = (
                           <div key={type} className="p-3 bg-gradient-to-br from-slate-50 to-white rounded-lg border border-slate-200 hover:border-orange-300 transition-all">
                             <div className="flex items-center gap-2 mb-2">
                               {getSensorIcon(type)}
-                              <div className="text-xs font-semibold text-slate-600 capitalize">
-                                {type.replace("_", " ")}
+                              <div className="text-xs font-semibold text-slate-600">
+                                {translateSensorType(type, t)}
                               </div>
                               {isGood ? (
                                 <ThumbsUp className="h-3 w-3 text-emerald-600 ml-auto" />

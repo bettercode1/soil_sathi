@@ -8,8 +8,9 @@ import { soilAnalyzerTranslations, soilHealthTranslations, commonTranslations } 
 import { Timer, Plus, ArrowUpRight, ArrowDownRight, Minus, FlaskConical, Leaf, Sprout } from "lucide-react";
 import soilHealthHero from "@/assets/soil-health-hero.jpg";
 
-type LanguageCode = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
-type LocalizedString = Record<LanguageCode, string>;
+import type { TranslationSet } from "@/constants/languages";
+
+type LocalizedString = TranslationSet;
 type NutrientStatusKey = "veryLow" | "low" | "optimal" | "high";
 
 const localized = (

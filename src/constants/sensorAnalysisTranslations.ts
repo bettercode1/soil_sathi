@@ -2,9 +2,7 @@
  * Sensor Analysis Translations
  */
 
-type Language = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
-
-type TranslationSet = Record<Language, string>;
+import type { TranslationSet } from "@/constants/languages";
 
 export const sensorAnalysisTranslations: Record<string, TranslationSet> = {
   essentialRootDev: {

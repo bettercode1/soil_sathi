@@ -10,17 +10,10 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Menu,
   Leaf,
-  Globe,
   Home,
   Microscope,
   ListChecks,
@@ -42,13 +35,14 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSelector } from "@/components/shared/LanguageSelector";
 import { cn } from "@/lib/utils";
 import { LoginModal } from "@/components/auth/LoginModal";
 import betterCodeLogo from "@/assets/bettercode-logo.png";
 
 const Header = () => {
   const isMobile = useIsMobile();
-  const { language, setLanguage, t, getLanguageName } = useLanguage();
+  const { t } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -134,6 +128,66 @@ const Header = () => {
       organicFarming: "सेंद्रिय शेती",
       helpDesk: "सहाय्यता डेस्क",
       yourSoilAdvisor: "तुमचा माती सल्लागार"
+    },
+    as: {
+      home: "ঘৰ",
+      soilAnalyzer: "মাটি বিশ্লেষক",
+      sensorData: "ছেন্চৰ তথ্য",
+      recommendations: "পৰামৰ্শ",
+      soilHealth: "মাটিৰ স্বাস্থ্য",
+      organicFarming: "জৈৱিক খেতি",
+      helpDesk: "সহায় ডেছ্ক",
+      yourSoilAdvisor: "আপোনাৰ মাটি পৰামৰ্শদাতা"
+    },
+    mni: {
+      home: "য়ুম",
+      soilAnalyzer: "মাটি বিশ্লেষক",
+      sensorData: "ছেন্সর ডাটা",
+      recommendations: "পরামর্শ",
+      soilHealth: "মাটির স্বাস্থ্য",
+      organicFarming: "জৈবিক খেতি",
+      helpDesk: "সহায় ডেস্ক",
+      yourSoilAdvisor: "আপনার মাটি পরামর্শদাতা"
+    },
+    lus: {
+      home: "In",
+      soilAnalyzer: "Lei analysis",
+      sensorData: "Sensor data",
+      recommendations: "Rawtna",
+      soilHealth: "Lei hriselna",
+      organicFarming: "Organic lo neih",
+      helpDesk: "Tanpui desk",
+      yourSoilAdvisor: "I lei advisor"
+    },
+    ne: {
+      home: "गृह",
+      soilAnalyzer: "माटो विश्लेषक",
+      sensorData: "सेन्सर डाटा",
+      recommendations: "सिफारिसहरू",
+      soilHealth: "माटोको स्वास्थ्य",
+      organicFarming: "जैविक खेती",
+      helpDesk: "सहायता डेस्क",
+      yourSoilAdvisor: "तपाईंको माटो सल्लाहकार"
+    },
+    kha: {
+      home: "Iing",
+      soilAnalyzer: "Klei analysis",
+      sensorData: "Sensor data",
+      recommendations: "Ki jingpyrkhat",
+      soilHealth: "Ka jinglong khlieh ka khei",
+      organicFarming: "Organic farming",
+      helpDesk: "Ka jingïarap",
+      yourSoilAdvisor: "U nongai jingtip khei"
+    },
+    brx: {
+      home: "घर",
+      soilAnalyzer: "माटि बिज्लेखनाय",
+      sensorData: "सेन्सर डाटा",
+      recommendations: "सलाह",
+      soilHealth: "माटि नि सेरफार",
+      organicFarming: "जैविक खेती",
+      helpDesk: "मदद डेस्क",
+      yourSoilAdvisor: "नोंथांनि माटि सलाहगिरि"
     }
   };
 
@@ -172,6 +226,12 @@ const Header = () => {
       te: translations.te[key],
       bn: translations.bn[key],
       mr: translations.mr[key],
+      as: translations.as[key],
+      mni: translations.mni[key],
+      lus: translations.lus[key],
+      ne: translations.ne[key],
+      kha: translations.kha[key],
+      brx: translations.brx[key],
     });
 
   const NavigationLinks = () => (
@@ -187,41 +247,6 @@ const Header = () => {
         </Link>
       ))}
     </nav>
-  );
-
-  // Simple language selector
-  const LanguageSelector = () => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2 shrink-0">
-          <Globe className="h-4 w-4" />
-          <span className="hidden 2xl:inline-block">{getLanguageName(language)}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setLanguage("mr")}>
-          मराठी (Marathi)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setLanguage("en")}>
-          English
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setLanguage("hi")}>
-          हिंदी (Hindi)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setLanguage("pa")}>
-          ਪੰਜਾਬੀ (Punjabi)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setLanguage("ta")}>
-          தமிழ் (Tamil)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setLanguage("te")}>
-          తెలుగు (Telugu)
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setLanguage("bn")}>
-          বাংলা (Bengali)
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 
   return (
@@ -283,14 +308,20 @@ const Header = () => {
                   </div>
                 </SheetTitle>
                 <SheetDescription>
-                  {t({ 
-                    en: translations.en.yourSoilAdvisor, 
+                  {t({
+                    en: translations.en.yourSoilAdvisor,
                     hi: translations.hi.yourSoilAdvisor,
                     pa: translations.pa.yourSoilAdvisor,
                     ta: translations.ta.yourSoilAdvisor,
                     te: translations.te.yourSoilAdvisor,
                     bn: translations.bn.yourSoilAdvisor,
-                    mr: translations.mr.yourSoilAdvisor
+                    mr: translations.mr.yourSoilAdvisor,
+                    as: translations.as.yourSoilAdvisor,
+                    mni: translations.mni.yourSoilAdvisor,
+                    lus: translations.lus.yourSoilAdvisor,
+                    ne: translations.ne.yourSoilAdvisor,
+                    kha: translations.kha.yourSoilAdvisor,
+                    brx: translations.brx.yourSoilAdvisor,
                   })}
                 </SheetDescription>
               </SheetHeader>

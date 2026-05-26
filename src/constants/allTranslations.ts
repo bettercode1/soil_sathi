@@ -1,5 +1,4 @@
-type Language = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
-type TranslationSet = Record<Language, string>;
+import type { TranslationSet } from "@/constants/languages";
 
 // NotFound Page Translations
 export const notFoundTranslations: Record<string, TranslationSet> = {

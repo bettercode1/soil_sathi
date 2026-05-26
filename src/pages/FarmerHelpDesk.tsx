@@ -32,7 +32,12 @@ import {
 import { useLanguage } from "@/contexts/LanguageContext";
 import { recommendationsTranslations } from "@/constants/allTranslations";
 import { buildApiUrl, parseJsonResponse } from "@/lib/api";
-type LanguageCode = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
+import type { Language } from "@/constants/languages";
+import {
+  LANGUAGE_OPTIONS,
+  LANGUAGE_NATIVE_NAMES,
+  mapLanguageToLocale,
+} from "@/constants/languages";
 
 type SpeechRecognitionResultItem = {
   0?: {
@@ -122,7 +127,7 @@ type ChatTimelineMessage = {
   exchangeId: string;
   role: "farmer" | "assistant";
   content: string;
-  detectedLanguage: LanguageCode;
+  detectedLanguage: Language;
   followUps?: string[];
   clarifyingQuestions?: string[];
   sources?: AiAssistSource[];
@@ -145,7 +150,7 @@ const MARATHI_HINT_REGEX =
 const HINDI_HINT_REGEX =
   /(किसान|योजना|ऋण|उर्वरक|मौसम|पैदावार|फसल|खरीफ|रबी|बीमा|सरकार|खेती|बीज|सिंचाई|खरपतवार|कीट|रोग|उत्पादन|बाजार|मंडी|कृषि|कृषि उत्पाद|पानी|बिजली|ट्रैक्टर|कंबाइन|स्प्रे|ड्रिप|स्प्रिंकलर|आम|कपास|सोयाबीन|गेहूं|चावल|ज्वार|बाजरा|रागी|अरहर|मूंग|उड़द|चना|मटर|प्याज|टमाटर|मिर्च|भिंडी|बैंगन|खीरा|लौकी|केला|अंगूर|संतरा|मौसंबी|नारियल|सिंदूर|काजू|बादाम|पिस्ता|अनानास|पपीता|तरबूज|खरबूजा)/i;
 
-const getTimeOfDayGreeting = (language: LanguageCode, referenceDate: Date = new Date()): string => {
+const getTimeOfDayGreeting = (language: Language, referenceDate: Date = new Date()): string => {
   const hour = referenceDate.getHours();
   const period =
     hour >= 5 && hour < 12
@@ -210,7 +215,7 @@ const helpDeskText: Record<
   | "speakingMessage"
   | "muteMessageLabel"
   | "unmuteMessageLabel",
-  Record<LanguageCode, string>
+  Record<Language, string>
 > = {
   tagline: {
     en: "Realtime guidance on Maharashtra schemes, loans, weather and crop care.",
@@ -491,7 +496,7 @@ const landingCopy: Record<
   | "voiceModeLabel"
   | "voiceModeDescription"
   | "activationTag",
-  Record<LanguageCode, string>
+  Record<Language, string>
 > = {
   heroHeading: {
     en: "Live Voice Assistant",
@@ -907,7 +912,7 @@ const renderAnswerText = (text: string) => {
  * 3. Character frequency analysis
  * 4. Fallback to user preference
  */
-const detectInputLanguage = (value: string, preferredLanguage?: LanguageCode): LanguageCode => {
+const detectInputLanguage = (value: string, preferredLanguage?: Language): Language => {
   if (!value || value.trim().length === 0) {
     return preferredLanguage || "en";
   }
@@ -977,17 +982,6 @@ const detectInputLanguage = (value: string, preferredLanguage?: LanguageCode): L
   return preferredLanguage || "en";
 };
 
-const mapLanguageToLocale = (code: string): string => {
-  switch (code) {
-    case "mr":
-      return "mr-IN";
-    case "hi":
-      return "hi-IN";
-    default:
-      return "en-IN";
-  }
-};
-
 const stripMarkup = (input: string) =>
   input
     .replace(/\*\*/g, "")
@@ -1011,7 +1005,7 @@ const FarmerHelpDesk = () => {
   const [activationSequence, setActivationSequence] = useState(0);
   const [assistantHistory, setAssistantHistory] = useState<FarmerAssistMessage[]>([]);
   const [assistantResponses, setAssistantResponses] = useState<AiAssistExchange[]>([]);
-  const [detectedLanguage, setDetectedLanguage] = useState<LanguageCode>(language);
+  const [detectedLanguage, setDetectedLanguage] = useState<Language>(language);
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [autoListen, setAutoListen] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
@@ -1034,7 +1028,7 @@ const FarmerHelpDesk = () => {
   const spokenIdsRef = useRef<Set<string>>(new Set());
   const greetingSpokenRef = useRef<string | null>(null);
   const lastGreetedActivationRef = useRef<number | null>(null);
-  const activationLanguageRef = useRef<LanguageCode>("en");
+  const activationLanguageRef = useRef<Language>("en");
   const pendingSpeechSubmitRef = useRef(false);
   const animationIntervalsRef = useRef<Record<string, number>>({});
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -1047,22 +1041,22 @@ const FarmerHelpDesk = () => {
   const userInteractedRef = useRef(false);
   const processedResultIndexRef = useRef(0); // Track which recognition results we've already processed
 
-  const languageOptions = useMemo<Array<{ code: LanguageCode; label: string }>>(
-    () => [
-      { code: "mr", label: "मराठी" },
-      { code: "hi", label: "हिंदी" },
-      { code: "en", label: "English" },
-    ],
+  const languageOptions = useMemo<Array<{ code: Language; label: string }>>(
+    () =>
+      LANGUAGE_OPTIONS.map((option) => ({
+        code: option.code,
+        label: LANGUAGE_NATIVE_NAMES[option.code],
+      })),
     [],
   );
 
-  const selectedLanguageValue = useMemo<LanguageCode>(
+  const selectedLanguageValue = useMemo<Language>(
     () => languageOptions.find((option) => option.code === language)?.code ?? "mr",
     [language, languageOptions],
   );
 
   const updateDetectedLanguage = useCallback(
-    (value: LanguageCode, source: "manual" | "input" | "voice" | "response" = "input") => {
+    (value: Language, source: "manual" | "input" | "voice" | "response" = "input") => {
       detectedLanguageSourceRef.current = source;
       setDetectedLanguage(value);
     },
@@ -1074,7 +1068,7 @@ const FarmerHelpDesk = () => {
    * Prioritizes native voices for each language with fallback strategies
    */
   const selectVoiceForLanguage = useCallback(
-    (languageCode: LanguageCode): SpeechSynthesisVoice | null => {
+    (languageCode: Language): SpeechSynthesisVoice | null => {
       if (availableVoices.length === 0) {
         return null;
       }
@@ -1083,7 +1077,7 @@ const FarmerHelpDesk = () => {
       const base = locale.split("-")[0];
 
       // Enhanced preference map with more specific voice matching
-      const preferenceMap: Partial<Record<LanguageCode, string[]>> = {
+      const preferenceMap: Partial<Record<Language, string[]>> = {
         mr: [
           locale,           // mr-IN (exact match)
           "mr",            // Marathi (any variant)
@@ -1186,7 +1180,7 @@ const FarmerHelpDesk = () => {
           exchangeId: exchange.id,
           role: "farmer",
           content: exchange.question,
-          detectedLanguage: exchange.detectedLanguage as LanguageCode,
+          detectedLanguage: exchange.detectedLanguage as Language,
         });
       }
 
@@ -1195,7 +1189,7 @@ const FarmerHelpDesk = () => {
         exchangeId: exchange.id,
         role: "assistant",
         content: exchange.answer,
-        detectedLanguage: exchange.detectedLanguage as LanguageCode,
+        detectedLanguage: exchange.detectedLanguage as Language,
         followUps: exchange.followUps,
         clarifyingQuestions: exchange.clarifyingQuestions,
         sources: exchange.sources,
@@ -1551,7 +1545,7 @@ const FarmerHelpDesk = () => {
 
   useEffect(() => {
     if (!question.trim()) {
-      updateDetectedLanguage(language as LanguageCode, "manual");
+      updateDetectedLanguage(language as Language, "manual");
     }
   }, [language, question, updateDetectedLanguage]);
 
@@ -1690,7 +1684,7 @@ const FarmerHelpDesk = () => {
         setTimeout(() => setAvailableVoices(voices), 0);
       }
 
-      const languageForVoice = (latest.detectedLanguage || latest.language || detectedLanguage) as LanguageCode;
+      const languageForVoice = (latest.detectedLanguage || latest.language || detectedLanguage) as Language;
       const cleanedText = stripMarkup(latest.answer);
       
       if (!cleanedText || cleanedText.trim().length === 0) {
@@ -2307,7 +2301,7 @@ const FarmerHelpDesk = () => {
     }
 
     detectedLanguageSourceRef.current = "manual";
-    setLanguage(detectedLanguage as LanguageCode);
+    setLanguage(detectedLanguage as Language);
   }, [detectedLanguage, isActivated, language, setLanguage]);
 
   const detectedLanguageLabel = useMemo(() => {
@@ -2484,7 +2478,7 @@ const FarmerHelpDesk = () => {
       }
 
       setVoiceError(null);
-      const languageForVoice = (message.detectedLanguage || detectedLanguage) as LanguageCode;
+      const languageForVoice = (message.detectedLanguage || detectedLanguage) as Language;
       
       // Create utterance with enhanced natural speech settings
       const utterance = new SpeechSynthesisUtterance(cleanedText);
@@ -2834,8 +2828,8 @@ const FarmerHelpDesk = () => {
         const data = await parseJsonResponse<AiAssistResponsePayload>(response);
 
         const responseLanguage =
-          (data.detectedLanguage as LanguageCode | undefined) ??
-          (data.language as LanguageCode | undefined) ??
+          (data.detectedLanguage as Language | undefined) ??
+          (data.language as Language | undefined) ??
           effectiveLanguage;
 
         updateDetectedLanguage(responseLanguage, "response");
@@ -3011,7 +3005,7 @@ const FarmerHelpDesk = () => {
                     <Select
                       value={selectedLanguageValue}
                       onValueChange={(value) => {
-                        const languageValue = value as LanguageCode;
+                        const languageValue = value as Language;
                         setLanguage(languageValue);
                         updateDetectedLanguage(languageValue, "manual");
                       }}

@@ -31,6 +31,12 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { sensorTranslations } from "@/constants/sensorTranslations";
+import {
+  formatSensorLocaleTime,
+  translateDeviceStatus,
+  translateReadingQuality,
+  translateSensorType,
+} from "@/utils/sensorLanguageHelpers";
 import type { 
   SensorDevice, 
   SensorReading, 
@@ -253,10 +259,7 @@ export const SensorDataCollector: React.FC<SensorDataCollectorProps> = ({
                         capitalize font-semibold text-[10px] px-2 py-0
                       `}
                     >
-                      {device.status === "active" ? t(sensorTranslations.active) : 
-                       device.status === "calibrating" ? t(sensorTranslations.calibratingStatus) || t(sensorTranslations.calibrating) :
-                       device.status === "low_battery" ? t(sensorTranslations.lowBatteryStatus) || t(sensorTranslations.lowBattery) :
-                       device.status.replace('_', ' ')}
+                      {translateDeviceStatus(device.status, t)}
                     </Badge>
                     {device.firmwareVersion && (
                       <span className="text-[10px] text-slate-400 font-mono tracking-tighter bg-slate-50 px-1.5 py-0.5 rounded">
@@ -278,7 +281,9 @@ export const SensorDataCollector: React.FC<SensorDataCollectorProps> = ({
                       <div className="p-1 bg-slate-50 rounded-md">
                         <Activity className="h-3 w-3 text-slate-400" />
                       </div>
-                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">{device.type}</span>
+                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
+                        {translateSensorType(device.type, t)}
+                      </span>
                     </div>
 
                     {device.batteryLevel !== undefined && (
@@ -332,7 +337,7 @@ export const SensorDataCollector: React.FC<SensorDataCollectorProps> = ({
                   className="w-full px-4 py-3 border-2 border-blue-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all disabled:bg-slate-100 disabled:cursor-not-allowed font-semibold"
                 />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-medium">
-                  sec
+                  {t(sensorTranslations.secondsShort)}
                 </div>
               </div>
             </div>
@@ -432,7 +437,7 @@ export const SensorDataCollector: React.FC<SensorDataCollectorProps> = ({
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="font-bold bg-purple-50 text-purple-700 border-purple-200">
-                        {reading.sensorType}
+                        {translateSensorType(reading.sensorType, t)}
                       </Badge>
                       <span className="text-lg font-bold text-slate-800">
                         {reading.value}
@@ -444,7 +449,7 @@ export const SensorDataCollector: React.FC<SensorDataCollectorProps> = ({
                     {reading.depth !== undefined && (
                       <Badge variant="outline" className="text-xs bg-slate-50">
                         <MapPin className="h-3 w-3 mr-1" />
-                        {reading.depth}cm
+                        {reading.depth}{t(sensorTranslations.cmUnit)}
                       </Badge>
                     )}
                     {reading.quality && (
@@ -456,14 +461,14 @@ export const SensorDataCollector: React.FC<SensorDataCollectorProps> = ({
                           "bg-red-50 text-red-700 border-red-200"
                         }`}
                       >
-                        {reading.quality}
+                        {translateReadingQuality(reading.quality, t)}
                       </Badge>
                     )}
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     <Clock className="h-4 w-4 text-slate-400" />
                     <span className="text-xs text-slate-500 font-medium">
-                      {new Date(reading.timestamp).toLocaleTimeString()}
+                      {formatSensorLocaleTime(reading.timestamp, language)}
                     </span>
                   </div>
                 </div>
@@ -504,7 +509,7 @@ export const SensorDataCollector: React.FC<SensorDataCollectorProps> = ({
                 <div className="flex items-center gap-2 mb-2">
                   <Clock className="h-5 w-5 text-purple-600" />
                   <div className="text-lg font-bold text-purple-700">
-                    {new Date(collection.startTime).toLocaleTimeString()}
+                    {formatSensorLocaleTime(collection.startTime, language)}
                   </div>
                 </div>
                 <div className="text-sm font-semibold text-slate-600">{t(sensorTranslations.startTime)}</div>

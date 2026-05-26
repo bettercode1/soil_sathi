@@ -6,8 +6,9 @@ import { componentTagger } from "lovable-tagger";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
-    host: "::",
+    host: true,
     port: 8080,
+    strictPort: false,
     proxy: {
       "/api": {
         target: "http://localhost:3001",
@@ -117,6 +118,6 @@ export default defineConfig(({ mode }) => ({
     mainFields: ['module', 'jsnext:main', 'jsnext'],
   },
 
-  // Reduce logging overhead for faster dev server
-  logLevel: 'warn',
+  // Show dev server URL; keep production builds quieter
+  logLevel: mode === "development" ? "info" : "warn",
 }));

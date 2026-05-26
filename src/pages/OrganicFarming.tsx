@@ -10,8 +10,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { organicFarmingNutrientTranslations } from "@/constants/allTranslations";
 import organicFarmingHeroNew from "@/assets/organic-farming-hero-2.jpg";
 
-type LanguageCode = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
-type LocalizedString = Record<LanguageCode, string>;
+import type { Language, TranslationSet } from "@/constants/languages";
+
+type LocalizedString = TranslationSet;
 
 const localized = (
   en: string,

@@ -1,5 +1,4 @@
-type Language = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
-type TranslationSet = Record<Language, string>;
+import type { TranslationSet } from "@/constants/languages";
 
 // Importing TranslationSet type if available, otherwise defining it loosely or assuming strict inference.
 // Assuming TranslationSet is Record<string, string> or similar.

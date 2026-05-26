@@ -1,6 +1,8 @@
 import type { Timestamp } from "firebase/firestore";
 
-export type Language = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
+import type { Language } from "@/constants/languages";
+
+export type { Language };
 
 // Soil Analysis Report
 export interface SoilAnalysisReport {

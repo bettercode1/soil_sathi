@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileUp, Camera, Upload } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { FileUp, Camera, Upload, FileText } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { soilAnalyzerTranslations } from "@/constants/allTranslations";
@@ -17,12 +18,21 @@ import DetailedReport from "@/components/reports/DetailedReport";
 import { SoilAnalysis } from "@/types/soil-analysis";
 import { useLocation } from "react-router-dom";
 
+const ALLOWED_REPORT_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+] as const;
+
 const SoilAnalyzer = () => {
   const { toast } = useToast();
   const { t, language } = useLanguage();
   const location = useLocation();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [uploadedMimeType, setUploadedMimeType] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("upload");
   const [manualValues, setManualValues] = useState({
     ph: "",
@@ -60,21 +70,55 @@ const SoilAnalyzer = () => {
     }
   }, [location.state, t]);
 
+  const clearUploadedFile = () => {
+    setUploadedImage(null);
+    setUploadedFileName(null);
+    setUploadedMimeType(null);
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setUploadedImage(event.target?.result as string);
-        setDataSource("upload"); // Mark data source as upload
-        setActiveTab("upload");
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const mimeType = file.type || "application/octet-stream";
+    if (!ALLOWED_REPORT_TYPES.includes(mimeType as (typeof ALLOWED_REPORT_TYPES)[number])) {
       toast({
-        title: t(soilAnalyzerTranslations.imageUploadSuccessTitle),
-        description: t(soilAnalyzerTranslations.imageUploadSuccessMessage),
+        title: "Unsupported file",
+        description: "Please upload a JPEG, PNG, WebP, or PDF soil report.",
+        variant: "destructive",
       });
+      e.target.value = "";
+      return;
     }
+
+    const maxBytes = mimeType === "application/pdf" ? 10 * 1024 * 1024 : 4 * 1024 * 1024;
+    if (file.size > maxBytes) {
+      toast({
+        title: "File too large",
+        description:
+          mimeType === "application/pdf"
+            ? "PDF must be under 10MB."
+            : "Image must be under 4MB.",
+        variant: "destructive",
+      });
+      e.target.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setUploadedImage(event.target?.result as string);
+      setUploadedFileName(file.name);
+      setUploadedMimeType(mimeType);
+      setDataSource("upload");
+      setActiveTab("upload");
+    };
+    reader.readAsDataURL(file);
+    toast({
+      title: t(soilAnalyzerTranslations.imageUploadSuccessTitle),
+      description: t(soilAnalyzerTranslations.imageUploadSuccessMessage),
+    });
+    e.target.value = "";
   };
 
   const handleManualInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -114,7 +158,9 @@ const SoilAnalyzer = () => {
       if (!response.ok) {
         // Parse error response to get details
         const errorData = await parseErrorResponse(response);
-        const errorMessage = errorData.details || errorData.error || `Server responded with ${response.status}`;
+        const errorMessage =
+          [errorData.error, errorData.details].filter(Boolean).join(" — ") ||
+          `Server responded with ${response.status}`;
         
         const isServiceOverloaded = 
           response.status === 503 || 
@@ -178,10 +224,20 @@ const SoilAnalyzer = () => {
       const result = await parseJsonResponse<SoilAnalysis>(response);
       setAnalysis(result);
       setShowFullReport(false);
-      toast({
-        title: t(soilAnalyzerTranslations.analysisReadyTitle),
-        description: t(soilAnalyzerTranslations.analysisReadyDescription),
-      });
+      if (result.isDemo) {
+        toast({
+          title: "Sample report (AI unavailable)",
+          description:
+            result.demoNotice ??
+            "Live Gemini analysis failed. Check GEMINI_API_KEY and GEMINI_MODEL on the server.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: t(soilAnalyzerTranslations.analysisReadyTitle),
+          description: t(soilAnalyzerTranslations.analysisReadyDescription),
+        });
+      }
     } catch (error) {
       console.error("[SoilAnalyzer] Error:", error);
       
@@ -240,6 +296,7 @@ const SoilAnalyzer = () => {
       manualValues: filteredManualValues,
       reportImage: {
         data: uploadedImage,
+        mimeType: uploadedMimeType ?? undefined,
       },
     });
   };
@@ -410,17 +467,25 @@ const SoilAnalyzer = () => {
                     <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-lg p-8 mb-6">
                       {uploadedImage ? (
                         <div className="w-full">
-                          <img 
-                            src={uploadedImage} 
-                            alt="Uploaded soil test report" 
-                            className="max-h-[300px] mx-auto mb-4"
-                          />
+                          {uploadedMimeType === "application/pdf" ? (
+                            <div className="flex flex-col items-center justify-center py-8 mb-4 bg-muted/40 rounded-lg">
+                              <FileText className="h-16 w-16 text-primary mb-3" />
+                              <p className="font-medium text-foreground">{uploadedFileName}</p>
+                              <p className="text-sm text-muted-foreground mt-1">PDF soil report ready to analyze</p>
+                            </div>
+                          ) : (
+                            <img
+                              src={uploadedImage}
+                              alt="Uploaded soil test report"
+                              className="max-h-[300px] mx-auto mb-4"
+                            />
+                          )}
                           <div className="text-center text-sm text-muted-foreground">
                             <p>{t(soilAnalyzerTranslations.imagePreviewCaption)}</p>
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               className="mt-2"
-                              onClick={() => setUploadedImage(null)}
+                              onClick={clearUploadedFile}
                             >
                               {t(soilAnalyzerTranslations.removeImage)}
                             </Button>
@@ -432,7 +497,7 @@ const SoilAnalyzer = () => {
                             <Upload className="h-10 w-10 text-muted-foreground mx-auto" />
                           </div>
                           <p className="text-sm text-muted-foreground mb-4">
-                            {t(soilAnalyzerTranslations.uploadHelperText)}
+                            {t(soilAnalyzerTranslations.uploadHelperText)} JPEG, PNG, WebP, or PDF (up to 10MB).
                           </p>
                           <div className="flex flex-col sm:flex-row gap-3 justify-center">
                             <Button className="gap-2">
@@ -441,7 +506,7 @@ const SoilAnalyzer = () => {
                                 <span>{t(soilAnalyzerTranslations.takePhoto)}</span>
                                 <Input
                                   type="file"
-                                  accept="image/*"
+                                  accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
                                   capture="environment"
                                   className="hidden"
                                   onChange={handleImageUpload}
@@ -454,7 +519,7 @@ const SoilAnalyzer = () => {
                                 <span>{t(soilAnalyzerTranslations.uploadFile)}</span>
                                 <Input
                                   type="file"
-                                  accept="image/*"
+                                  accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
                                   className="hidden"
                                   onChange={handleImageUpload}
                                 />
@@ -609,6 +674,15 @@ const SoilAnalyzer = () => {
               {analysis && (
                 !showFullReport ? (
                   <div className="animate-fade-in-up w-full">
+                    {analysis.isDemo && (
+                      <Alert variant="destructive" className="mb-4">
+                        <AlertTitle>Sample report — not from live AI</AlertTitle>
+                        <AlertDescription>
+                          {analysis.demoNotice ??
+                            "The server could not reach Gemini. On production, set GEMINI_API_KEY and GEMINI_MODEL=gemini-2.5-flash in your host environment."}
+                        </AlertDescription>
+                      </Alert>
+                    )}
                     <SimplifiedReport 
                       analysis={analysis} 
                       onKnowMore={() => setShowFullReport(true)}

@@ -47,4 +47,7 @@ export type SoilAnalysis = {
     nextSteps: string;
   };
   analysisTimestamp: string;
+  /** True when the server returned a local demo template (AI models unavailable). */
+  isDemo?: boolean;
+  demoNotice?: string;
 };

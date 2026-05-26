@@ -1,7 +1,18 @@
+import path from "node:path";
 import { config as loadEnv } from "dotenv";
 import { z } from "zod";
 
-loadEnv();
+// Use cwd (repo root on Render and `npm start`) so .env works in dev and after build
+const projectRoot = process.cwd();
+const envPath = path.join(projectRoot, ".env");
+
+const envLoadResult = loadEnv({ path: envPath });
+if (envLoadResult.error && !process.env.GEMINI_API_KEY) {
+  console.warn(
+    `[SoilSathi] Could not load ${envPath}:`,
+    envLoadResult.error.message
+  );
+}
 
 const extractNumericValue = (value: unknown): number | undefined => {
   if (typeof value === "number") {
@@ -108,7 +119,7 @@ const getPort = () => {
 export const env = {
   nodeEnv: NODE_ENV ?? (process.env.npm_lifecycle_event?.includes("dev") ? "development" : "production"), // Default to production for Render, but dev for local scripts
   port: getPort(),
-  geminiModel: GEMINI_MODEL ?? "gemini-1.5-flash",
+  geminiModel: GEMINI_MODEL ?? "gemini-3.5-flash",
   geminiEmbedModel: GEMINI_EMBED_MODEL ?? "text-embedding-004",
   geminiApiKey: GEMINI_API_KEY,
   allowedOrigins: ALLOWED_ORIGINS ?? [],
@@ -118,7 +129,11 @@ export const env = {
 
 if (!env.geminiApiKey) {
   console.warn(
-    "[SoilSathi] GEMINI_API_KEY not set. Gemini-backed endpoints will respond with an error until it is provided."
+    "[SoilSathi] GEMINI_API_KEY not set. Save it in .env at the project root and restart the server."
+  );
+} else {
+  console.log(
+    `[SoilSathi] Gemini configured (model: ${env.geminiModel}, key loaded from ${envPath})`
   );
 }
 

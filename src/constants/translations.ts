@@ -1,15 +1,10 @@
-type Language = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
+import type { Language, TranslationSet } from "@/constants/languages";
+import { getLanguageFallbackChain } from "@/constants/languages";
 
-type TranslationSet = Record<Language, string>;
+export type { Language, TranslationSet };
 
-type TranslationLanguages = {
+type TranslationLanguages = Partial<Record<Language, Record<string, string>>> & {
   en: Record<string, string>;
-  hi: Record<string, string>;
-  pa: Record<string, string>;
-  ta: Record<string, string>;
-  te: Record<string, string>;
-  bn: Record<string, string>;
-  mr: Record<string, string>;
 };
 
 export const homePageTranslations: TranslationLanguages = {
@@ -406,3 +401,12 @@ export const homePageTranslations: TranslationLanguages = {
     startAnalyzing: "आत्ताच तुमच्या मातीची तपासणी करा"
   }
 };
+
+/** Home page copy with Northeast + regional fallbacks (bn/hi/en) */
+export function getHomePageCopy(language: Language): Record<string, string> {
+  for (const code of getLanguageFallbackChain(language)) {
+    const copy = homePageTranslations[code];
+    if (copy) return copy;
+  }
+  return homePageTranslations.en;
+}

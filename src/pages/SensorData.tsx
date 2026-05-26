@@ -28,7 +28,7 @@ import html2canvas from "html2canvas";
 import { useToast } from "@/components/ui/use-toast";
 
 const SensorData = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [sensorCollection, setSensorCollection] = useState<SensorDataCollection | null>(null);
@@ -172,7 +172,7 @@ const SensorData = () => {
       (organic < 1 ? t(sensorAnalysisTranslations.organicLow) : t(sensorAnalysisTranslations.organicAdequate));
 
     return {
-      language: "en", // Keeping internal lang tag en for now as keys govern display
+      language,
       overview: description,
       soilQuality: {
         rating: t(sensorAnalysisTranslations[qualityRating]),

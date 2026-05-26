@@ -26,6 +26,7 @@ import BettercodeLogo from "@/assets/bettercode-logo.png";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { sensorTranslations, commonTranslations, recommendationsTranslations } from "@/constants/allTranslations";
 import { sensorAnalysisTranslations } from "@/constants/sensorAnalysisTranslations";
+import { formatSensorLocaleDateTime } from "@/utils/sensorLanguageHelpers";
 
 interface DetailedReportProps {
   analysis: SoilAnalysis;
@@ -237,7 +238,7 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
   dataSource,
   sensorCollection
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const soilQualityScore = useMemo(() => {
     const parsed = Number(analysis.soilQuality.score);
@@ -359,7 +360,7 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
                 {sensorCollection && sensorCollection.startTime && (
                   <p className="text-emerald-50/80 text-sm mt-1 flex items-center gap-2">
                     <Activity className="h-3 w-3" />
-                    {t(sensorTranslations.collectionSummary)}: {new Date(sensorCollection.startTime).toLocaleString()}
+                    {t(sensorTranslations.collectionSummary)}: {formatSensorLocaleDateTime(sensorCollection.startTime, language)}
                   </p>
                 )}
               </div>
@@ -394,7 +395,9 @@ const DetailedReport: React.FC<DetailedReportProps> = ({
                 <div className="bg-white rounded-lg p-4 border border-emerald-100">
                   <div className="text-sm text-slate-600 mb-1">{t(sensorTranslations.startTime)}</div>
                   <div className="text-sm font-bold text-emerald-700">
-                    {sensorCollection.startTime ? new Date(sensorCollection.startTime).toLocaleString() : "N/A"}
+                    {sensorCollection.startTime
+                      ? formatSensorLocaleDateTime(sensorCollection.startTime, language)
+                      : t(sensorTranslations.notAvailable)}
                   </div>
                 </div>
               </div>

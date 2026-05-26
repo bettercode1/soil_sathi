@@ -20,7 +20,7 @@ const SimplifiedReport: React.FC<SimplifiedReportProps> = ({ analysis, onKnowMor
     // Check if analysis or nutrientAnalysis is undefined/null
     if (!analysis || !analysis.nutrientAnalysis) {
       console.warn("SimplifiedReport: analysis or nutrientAnalysis is missing");
-      return "N/A";
+      return t(sensorTranslations.notAvailable);
     }
 
     const nitrogenLabel = t(commonTranslations.nitrogen).toLowerCase();
@@ -56,7 +56,7 @@ const SimplifiedReport: React.FC<SimplifiedReportProps> = ({ analysis, onKnowMor
       return param.includes(search);
     });
 
-    return nutrient ? nutrient.value : "N/A";
+    return nutrient ? nutrient.value : t(sensorTranslations.notAvailable);
   };
 
   const metrics = [

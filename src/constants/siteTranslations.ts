@@ -1,7 +1,5 @@
 import { newCommonTranslations } from "./newCommonTranslations";
-
-type Language = "en" | "hi" | "pa" | "ta" | "te" | "bn" | "mr";
-type TranslationSet = Record<Language, string>;
+import type { TranslationSet } from "@/constants/languages";
 
 export const soilAnalyzerTranslations: Record<string, TranslationSet> = {
   title: {
