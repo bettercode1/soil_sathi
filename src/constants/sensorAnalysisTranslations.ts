@@ -3,8 +3,9 @@
  */
 
 import type { TranslationSet } from "@/constants/languages";
+import { expandTranslationRecord } from "@/utils/expandTranslations";
 
-export const sensorAnalysisTranslations: Record<string, TranslationSet> = {
+const rawSensorAnalysisTranslations: Record<string, TranslationSet> = {
   essentialRootDev: {
     en: "Essential for root development",
     hi: "जड़ विकास के लिए आवश्यक",
@@ -492,3 +493,5 @@ export const sensorAnalysisTranslations: Record<string, TranslationSet> = {
     mr: "तपासा"
   },
 };
+
+export const sensorAnalysisTranslations = expandTranslationRecord(rawSensorAnalysisTranslations);

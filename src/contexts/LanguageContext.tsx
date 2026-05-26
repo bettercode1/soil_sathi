@@ -1,11 +1,24 @@
 
-import React, { createContext, useState, useContext, ReactNode } from "react";
+import React, { createContext, useState, useContext, ReactNode, useCallback } from "react";
 import {
   type Language,
   type TranslationSet,
   LANGUAGE_NATIVE_NAMES,
   resolveTranslation,
+  ALL_LANGUAGES,
 } from "@/constants/languages";
+import { expandTranslationSet } from "@/utils/expandTranslations";
+
+const LANGUAGE_STORAGE_KEY = "soilsathi-language";
+
+const readStoredLanguage = (): Language => {
+  if (typeof window === "undefined") return "mr";
+  const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  if (stored && (ALL_LANGUAGES as readonly string[]).includes(stored)) {
+    return stored as Language;
+  }
+  return "mr";
+};
 
 interface LanguageContextType {
   language: Language;
@@ -17,15 +30,25 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>("mr");
+  const [language, setLanguageState] = useState<Language>(readStoredLanguage);
 
-  const t = (translations: Partial<Record<Language, string>> | TranslationSet | undefined) => {
-    if (!translations) {
-      console.warn("[LanguageContext] Translation is undefined");
-      return "";
+  const setLanguage = useCallback((lang: Language) => {
+    setLanguageState(lang);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
     }
-    return resolveTranslation(translations, language);
-  };
+  }, []);
+
+  const t = useCallback(
+    (translations: Partial<Record<Language, string>> | TranslationSet | undefined) => {
+      if (!translations) {
+        console.warn("[LanguageContext] Translation is undefined");
+        return "";
+      }
+      return resolveTranslation(expandTranslationSet(translations), language);
+    },
+    [language],
+  );
 
   const getLanguageName = (code: Language) => LANGUAGE_NATIVE_NAMES[code];
 

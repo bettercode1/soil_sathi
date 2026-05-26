@@ -10,9 +10,10 @@ import {
 import { Globe } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LANGUAGE_OPTIONS } from "@/constants/languages";
+import { commonTranslations } from "@/constants/allTranslations";
 
 export const LanguageSelector = () => {
-  const { language, setLanguage, getLanguageName } = useLanguage();
+  const { language, setLanguage, getLanguageName, t } = useLanguage();
 
   const indiaOptions = LANGUAGE_OPTIONS.filter((o) => o.group === "india");
   const northeastOptions = LANGUAGE_OPTIONS.filter((o) => o.group === "northeast");
@@ -26,7 +27,9 @@ export const LanguageSelector = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="max-h-[min(70vh,24rem)] overflow-y-auto">
-        <DropdownMenuLabel className="text-xs text-muted-foreground">India</DropdownMenuLabel>
+        <DropdownMenuLabel className="text-xs text-muted-foreground">
+          {t(commonTranslations.languageGroupIndia)}
+        </DropdownMenuLabel>
         {indiaOptions.map((option) => (
           <DropdownMenuItem
             key={option.code}
@@ -38,7 +41,7 @@ export const LanguageSelector = () => {
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-xs text-muted-foreground">
-          Northeast India
+          {t(commonTranslations.languageGroupNortheast)}
         </DropdownMenuLabel>
         {northeastOptions.map((option) => (
           <DropdownMenuItem

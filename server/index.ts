@@ -61,7 +61,39 @@ const corsOptions: CorsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
-app.use(helmet({ crossOriginResourcePolicy: false }));
+const productionCsp = {
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: [
+      "'self'",
+      "https://www.googletagmanager.com",
+      "https://www.google-analytics.com",
+    ],
+    connectSrc: [
+      "'self'",
+      "https://*.googleapis.com",
+      "https://*.google.com",
+      "https://*.gstatic.com",
+      "https://*.firebaseio.com",
+      "wss://*.firebaseio.com",
+    ],
+    styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+    fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+    imgSrc: ["'self'", "data:", "blob:", "https:"],
+    objectSrc: ["'none'"],
+    baseUri: ["'self'"],
+    formAction: ["'self'"],
+    frameAncestors: ["'self'"],
+  },
+} as const;
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: false,
+    contentSecurityPolicy:
+      env.nodeEnv === "production" ? productionCsp : false,
+  }),
+);
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: false, limit: "20mb" }));
@@ -71,6 +103,24 @@ const apiRateLimiter = rateLimit({
   max: env.rateLimitMaxRequests,
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) =>
+    req.method === "GET" &&
+    (req.path === "/health" || req.originalUrl === "/api/health"),
+  handler: (_req, res) => {
+    const retryAfterSeconds = Math.max(
+      1,
+      Math.ceil(env.rateLimitWindowMs / 1000),
+    );
+    res.setHeader("Retry-After", String(retryAfterSeconds));
+    res.status(429).json({
+      errorType: "server_rate_limit",
+      error: "Too many requests to this server. Please wait and try again.",
+      details: `You can try again in about ${retryAfterSeconds} seconds.`,
+      code: 429,
+      status: "RATE_LIMITED",
+      retryAfterSeconds,
+    });
+  },
 });
 
 app.use("/api/", apiRateLimiter);
@@ -3126,10 +3176,13 @@ app.post("/api/analyze-soil", async (req, res) => {
     if (!genAI) {
       console.error("[SoilSathi] ❌ Gemini API client not initialized for analyze-soil!");
       if (!res.headersSent) {
-        res.status(500).json({
-          error: "Gemini API key missing. Please configure GEMINI_API_KEY.",
+        res.status(503).json({
+          errorType: "missing_api_key",
+          error: "AI analysis is not configured on the server.",
           details:
-            "Add GEMINI_API_KEY to soil_sathi/.env (project root), save the file, and restart npm run dev.",
+            "Set GEMINI_API_KEY in the hosting dashboard (Render → Environment) and redeploy.",
+          code: 503,
+          status: "MISSING_API_KEY",
         });
       }
       return;
@@ -3350,20 +3403,27 @@ app.post("/api/analyze-soil", async (req, res) => {
         
         if (isQuotaExceeded) {
           sendJsonError(429, {
-            error: "API quota exceeded. Please wait a moment and try again.",
-            details: errorInfo?.message || apiError?.message || "You've reached the API request limit. Please wait before trying again.",
+            errorType: "gemini_quota",
+            error: "Google Gemini AI quota exceeded.",
+            details:
+              errorInfo?.message ||
+              apiError?.message ||
+              "The Gemini API daily or per-minute limit was reached. Wait a few minutes or use a new API key from Google AI Studio.",
             code: 429,
             status: "RESOURCE_EXHAUSTED",
+            retryAfterSeconds: 60,
           });
           return;
         }
         
         if (isServiceOverloaded) {
           sendJsonError(503, {
-            error: "The model is overloaded. Please try again later.",
+            errorType: "service_unavailable",
+            error: "The AI model is overloaded. Please try again later.",
             details: errorInfo?.message || apiError?.message || "The Gemini API is currently unavailable. Please wait a moment and try again.",
             code: 503,
             status: "UNAVAILABLE",
+            retryAfterSeconds: 5,
           });
           return;
         }
@@ -4104,13 +4164,15 @@ app.post("/api/farmer-assist", async (req, res) => {
     }
     
     if (isRateLimit) {
-      console.error("[SoilSathi] Returning 429 Rate Limit response");
+      console.error("[SoilSathi] Returning 429 Gemini quota response");
       res.status(429).json({
-        error: "Too many requests. Please wait a moment before trying again.",
-        details: "The API rate limit has been reached. Please wait a few seconds and try again.",
+        errorType: "gemini_quota",
+        error: "Google Gemini AI quota exceeded.",
+        details:
+          "The Gemini API limit was reached. Wait a few minutes, enable billing in Google AI Studio, or add a new API key.",
         code: apiError?.code || 429,
         status: apiError?.status || "RESOURCE_EXHAUSTED",
-        retryAfter: 10, // Suggest retry after 10 seconds
+        retryAfterSeconds: 60,
       });
       return;
     }

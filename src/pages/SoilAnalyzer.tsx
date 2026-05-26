@@ -11,7 +11,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { soilAnalyzerTranslations } from "@/constants/allTranslations";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { buildApiUrl, parseJsonResponse, parseErrorResponse } from "@/lib/api";
+import {
+  buildApiUrl,
+  parseJsonResponse,
+  parseErrorResponse,
+  type ApiErrorPayload,
+  type ApiErrorType,
+} from "@/lib/api";
 import soilAnalyzerHero from "@/assets/soil-analyzer-hero.jpg";
 import SimplifiedReport from "@/components/reports/SimplifiedReport";
 import DetailedReport from "@/components/reports/DetailedReport";
@@ -47,6 +53,8 @@ const SoilAnalyzer = () => {
   const [showFullReport, setShowFullReport] = useState(false);
   const [dataSource, setDataSource] = useState<"sensor" | "upload" | "manual">("manual");
   const reportRef = useRef<HTMLDivElement>(null);
+  const lastAnalysisPayloadRef = useRef<Record<string, unknown> | null>(null);
+  const skipLanguageReanalysisRef = useRef(true);
 
   useEffect(() => {
     if (location.state?.manualValues) {
@@ -83,8 +91,8 @@ const SoilAnalyzer = () => {
     const mimeType = file.type || "application/octet-stream";
     if (!ALLOWED_REPORT_TYPES.includes(mimeType as (typeof ALLOWED_REPORT_TYPES)[number])) {
       toast({
-        title: "Unsupported file",
-        description: "Please upload a JPEG, PNG, WebP, or PDF soil report.",
+        title: t(soilAnalyzerTranslations.unsupportedFileTitle),
+        description: t(soilAnalyzerTranslations.unsupportedFileDesc),
         variant: "destructive",
       });
       e.target.value = "";
@@ -94,11 +102,11 @@ const SoilAnalyzer = () => {
     const maxBytes = mimeType === "application/pdf" ? 10 * 1024 * 1024 : 4 * 1024 * 1024;
     if (file.size > maxBytes) {
       toast({
-        title: "File too large",
+        title: t(soilAnalyzerTranslations.fileTooLargeTitle),
         description:
           mimeType === "application/pdf"
-            ? "PDF must be under 10MB."
-            : "Image must be under 4MB.",
+            ? t(soilAnalyzerTranslations.fileTooLargePdf)
+            : t(soilAnalyzerTranslations.fileTooLargeImage),
         variant: "destructive",
       });
       e.target.value = "";
@@ -131,11 +139,74 @@ const SoilAnalyzer = () => {
     return Object.fromEntries(entries);
   }, [manualValues]);
 
+  const getErrorCopy = (
+    kind: ApiErrorType,
+    retryAttempt: number,
+    maxRetries: number,
+    retryAfterSeconds?: number,
+  ): { title: string; message: string; retryable: boolean } => {
+    switch (kind) {
+      case "server_rate_limit":
+        return {
+          title: t(soilAnalyzerTranslations.serverRateLimitTitle),
+          message: retryAfterSeconds
+            ? `${t(soilAnalyzerTranslations.serverRateLimitMessage)} (${retryAfterSeconds}s)`
+            : t(soilAnalyzerTranslations.serverRateLimitFinalMessage),
+          retryable: false,
+        };
+      case "gemini_quota":
+        return {
+          title: t(soilAnalyzerTranslations.geminiQuotaTitle),
+          message:
+            retryAttempt < maxRetries
+              ? t(soilAnalyzerTranslations.geminiQuotaRetryMessage)
+              : t(soilAnalyzerTranslations.geminiQuotaFinalMessage),
+          retryable: retryAttempt < maxRetries,
+        };
+      case "service_unavailable":
+        return {
+          title: t(soilAnalyzerTranslations.serviceOverloadedTitle),
+          message:
+            retryAttempt < maxRetries
+              ? t(soilAnalyzerTranslations.retryingMessage)
+                  .replace("{attempt}", String(retryAttempt + 1))
+                  .replace("{max}", String(maxRetries))
+              : t(soilAnalyzerTranslations.serviceOverloadedMessage),
+          retryable: retryAttempt < maxRetries,
+        };
+      case "missing_api_key":
+        return {
+          title: t(soilAnalyzerTranslations.missingApiKeyTitle),
+          message: t(soilAnalyzerTranslations.missingApiKeyMessage),
+          retryable: false,
+        };
+      case "permission_denied":
+        return {
+          title: t(soilAnalyzerTranslations.analysisErrorTitle),
+          message: t(soilAnalyzerTranslations.geminiQuotaFinalMessage),
+          retryable: false,
+        };
+      case "timeout":
+        return {
+          title: t(soilAnalyzerTranslations.analysisErrorTitle),
+          message: t(soilAnalyzerTranslations.serviceOverloadedMessage),
+          retryable: retryAttempt < maxRetries,
+        };
+      default:
+        return {
+          title: t(soilAnalyzerTranslations.analysisErrorTitle),
+          message: t(soilAnalyzerTranslations.analysisErrorFallback),
+          retryable: false,
+        };
+    }
+  };
+
   const requestAnalysis = async (
     payload: Record<string, unknown>,
     retryAttempt: number = 0,
     maxRetries: number = 3
   ) => {
+    lastAnalysisPayloadRef.current = payload;
     setApiError(null);
     setIsAnalyzing(true);
     setAnalysis(null);
@@ -156,69 +227,39 @@ const SoilAnalyzer = () => {
       });
 
       if (!response.ok) {
-        // Parse error response to get details
-        const errorData = await parseErrorResponse(response);
-        const errorMessage =
-          [errorData.error, errorData.details].filter(Boolean).join(" — ") ||
-          `Server responded with ${response.status}`;
-        
-        const isServiceOverloaded = 
-          response.status === 503 || 
-          errorData.status === "UNAVAILABLE" ||
-          errorData.code === 503 ||
-          errorMessage.toLowerCase().includes("overloaded") ||
-          errorMessage.toLowerCase().includes("unavailable");
+        const errorData: ApiErrorPayload = await parseErrorResponse(response);
+        const errorKind = errorData.errorType ?? "generic";
+        const copy = getErrorCopy(
+          errorKind,
+          retryAttempt,
+          maxRetries,
+          errorData.retryAfterSeconds,
+        );
 
-        const isQuotaExceeded = 
-          response.status === 429 ||
-          errorData.code === 429 ||
-          errorMessage.toLowerCase().includes("quota") ||
-          errorMessage.toLowerCase().includes("rate limit") ||
-          errorMessage.toLowerCase().includes("exceeded");
+        if (copy.retryable) {
+          const delayMs =
+            errorKind === "gemini_quota" && errorData.retryAfterSeconds
+              ? Math.min(errorData.retryAfterSeconds * 1000, 60_000)
+              : Math.min(2000 * Math.pow(2, retryAttempt), 10_000);
 
-        // Extract retry-after time from error message if available (for 429 errors)
-        let retryAfterMs: number | null = null;
-        if (isQuotaExceeded) {
-          const retryAfterMatch = errorMessage.match(/retry in ([\d.]+)s/i);
-          if (retryAfterMatch) {
-            const retryAfterSeconds = parseFloat(retryAfterMatch[1]);
-            retryAfterMs = Math.ceil(retryAfterSeconds * 1000);
-            // Cap at 60 seconds to avoid very long waits
-            retryAfterMs = Math.min(retryAfterMs, 60000);
-          }
-        }
-
-        // Retry logic for 503 and 429 errors
-        const isRetryable = (isServiceOverloaded || isQuotaExceeded) && retryAttempt < maxRetries;
-        
-        if (isRetryable) {
-          // Use extracted retry-after time for 429, or exponential backoff for 503
-          const delayMs = isQuotaExceeded && retryAfterMs 
-            ? retryAfterMs 
-            : Math.min(2000 * Math.pow(2, retryAttempt), 10000); // Exponential backoff: 2s, 4s, 8s (max 10s)
-          
-          // Show retry message to user
           toast({
-            title: isQuotaExceeded 
-              ? t(soilAnalyzerTranslations.quotaExceededTitle)
-              : t(soilAnalyzerTranslations.serviceOverloadedTitle),
-            description: isQuotaExceeded
-              ? t(soilAnalyzerTranslations.quotaExceededMessage)
-              : t(soilAnalyzerTranslations.retryingMessage)
-                  .replace("{attempt}", String(retryAttempt + 1))
-                  .replace("{max}", String(maxRetries)),
+            title: copy.title,
+            description: copy.message,
             variant: "default",
           });
 
-          // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-
-          // Retry the request
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
           return requestAnalysis(payload, retryAttempt + 1, maxRetries);
         }
 
-        // If no more retries or not a retryable error, throw error
-        throw new Error(errorMessage);
+        const errorMessage =
+          [errorData.error, errorData.details].filter(Boolean).join(" — ") ||
+          copy.message;
+        throw Object.assign(new Error(errorMessage), {
+          errorKind,
+          displayTitle: copy.title,
+          displayMessage: copy.message,
+        });
       }
 
       const result = await parseJsonResponse<SoilAnalysis>(response);
@@ -226,10 +267,9 @@ const SoilAnalyzer = () => {
       setShowFullReport(false);
       if (result.isDemo) {
         toast({
-          title: "Sample report (AI unavailable)",
+          title: t(soilAnalyzerTranslations.demoReportTitle),
           description:
-            result.demoNotice ??
-            "Live Gemini analysis failed. Check GEMINI_API_KEY and GEMINI_MODEL on the server.",
+            result.demoNotice ?? t(soilAnalyzerTranslations.demoReportDescription),
           variant: "destructive",
         });
       } else {
@@ -240,36 +280,20 @@ const SoilAnalyzer = () => {
       }
     } catch (error) {
       console.error("[SoilAnalyzer] Error:", error);
-      
-      // Check if it's a service overloaded or quota exceeded error
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const isServiceOverloaded = 
-        errorMessage.toLowerCase().includes("overloaded") ||
-        errorMessage.toLowerCase().includes("unavailable") ||
-        errorMessage.includes("503");
-      
-      const isQuotaExceeded = 
-        errorMessage.toLowerCase().includes("quota") ||
-        errorMessage.toLowerCase().includes("rate limit") ||
-        errorMessage.toLowerCase().includes("exceeded") ||
-        errorMessage.toLowerCase().includes("429");
 
-      let displayMessage: string;
-      let displayTitle: string;
+      const enriched = error as Error & {
+        errorKind?: ApiErrorType;
+        displayTitle?: string;
+        displayMessage?: string;
+      };
 
-      if (isQuotaExceeded && retryAttempt >= maxRetries) {
-        // All retries exhausted for quota
-        displayTitle = t(soilAnalyzerTranslations.quotaExceededTitle);
-        displayMessage = t(soilAnalyzerTranslations.quotaExceededFinalMessage);
-      } else if (isServiceOverloaded && retryAttempt >= maxRetries) {
-        // All retries exhausted for service overload
-        displayTitle = t(soilAnalyzerTranslations.serviceOverloadedTitle);
-        displayMessage = t(soilAnalyzerTranslations.serviceOverloadedMessage);
-      } else {
-        // Other errors
-        displayTitle = t(soilAnalyzerTranslations.analysisErrorTitle);
-        displayMessage = errorMessage || t(soilAnalyzerTranslations.analysisErrorFallback);
-      }
+      const errorKind = enriched.errorKind ?? "generic";
+      const fallbackCopy = getErrorCopy(errorKind, retryAttempt, maxRetries);
+      const displayTitle = enriched.displayTitle ?? fallbackCopy.title;
+      const displayMessage =
+        enriched.displayMessage ??
+        ((error instanceof Error ? error.message : String(error)) ||
+          fallbackCopy.message);
 
       setApiError(displayMessage);
       toast({
@@ -322,7 +346,25 @@ const SoilAnalyzer = () => {
     setAnalysis(null);
     setApiError(null);
     setShowFullReport(false);
+    lastAnalysisPayloadRef.current = null;
   };
+
+  useEffect(() => {
+    if (skipLanguageReanalysisRef.current) {
+      skipLanguageReanalysisRef.current = false;
+      return;
+    }
+    if (!lastAnalysisPayloadRef.current) {
+      return;
+    }
+
+    toast({
+      title: t(soilAnalyzerTranslations.languageReanalyzingTitle),
+      description: t(soilAnalyzerTranslations.languageReanalyzingDesc),
+    });
+    void requestAnalysis(lastAnalysisPayloadRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-run only when language changes
+  }, [language]);
 
   const handleDownloadReport = async () => {
     if (!analysis || !reportRef.current) {
@@ -471,7 +513,9 @@ const SoilAnalyzer = () => {
                             <div className="flex flex-col items-center justify-center py-8 mb-4 bg-muted/40 rounded-lg">
                               <FileText className="h-16 w-16 text-primary mb-3" />
                               <p className="font-medium text-foreground">{uploadedFileName}</p>
-                              <p className="text-sm text-muted-foreground mt-1">PDF soil report ready to analyze</p>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {t(soilAnalyzerTranslations.pdfReadyCaption)}
+                              </p>
                             </div>
                           ) : (
                             <img
@@ -497,7 +541,8 @@ const SoilAnalyzer = () => {
                             <Upload className="h-10 w-10 text-muted-foreground mx-auto" />
                           </div>
                           <p className="text-sm text-muted-foreground mb-4">
-                            {t(soilAnalyzerTranslations.uploadHelperText)} JPEG, PNG, WebP, or PDF (up to 10MB).
+                            {t(soilAnalyzerTranslations.uploadHelperText)}{" "}
+                            {t(soilAnalyzerTranslations.uploadFormatsHint)}
                           </p>
                           <div className="flex flex-col sm:flex-row gap-3 justify-center">
                             <Button className="gap-2">
@@ -676,10 +721,10 @@ const SoilAnalyzer = () => {
                   <div className="animate-fade-in-up w-full">
                     {analysis.isDemo && (
                       <Alert variant="destructive" className="mb-4">
-                        <AlertTitle>Sample report — not from live AI</AlertTitle>
+                        <AlertTitle>{t(soilAnalyzerTranslations.demoReportTitle)}</AlertTitle>
                         <AlertDescription>
                           {analysis.demoNotice ??
-                            "The server could not reach Gemini. On production, set GEMINI_API_KEY and GEMINI_MODEL=gemini-2.5-flash in your host environment."}
+                            t(soilAnalyzerTranslations.demoReportDescription)}
                         </AlertDescription>
                       </Alert>
                     )}

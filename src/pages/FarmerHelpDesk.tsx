@@ -37,7 +37,9 @@ import {
   LANGUAGE_OPTIONS,
   LANGUAGE_NATIVE_NAMES,
   mapLanguageToLocale,
+  resolveTranslation,
 } from "@/constants/languages";
+import { expandTranslationSet } from "@/utils/expandTranslations";
 
 type SpeechRecognitionResultItem = {
   0?: {
@@ -161,29 +163,46 @@ const getTimeOfDayGreeting = (language: Language, referenceDate: Date = new Date
           ? "evening"
           : "night";
 
-  const greetings: Record<string, Record<typeof period, string>> = {
-    mr: {
-      morning: "शुभ प्रभात! मी तुमचा शेतकरी मित्र आहे. मी कशी मदत करू?",
-      afternoon: "शुभ दुपार! मी तुमचा शेतकरी मित्र आहे. मी कशी मदत करू?",
-      evening: "शुभ संध्या! मी तुमचा शेतकरी मित्र आहे. मी कशी मदत करू?",
-      night: "शुभ रात्री! मी तुमचा शेतकरी मित्र आहे. मी कशी मदत करू?",
+  const greetings: Record<typeof period, Partial<Record<Language, string>> & { en: string }> = {
+    morning: {
+      en: "Good morning! I'm your farmer friend. How can I help you today?",
+      hi: "सुप्रभात! मैं आपका किसान साथी हूँ। मैं किस विषय में सहायता करूँ?",
+      mr: "शुभ प्रभात! मी तुमचा शेतकरी मित्र आहे. मी कशी मदत करू?",
+      pa: "ਸ਼ੁਭ ਸਵੇਰ! ਮੈਂ ਤੁਹਾਡਾ ਕਿਸਾਨ ਦੋਸਤ ਹਾਂ। ਮੈਂ ਕਿਵੇਂ ਮਦਦ ਕਰਾਂ?",
+      ta: "காலை வணக்கம்! நான் உங்கள் விவசாய நண்பன். எப்படி உதவலாம்?",
+      te: "శుభోదయం! నేను మీ రైతు స్నేహితుడిని. ఎలా సహాయం చేయగలను?",
+      bn: "সুপ্রভাত! আমি আপনার কৃষক বন্ধু। কীভাবে সাহায্য করতে পারি?",
     },
-    hi: {
-      morning: "सुप्रभात! मैं आपका किसान साथी हूँ। मैं किस विषय में सहायता करूँ?",
-      afternoon: "शुभ दोपहर! मैं आपका किसान साथी हूँ। मैं किस विषय में सहायता करूँ?",
-      evening: "शुभ संध्या! मैं आपका किसान साथी हूँ। मैं किस विषय में सहायता करूँ?",
-      night: "शुभ रात्रि! मैं आपका किसान साथी हूँ। मैं किस विषय में सहायता करूँ?",
+    afternoon: {
+      en: "Good afternoon! I'm your farmer friend. How can I help you today?",
+      hi: "शुभ दोपहर! मैं आपका किसान साथी हूँ। मैं किस विषय में सहायता करूँ?",
+      mr: "शुभ दुपार! मी तुमचा शेतकरी मित्र आहे. मी कशी मदत करू?",
+      pa: "ਸ਼ੁਭ ਦੁਪਹਿਰ! ਮੈਂ ਤੁਹਾਡਾ ਕਿਸਾਨ ਦੋਸਤ ਹਾਂ। ਮੈਂ ਕਿਵੇਂ ਮਦਦ ਕਰਾਂ?",
+      ta: "மதிய வணக்கம்! நான் உங்கள் விவசாய நண்பன். எப்படி உதவலாம்?",
+      te: "శుభ మధ్యాహ్నం! నేను మీ రైతు స్నేహితుడిని. ఎలా సహాయం చేయగలను?",
+      bn: "শুভ অপরাহ্ন! আমি আপনার কৃষক বন্ধু। কীভাবে সাহায্য করতে পারি?",
     },
-    en: {
-      morning: "Good morning! I'm your farmer friend. How can I help you today?",
-      afternoon: "Good afternoon! I'm your farmer friend. How can I help you today?",
-      evening: "Good evening! I'm your farmer friend. How can I help you today?",
-      night: "Good evening! I'm your farmer friend. How can I help you today?",
+    evening: {
+      en: "Good evening! I'm your farmer friend. How can I help you today?",
+      hi: "शुभ संध्या! मैं आपका किसान साथी हूँ। मैं किस विषय में सहायता करूँ?",
+      mr: "शुभ संध्या! मी तुमचा शेतकरी मित्र आहे. मी कशी मदत करू?",
+      pa: "ਸ਼ੁਭ ਸ਼ਾਮ! ਮੈਂ ਤੁਹਾਡਾ ਕਿਸਾਨ ਦੋਸਤ ਹਾਂ। ਮੈਂ ਕਿਵੇਂ ਮਦਦ ਕਰਾਂ?",
+      ta: "மாலை வணக்கம்! நான் உங்கள் விவசாய நண்பன். எப்படி உதவலாம்?",
+      te: "శుభ సాయంత్రం! నేను మీ రైతు స్నేహితుడిని. ఎలా సహాయం చేయగలను?",
+      bn: "শুভ সন্ধ্যা! আমি আপনার কৃষক বন্ধু। কীভাবে সাহায্য করতে পারি?",
+    },
+    night: {
+      en: "Good evening! I'm your farmer friend. How can I help you today?",
+      hi: "शुभ रात्रि! मैं आपका किसान साथी हूँ। मैं किस विषय में सहायता करूँ?",
+      mr: "शुभ रात्री! मी तुमचा शेतकरी मित्र आहे. मी कशी मदत करू?",
+      pa: "ਸ਼ੁਭ ਰਾਤ! ਮੈਂ ਤੁਹਾਡਾ ਕਿਸਾਨ ਦੋਸਤ ਹਾਂ। ਮੈਂ ਕਿਵੇਂ ਮਦਦ ਕਰਾਂ?",
+      ta: "நல்ல இரவு! நான் உங்கள் விவசாய நண்பன். எப்படி உதவலாம்?",
+      te: "శుభ రాత్రి! నేను మీ రైతు స్నేహితుడిని. ఎలా సహాయం చేయగలను?",
+      bn: "শুভ রাত্রি! আমি আপনার কৃষক বন্ধু। কীভাবে সাহায্য করতে পারি?",
     },
   };
 
-  const selectedLanguage = ["mr", "hi", "en"].includes(language) ? language : "en";
-  return greetings[selectedLanguage][period];
+  return resolveTranslation(expandTranslationSet(greetings[period]), language);
 };
 
 const helpDeskText: Record<

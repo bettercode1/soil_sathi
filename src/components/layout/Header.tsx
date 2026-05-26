@@ -36,9 +36,22 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelector } from "@/components/shared/LanguageSelector";
+import {
+  cropDiseaseTranslations,
+  weatherAlertsTranslations,
+  cropGrowthTranslations,
+  marketPricesTranslations,
+  irrigationSchedulerTranslations,
+  farmingCalendarTranslations,
+  fertilizerCostTranslations,
+  commonTranslations,
+  indexTranslations,
+  regionsTranslations,
+} from "@/constants/allTranslations";
 import { cn } from "@/lib/utils";
 import { LoginModal } from "@/components/auth/LoginModal";
 import betterCodeLogo from "@/assets/bettercode-logo.png";
+import type { TranslationSet } from "@/constants/languages";
 
 const Header = () => {
   const isMobile = useIsMobile();
@@ -203,18 +216,18 @@ const Header = () => {
     { key: "helpDesk", href: "/farmer-help-desk", icon: LifeBuoy },
   ];
 
-  const newFeatureItems: Array<{ key: string; href: string; icon: LucideIcon }> = [
-    { key: "cropDisease", href: "/crop-disease", icon: Bug },
-    { key: "weatherAlerts", href: "/weather-alerts", icon: Cloud },
-    { key: "cropGrowth", href: "/crop-growth", icon: TrendingUp },
-    { key: "marketPrices", href: "/market-prices", icon: DollarSign },
-    { key: "irrigation", href: "/irrigation-scheduler", icon: Droplets },
-    { key: "farmingCalendar", href: "/farming-calendar", icon: Calendar },
-    { key: "fertilizerCost", href: "/fertilizer-cost", icon: Calculator },
-    { key: "regionalInsights", href: "/regions", icon: Map },
-    { key: "soilPrediction", href: "/soil-health-prediction", icon: AlertTriangle },
-    { key: "farmerCommunity", href: "/farmer-community", icon: MessageCircle },
-    { key: "expertConsultation", href: "/expert-consultation", icon: Users },
+  const newFeatureItems: Array<{ label: TranslationSet; href: string; icon: LucideIcon }> = [
+    { label: cropDiseaseTranslations.title, href: "/crop-disease", icon: Bug },
+    { label: weatherAlertsTranslations.title, href: "/weather-alerts", icon: Cloud },
+    { label: cropGrowthTranslations.title, href: "/crop-growth", icon: TrendingUp },
+    { label: marketPricesTranslations.title, href: "/market-prices", icon: DollarSign },
+    { label: irrigationSchedulerTranslations.title, href: "/irrigation-scheduler", icon: Droplets },
+    { label: farmingCalendarTranslations.title, href: "/farming-calendar", icon: Calendar },
+    { label: fertilizerCostTranslations.title, href: "/fertilizer-cost", icon: Calculator },
+    { label: regionsTranslations.title, href: "/regions", icon: Map },
+    { label: indexTranslations.soilHealthPredictionTitle, href: "/soil-health-prediction", icon: AlertTriangle },
+    { label: indexTranslations.farmerCommunityTitle, href: "/farmer-community", icon: MessageCircle },
+    { label: indexTranslations.expertConsultationTitle, href: "/expert-consultation", icon: Users },
   ];
 
   const getLabel = (key: NavKey) =>
@@ -341,17 +354,17 @@ const Header = () => {
                 
                 <div className="px-3 py-2">
                   <h4 className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-                    New Features
+                    {t(commonTranslations.newFeatures)}
                   </h4>
                   <div className="flex flex-col gap-2">
-                    {newFeatureItems.map(({ key, href, icon: Icon }) => (
+                    {newFeatureItems.map(({ label, href, icon: Icon }) => (
                       <Link
-                        key={key}
+                        key={href}
                         to={href}
                         className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
                       >
                         <Icon className="h-4 w-4 text-muted-foreground" />
-                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                        {t(label)}
                       </Link>
                     ))}
                   </div>

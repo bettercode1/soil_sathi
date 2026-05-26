@@ -3,8 +3,9 @@
  */
 
 import type { TranslationSet } from "@/constants/languages";
+import { expandTranslationRecord } from "@/utils/expandTranslations";
 
-export const sensorTranslations: Record<string, TranslationSet> = {
+const rawSensorTranslations: Record<string, TranslationSet> = {
   // Main Titles
   sensorDataCollection: {
     en: "Sensor-Based Data Collection",
@@ -537,6 +538,15 @@ export const sensorTranslations: Record<string, TranslationSet> = {
     bn: "সেন্সর ডেটা",
     mr: "सेंसर डेटा",
   },
+  realtimeMonitoring: {
+    en: "Real-time Monitoring",
+    hi: "वास्तविक समय निगरानी",
+    pa: "ਰੀਅਲ-ਟਾਈਮ ਨਿਗਰਾਨੀ",
+    ta: "நேரடி கண்காணிப்பு",
+    te: "రియల్-టైమ్ పర్యవేక్షణ",
+    bn: "রিয়েল-টাইম পর্যবেক্ষণ",
+    mr: "रिअल-टाइम देखरेख",
+  },
   readings: {
     en: "readings",
     hi: "रीडिंग",
@@ -880,3 +890,5 @@ export const sensorTranslations: Record<string, TranslationSet> = {
     ne: "माटोको आर्द्रता बढी छ। राम्रो निकासी सुनिश्चित गर्नुहोस्।",
   },
 };
+
+export const sensorTranslations = expandTranslationRecord(rawSensorTranslations);

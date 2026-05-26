@@ -10,8 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { commonTranslations } from "@/constants/siteTranslations";
-import { sensorTranslations, sensorAnalysisTranslations } from "@/constants/allTranslations";
+import { commonTranslations, sensorTranslations, sensorAnalysisTranslations } from "@/constants/allTranslations";
 import { SensorDataCollector } from "@/components/sensors/SensorDataCollector";
 import { SensorDataVisualization } from "@/components/sensors/SensorDataVisualization";
 import type { SensorDataCollection } from "@/types/sensor-data";
@@ -263,7 +262,7 @@ const SensorData = () => {
                 <h1 className="text-xl font-bold text-slate-800">
                   {t(sensorTranslations.sensorDataTab)}
                 </h1>
-                <p className="text-xs text-slate-500 font-medium">{t(commonTranslations.realtimeMonitoring)}</p>
+                <p className="text-xs text-slate-500 font-medium">{t(sensorTranslations.realtimeMonitoring)}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">

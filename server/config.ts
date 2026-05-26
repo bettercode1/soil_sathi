@@ -124,7 +124,10 @@ export const env = {
   geminiApiKey: GEMINI_API_KEY,
   allowedOrigins: ALLOWED_ORIGINS ?? [],
   rateLimitWindowMs: RATE_LIMIT_WINDOW_MS ?? 60_000,
-  rateLimitMaxRequests: RATE_LIMIT_MAX_REQUESTS ?? 20,
+  // Production SPA can trigger several API calls per action; 20/min was too low on Render
+  rateLimitMaxRequests:
+    RATE_LIMIT_MAX_REQUESTS ??
+    (NODE_ENV === "production" ? 120 : 60),
 } as const;
 
 if (!env.geminiApiKey) {

@@ -24,4 +24,8 @@ services:
         value: gemini-2.5-flash
       - key: ALLOWED_ORIGINS
         sync: false  # Set manually if needed (e.g., "https://yourdomain.com")
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "120"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "60000"
 

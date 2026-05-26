@@ -1,4 +1,3 @@
-import { newCommonTranslations } from "./newCommonTranslations";
 import type { TranslationSet } from "@/constants/languages";
 
 export const soilAnalyzerTranslations: Record<string, TranslationSet> = {
@@ -434,10 +433,5 @@ export const recommendationsTranslations: Record<string, TranslationSet> = {
   }
 };
 
-export const commonTranslations: Record<string, TranslationSet> = {
-  ...soilAnalyzerTranslations,
-  ...newCommonTranslations,
-  phLevel: soilAnalyzerTranslations.soilPH,
-  // ensure organicMatter is available
-  organicMatter: newCommonTranslations.organicMatter || soilAnalyzerTranslations.organic || { en: "Organic Matter", hi: "जैविक पदार्थ", mr: "सेंद्रिय पदार्थ" }
-};
+/** @deprecated Import from `@/constants/allTranslations` instead — full language coverage */
+export { commonTranslations } from "./allTranslations";

@@ -393,32 +393,104 @@ export const soilAnalyzerTranslations: Record<string, TranslationSet> = {
     bn: "আবার চেষ্টা করা হচ্ছে... ({max} এর মধ্যে {attempt} প্রচেষ্টা)",
     mr: "पुन्हा प्रयत्न करत आहे... ({max} मधील {attempt} प्रयत्न)"
   },
+  serverRateLimitTitle: {
+    en: "Too many requests",
+    hi: "बहुत अधिक अनुरोध",
+    pa: "ਬਹੁਤ ਜ਼ਿਆਦਾ ਬੇਨਤੀਆਂ",
+    ta: "அதிக கோரிக்கைகள்",
+    te: "చాలా అభ్యర్థనలు",
+    bn: "অনেক বেশি অনুরোধ",
+    mr: "खूप विनंत्या",
+  },
+  serverRateLimitMessage: {
+    en: "You are sending requests too quickly. Please wait about a minute, then try again.",
+    hi: "आप बहुत तेज़ी से अनुरोध भेज रहे हैं। कृपया लगभग एक मिनट प्रतीक्षा करें, फिर पुनः प्रयास करें।",
+    pa: "ਤੁਸੀਂ ਬਹੁਤ ਤੇਜ਼ੀ ਨਾਲ ਬੇਨਤੀਆਂ ਭੇਜ ਰਹੇ ਹੋ। ਕਿਰਪਾ ਕਰਕੇ ਲਗਭਗ ਇੱਕ ਮਿੰਟ ਉਡੀਕ ਕਰੋ, ਫਿਰ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    ta: "நீங்கள் மிக விரைவாக கோரிக்கைகளை அனுப்புகிறீர்கள். சுமார் ஒரு நிமிடம் காத்திருந்து மீண்டும் முயற்சிக்கவும்.",
+    te: "మీరు చాలా వేగంగా అభ్యర్థనలు పంపుతున్నారు. దయచేసి సుమారు ఒక నిమిషం వేచి, మళ్లీ ప్రయత్నించండి.",
+    bn: "আপনি খুব দ্রুত অনুরোধ পাঠাচ্ছেন। প্রায় এক মিনিট অপেক্ষা করে আবার চেষ্টা করুন।",
+    mr: "तुम्ही खूप लवकर विनंत्या पाठवत आहात. कृपया सुमारे एक मिनिट थांबा, नंतर पुन्हा प्रयत्न करा.",
+  },
+  serverRateLimitFinalMessage: {
+    en: "Server request limit reached. Wait 1–2 minutes before analyzing again.",
+    hi: "सर्वर अनुरोध सीमा पूरी हो गई। दोबारा विश्लेषण से पहले 1–2 मिनट प्रतीक्षा करें।",
+    pa: "ਸਰਵਰ ਬੇਨਤੀ ਸੀਮਾ ਪੂਰੀ ਹੋ ਗਈ। ਦੁਬਾਰਾ ਵਿਸ਼ਲੇਸ਼ਣ ਤੋਂ ਪਹਿਲਾਂ 1–2 ਮਿੰਟ ਉਡੀਕ ਕਰੋ।",
+    ta: "சேவையக கோரிக்கை வரம்பு எட்டப்பட்டது. மீண்டும் பகுப்பாய்வு செய்வதற்கு முன் 1–2 நிமிடங்கள் காத்திருங்கள்.",
+    te: "సర్వర్ అభ్యర్థన పరిమితి చేరుకుంది. మళ్లీ విశ్లేషించే ముందు 1–2 నిమిషాలు వేచి ఉండండి.",
+    bn: "সার্ভার অনুরোধ সীমা পূর্ণ হয়েছে। আবার বিশ্লেষণের আগে 1–2 মিনিট অপেক্ষা করুন।",
+    mr: "सर्वर विनंती मर्यादा पूर्ण झाली. पुन्हा विश्लेषण करण्यापूर्वी 1–2 मिनिटे थांबा.",
+  },
+  geminiQuotaTitle: {
+    en: "Google AI quota exceeded",
+    hi: "Google AI कोटा समाप्त",
+    pa: "Google AI ਕੋਟਾ ਪੂਰਾ",
+    ta: "Google AI கோட்டா முடிந்தது",
+    te: "Google AI కోటా ముగిసింది",
+    bn: "Google AI কোটা শেষ",
+    mr: "Google AI कोटा संपला",
+  },
+  geminiQuotaRetryMessage: {
+    en: "Gemini AI limit reached. Waiting a moment, then retrying automatically...",
+    hi: "Gemini AI सीमा पूरी। थोड़ी देर प्रतीक्षा करें, फिर स्वचालित पुनः प्रयास...",
+    pa: "Gemini AI ਸੀਮਾ ਪੂਰੀ। ਥੋੜ੍ਹੀ ਦੇਰ ਉਡੀਕ, ਫਿਰ ਆਪਣੇ ਆਪ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼...",
+    ta: "Gemini AI வரம்பு எட்டப்பட்டது. சிறிது காத்திருந்து தானாக மீண்டும் முயற்சிக்கிறது...",
+    te: "Gemini AI పరిమితి చేరుకుంది. కొద్దిసేపు వేచి, స్వయంచాలకంగా మళ్లీ ప్రయత్నిస్తోంది...",
+    bn: "Gemini AI সীমা পূর্ণ। একটু অপেক্ষা করুন, স্বয়ংক্রিয়ভাবে আবার চেষ্টা করা হচ্ছে...",
+    mr: "Gemini AI मर्यादा संपली. थोडा वेळ थांबा, आम्ही स्वयंचलितपणे पुन्हा प्रयत्न करत आहोत...",
+  },
+  geminiQuotaFinalMessage: {
+    en: "Google Gemini AI daily or per-minute limit reached. Wait a few minutes, then try again. If this continues, create a new API key at Google AI Studio or enable billing.",
+    hi: "Google Gemini AI की दैनिक या प्रति-मिनट सीमा पूरी हो गई। कुछ मिनट प्रतीक्षा करें, फिर पुनः प्रयास करें। यदि समस्या बनी रहे, तो Google AI Studio से नई API key बनाएं या बिलिंग सक्षम करें।",
+    pa: "Google Gemini AI ਦੀ ਰੋਜ਼ਾਨਾ ਜਾਂ ਪ੍ਰਤੀ-ਮਿੰਟ ਸੀਮਾ ਪੂਰੀ ਹੋ ਗਈ। ਕੁਝ ਮਿੰਟ ਉਡੀਕ ਕਰੋ, ਫਿਰ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ। ਜੇ ਜਾਰੀ ਰਹੇ, Google AI Studio ਤੋਂ ਨਵੀਂ API key ਬਣਾਓ।",
+    ta: "Google Gemini AI தினசரி அல்லது நிமிட வரம்பு எட்டப்பட்டது. சில நிமிடங்கள் காத்திருந்து மீண்டும் முயற்சிக்கவும். தொடர்ந்தால் Google AI Studio-யில் புதிய API விசை உருவாக்கவும்.",
+    te: "Google Gemini AI రోజువారీ లేదా నిమిషానికి పరిమితి చేరుకుంది. కొన్ని నిమిషాలు వేచి మళ్లీ ప్రయత్నించండి. కొనసాగితే Google AI Studioలో కొత్త API key సృష్టించండి.",
+    bn: "Google Gemini AI দৈনিক বা প্রতি-মিনিট সীমা পূর্ণ হয়েছে। কয়েক মিনিট অপেক্ষা করে আবার চেষ্টা করুন। চলতে থাকলে Google AI Studio-তে নতুন API key তৈরি করুন।",
+    mr: "Google Gemini AI ची दैनिक किंवा प्रति-मिनिट मर्यादा संपली. काही मिनिटे थांबा, नंतर पुन्हा प्रयत्न करा. समस्या कायम राहिल्यास Google AI Studio वरून नवीन API key तयार करा किंवा billing सुरू करा.",
+  },
+  missingApiKeyTitle: {
+    en: "AI not configured",
+    hi: "AI कॉन्फ़िगर नहीं है",
+    pa: "AI ਕੌਨਫਿਗਰ ਨਹੀਂ",
+    ta: "AI கட்டமைக்கப்படவில்லை",
+    te: "AI కాన్ఫిగర్ కాలేదు",
+    bn: "AI কনফিগার করা নেই",
+    mr: "AI कॉन्फिगर केलेले नाही",
+  },
+  missingApiKeyMessage: {
+    en: "Soil analysis needs GEMINI_API_KEY on the server (Render → Environment). Add the key and redeploy.",
+    hi: "मिट्टी विश्लेषण के लिए सर्वर पर GEMINI_API_KEY ज़रूरी है (Render → Environment)। कुंजी जोड़ें और पुनः deploy करें।",
+    pa: "ਮਿੱਟੀ ਵਿਸ਼ਲੇਸ਼ਣ ਲਈ ਸਰਵਰ 'ਤੇ GEMINI_API_KEY ਚਾਹੀਦੀ ਹੈ। ਕੁੰਜੀ ਸ਼ਾਮਲ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ deploy ਕਰੋ।",
+    ta: "மண் பகுப்பாய்வுக்கு சேவையகத்தில் GEMINI_API_KEY தேவை. விசையைச் சேர்த்து மீண்டும் deploy செய்யவும்.",
+    te: "నేల విశ్లేషణకు సర్వర్‌లో GEMINI_API_KEY అవసరం. కీ జోడించి మళ్లీ deploy చేయండి.",
+    bn: "মাটি বিশ্লেষণের জন্য সার্ভারে GEMINI_API_KEY প্রয়োজন। কী যোগ করে পুনরায় deploy করুন।",
+    mr: "माती विश्लेषणासाठी सर्व्हरवर GEMINI_API_KEY आवश्यक आहे (Render → Environment). की जोडा आणि पुन्हा deploy करा.",
+  },
   quotaExceededTitle: {
-    en: "API quota exceeded",
-    hi: "API कोटा समाप्त",
-    pa: "API ਕੋਟਾ ਪਾਰ",
-    ta: "API கோட்டா மீறப்பட்டது",
-    te: "API కోటా మించిపోయింది",
-    bn: "API কোটা ছাড়িয়ে গেছে",
-    mr: "API कोटा संपला"
+    en: "Google AI quota exceeded",
+    hi: "Google AI कोटा समाप्त",
+    pa: "Google AI ਕੋਟਾ ਪੂਰਾ",
+    ta: "Google AI கோட்டா முடிந்தது",
+    te: "Google AI కోటా ముగిసింది",
+    bn: "Google AI কোটা শেষ",
+    mr: "Google AI कोटा संपला",
   },
   quotaExceededMessage: {
-    en: "You've reached the API request limit. Please wait a moment and try again. We're automatically retrying...",
-    hi: "आप API अनुरोध सीमा तक पहुंच गए हैं। कृपया कुछ समय प्रतीक्षा करें और पुनः प्रयास करें। हम स्वचालित रूप से पुनः प्रयास कर रहे हैं...",
-    pa: "ਤੁਸੀਂ API ਬੇਨਤੀ ਸੀਮਾ ਤੱਕ ਪਹੁੰਚ ਗਏ ਹੋ। ਕਿਰਪਾ ਕਰਕੇ ਇੱਕ ਪਲ ਉਡੀਕ ਕਰੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ। ਅਸੀਂ ਆਪਣੇ-ਆਪ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰ ਰਹੇ ਹਾਂ...",
-    ta: "நீங்கள் API கோரிக்கை வரம்பை எட்டியுள்ளீர்கள். தயவுசெய்து சிறிது நேரம் காத்திருந்து மீண்டும் முயற்சிக்கவும். நாங்கள் தானாக மீண்டும் முயற்சிக்கிறோம்...",
-    te: "మీరు API అభ్యర్థన పరిమితిని చేరుకున్నారు. దయచేసి కొంచెం వేచి ఉండి మళ్లీ ప్రయత్నించండి. మేము స్వయంచాలకంగా మళ్లీ ప్రయత్నిస్తున్నాము...",
-    bn: "আপনি API অনুরোধ সীমা পৌঁছেছেন। অনুগ্রহ করে একটু অপেক্ষা করুন এবং আবার চেষ্টা করুন। আমরা স্বয়ংক্রিয়ভাবে আবার চেষ্টা করছি...",
-    mr: "तुम्ही API विनंती मर्यादा गाठली आहे. कृपया थोडा वेळ थांबा आणि पुन्हा प्रयत्न करा. आम्ही स्वयंचलितपणे पुन्हा प्रयत्न करत आहोत..."
+    en: "Gemini AI limit reached. Waiting, then retrying automatically...",
+    hi: "Gemini AI सीमा पूरी। प्रतीक्षा कर रहे हैं, फिर स्वचालित पुनः प्रयास...",
+    pa: "Gemini AI ਸੀਮਾ ਪੂਰੀ। ਉਡੀਕ ਕਰ ਰਹੇ ਹਾਂ, ਫਿਰ ਆਪਣੇ ਆਪ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼...",
+    ta: "Gemini AI வரம்பு எட்டப்பட்டது. காத்திருந்து தானாக மீண்டும் முயற்சிக்கிறது...",
+    te: "Gemini AI పరిమితి చేరుకుంది. వేచి, స్వయంచాలకంగా మళ్లీ ప్రయత్నిస్తోంది...",
+    bn: "Gemini AI সীমা পূর্ণ। অপেক্ষা করে স্বয়ংক্রিয়ভাবে আবার চেষ্টা করা হচ্ছে...",
+    mr: "Gemini AI मर्यादा संपली. थोडा वेळ थांबा, आम्ही स्वयंचलितपणे पुन्हा प्रयत्न करत आहोत...",
   },
   quotaExceededFinalMessage: {
-    en: "API quota limit reached. Please wait a few minutes before trying again, or consider upgrading your API plan.",
-    hi: "API कोटा सीमा पहुंच गई। कृपया पुनः प्रयास करने से पहले कुछ मिनट प्रतीक्षा करें, या अपनी API योजना अपग्रेड करने पर विचार करें।",
-    pa: "API ਕੋਟਾ ਸੀਮਾ ਪਹੁੰਚ ਗਈ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਕੁਝ ਮਿੰਟ ਉਡੀਕ ਕਰੋ, ਜਾਂ ਆਪਣੀ API ਯੋਜਨਾ ਅਪਗ੍ਰੇਡ ਕਰਨ ਬਾਰੇ ਸੋਚੋ।",
-    ta: "API கோட்டா வரம்பு எட்டப்பட்டது. தயவுசெய்து மீண்டும் முயற்சிக்கும் முன் சில நிமிடங்கள் காத்திருங்கள், அல்லது உங்கள் API திட்டத்தை மேம்படுத்துவதைக் கவனியுங்கள்।",
-    te: "API కోటా పరిమితి చేరుకుంది. దయచేసి మళ్లీ ప్రయత్నించే ముందు కొన్ని నిమిషాలు వేచి ఉండండి, లేదా మీ API ప్లాన్‌ను అప్‌గ్రేడ్ చేయడాన్ని పరిగణించండి।",
-    bn: "API কোটা সীমা পৌঁছেছে। অনুগ্রহ করে আবার চেষ্টা করার আগে কয়েক মিনিট অপেক্ষা করুন, অথবা আপনার API পরিকল্পনা আপগ্রেড করার কথা বিবেচনা করুন।",
-    mr: "API कोटा मर्यादा गाठली आहे. कृपया पुन्हा प्रयत्न करण्यापूर्वी काही मिनिटे थांबा, किंवा तुमची API योजना अपग्रेड करण्याचा विचार करा."
+    en: "Google Gemini AI limit reached. Wait a few minutes, then try again. Create a new key at Google AI Studio if needed.",
+    hi: "Google Gemini AI सीमा पूरी। कुछ मिनट प्रतीक्षा करें, फिर पुनः प्रयास करें। आवश्यकता हो तो Google AI Studio से नई key बनाएं।",
+    pa: "Google Gemini AI ਸੀਮਾ ਪੂਰੀ। ਕੁਝ ਮਿੰਟ ਉਡੀਕ ਕਰੋ, ਫਿਰ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    ta: "Google Gemini AI வரம்பு எட்டப்பட்டது. சில நிமிடங்கள் காத்திருந்து மீண்டும் முயற்சிக்கவும்.",
+    te: "Google Gemini AI పరిమితి చేరుకుంది. కొన్ని నిమిషాలు వేచి మళ్లీ ప్రయత్నించండి.",
+    bn: "Google Gemini AI সীমা পূর্ণ। কয়েক মিনিট অপেক্ষা করে আবার চেষ্টা করুন।",
+    mr: "Google Gemini AI मर्यादा संपली. काही मिनिटे थांबा, नंतर पुन्हा प्रयत्न करा. Google AI Studio वरून नवीन key तयार करा.",
   },
   noImageTitle: {
     en: "Upload a report image",
@@ -671,6 +743,105 @@ export const soilAnalyzerTranslations: Record<string, TranslationSet> = {
     te: "సిఫార్సులను అమలు చేయడానికి దశలవారీ చర్యలు.",
     bn: "সুপারিশ বাস্তবায়নের জন্য ধাপে ধাপে পদক্ষেপ।",
     mr: "शिफारसी अंमलात आणण्यासाठी टप्प्याटप्प्याच्या कृती."
+  },
+  demoReportTitle: {
+    en: "Sample report — not from live AI",
+    hi: "नमूना रिपोर्ट — लाइव AI से नहीं",
+    pa: "ਨਮੂਨਾ ਰਿਪੋਰਟ — ਲਾਈਵ AI ਤੋਂ ਨਹੀਂ",
+    ta: "மாதிரி அறிக்கை — நேரடி AI இல்லை",
+    te: "నమూనా నివేదిక — లైవ్ AI కాదు",
+    bn: "নমুনা রিপোর্ট — লাইভ AI নয়",
+    mr: "नमुना अहवाल — थेट AI नाही"
+  },
+  demoReportDescription: {
+    en: "Gemini API was unavailable. Configure GEMINI_API_KEY on the server for live analysis.",
+    hi: "Gemini API उपलब्ध नहीं था। लाइव विश्लेषण के लिए सर्वर पर GEMINI_API_KEY सेट करें।",
+    pa: "Gemini API ਉਪਲਬਧ ਨਹੀਂ ਸੀ। ਲਾਈਵ ਵਿਸ਼ਲੇਸ਼ਣ ਲਈ ਸਰਵਰ 'ਤੇ GEMINI_API_KEY ਸੈੱਟ ਕਰੋ।",
+    ta: "Gemini API கிடைக்கவில்லை. நேரடி பகுப்பாய்வுக்கு சேவையகத்தில் GEMINI_API_KEY அமைக்கவும்.",
+    te: "Gemini API అందుబాటులో లేదు. లైవ్ విశ్లేషణ కోసం సర్వర్‌లో GEMINI_API_KEY సెట్ చేయండి.",
+    bn: "Gemini API উপলব্ধ ছিল না। লাইভ বিশ্লেষণের জন্য সার্ভারে GEMINI_API_KEY সেট করুন।",
+    mr: "Gemini API उपलब्ध नव्हता. थेट विश्लेषणासाठी सर्व्हरवर GEMINI_API_KEY सेट करा."
+  },
+  unsupportedFileTitle: {
+    en: "Unsupported file",
+    hi: "असमर्थित फ़ाइल",
+    pa: "ਅਸਮਰਥਿਤ ਫਾਈਲ",
+    ta: "ஆதரிக்கப்படாத கோப்பு",
+    te: "మద్దతు లేని ఫైల్",
+    bn: "অসমর্থিত ফাইল",
+    mr: "असमर्थित फाइल"
+  },
+  unsupportedFileDesc: {
+    en: "Please upload a JPEG, PNG, WebP, or PDF soil report.",
+    hi: "कृपया JPEG, PNG, WebP, या PDF मिट्टी रिपोर्ट अपलोड करें।",
+    pa: "ਕਿਰਪਾ ਕਰਕੇ JPEG, PNG, WebP, ਜਾਂ PDF ਮਿੱਟੀ ਰਿਪੋਰਟ ਅਪਲੋਡ ਕਰੋ।",
+    ta: "JPEG, PNG, WebP அல்லது PDF மண் அறிக்கையை பதிவேற்றவும்.",
+    te: "JPEG, PNG, WebP, లేదా PDF నేల నివేదికను అప్‌లోడ్ చేయండి.",
+    bn: "JPEG, PNG, WebP, বা PDF মাটির রিপোর্ট আপলোড করুন।",
+    mr: "कृपया JPEG, PNG, WebP, किंवा PDF माती अहवाल अपलोड करा."
+  },
+  fileTooLargeTitle: {
+    en: "File too large",
+    hi: "फ़ाइल बहुत बड़ी है",
+    pa: "ਫਾਈਲ ਬਹੁਤ ਵੱਡੀ ਹੈ",
+    ta: "கோப்பு மிகப் பெரியது",
+    te: "ఫైల్ చాలా పెద్దది",
+    bn: "ফাইল খুব বড়",
+    mr: "फाइल खूप मोठी आहे"
+  },
+  fileTooLargePdf: {
+    en: "PDF must be under 10MB.",
+    hi: "PDF 10MB से कम होनी चाहिए।",
+    pa: "PDF 10MB ਤੋਂ ਘੱਟ ਹੋਣੀ ਚਾਹੀਦੀ ਹੈ।",
+    ta: "PDF 10MB க்குக் குறைவாக இருக்க வேண்டும்.",
+    te: "PDF 10MB కంటే తక్కువ ఉండాలి.",
+    bn: "PDF 10MB এর কম হতে হবে।",
+    mr: "PDF 10MB पेक्षा लहान असावी."
+  },
+  fileTooLargeImage: {
+    en: "Image must be under 4MB.",
+    hi: "छवि 4MB से कम होनी चाहिए।",
+    pa: "ਚਿੱਤਰ 4MB ਤੋਂ ਘੱਟ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ।",
+    ta: "படம் 4MB க்குக் குறைவாக இருக்க வேண்டும்.",
+    te: "చిత్రం 4MB కంటే తక్కువ ఉండాలి.",
+    bn: "ছবি 4MB এর কম হতে হবে।",
+    mr: "प्रतिमा 4MB पेक्षा लहान असावी."
+  },
+  pdfReadyCaption: {
+    en: "PDF soil report ready to analyze",
+    hi: "PDF मिट्टी रिपोर्ट विश्लेषण के लिए तैयार",
+    pa: "PDF ਮਿੱਟੀ ਰਿਪੋਰਟ ਵਿਸ਼ਲੇਸ਼ਣ ਲਈ ਤਿਆਰ",
+    ta: "PDF மண் அறிக்கை பகுப்பாய்வுக்கு தயார்",
+    te: "PDF నేల నివేదిక విశ్లేషణకు సిద్ధం",
+    bn: "PDF মাটির রিপোর্ট বিশ্লেষণের জন্য প্রস্তুত",
+    mr: "PDF माती अहवाल विश्लेषणासाठी तयार"
+  },
+  uploadFormatsHint: {
+    en: "JPEG, PNG, WebP, or PDF (up to 10MB).",
+    hi: "JPEG, PNG, WebP, या PDF (10MB तक)।",
+    pa: "JPEG, PNG, WebP, ਜਾਂ PDF (10MB ਤੱਕ)।",
+    ta: "JPEG, PNG, WebP, அல்லது PDF (10MB வரை).",
+    te: "JPEG, PNG, WebP, లేదా PDF (10MB వరకు).",
+    bn: "JPEG, PNG, WebP, বা PDF (10MB পর্যন্ত)।",
+    mr: "JPEG, PNG, WebP, किंवा PDF (10MB पर्यंत)."
+  },
+  languageReanalyzingTitle: {
+    en: "Updating report language",
+    hi: "रिपोर्ट भाषा अपडेट हो रही है",
+    pa: "ਰਿਪੋਰਟ ਭਾਸ਼ਾ ਅਪਡੇਟ ਹੋ ਰਹੀ ਹੈ",
+    ta: "அறிக்கை மொழி புதுப்பிக்கப்படுகிறது",
+    te: "నివేదిక భాష నవీకరించబడుతోంది",
+    bn: "রিপোর্টের ভাষা আপডেট হচ্ছে",
+    mr: "अहवालाची भाषा अद्यतन होत आहे"
+  },
+  languageReanalyzingDesc: {
+    en: "Regenerating your soil analysis in the selected language…",
+    hi: "चयनित भाषा में आपका मिट्टी विश्लेषण पुनः तैयार हो रहा है…",
+    pa: "ਚੁਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਤੁਹਾਡਾ ਮਿੱਟੀ ਵਿਸ਼ਲੇਸ਼ਣ ਦੁਬਾਰਾ ਤਿਆਰ ਹੋ ਰਿਹਾ ਹੈ…",
+    ta: "தேர்ந்தெடுத்த மொழியில் உங்கள் மண் பகுப்பாய்வு மீண்டும் உருவாக்கப்படுகிறது…",
+    te: "ఎంచుకున్న భాషలో మీ నేల విశ్లేషణ మళ్లీ రూపొందించబడుతోంది…",
+    bn: "নির্বাচিত ভাষায় আপনার মাটি বিশ্লেষণ পুনরায় তৈরি হচ্ছে…",
+    mr: "निवडलेल्या भाषेत तुमचे माती विश्लेषण पुन्हा तयार होत आहे…"
   }
 };
 
@@ -2751,11 +2922,14 @@ export const fertilizerCostTranslations: Record<string, TranslationSet> = {
 
 // Common Translations used across multiple pages
 import { newCommonTranslations } from "./newCommonTranslations";
+import { expandTranslationRecord } from "../utils/expandTranslations";
+
+const expandedNewCommonTranslations = expandTranslationRecord(newCommonTranslations);
 
 // Common Translations used across multiple pages
 export const commonTranslations: Record<string, TranslationSet> = {
   ...soilAnalyzerTranslations,
-  ...newCommonTranslations,
+  ...expandedNewCommonTranslations,
   phLevel: soilAnalyzerTranslations.soilPH || {
     en: "pH Level",
     hi: "pH स्तर",
@@ -3047,6 +3221,69 @@ export const commonTranslations: Record<string, TranslationSet> = {
     te: "నేల నాణ్యత",
     bn: "মাটির গুণমান",
     mr: "मातीची गुणवत्ता"
+  },
+  overview: {
+    en: "Overview",
+    hi: "अवलोकन",
+    pa: "ਸੰਖੇਪ",
+    ta: "சுருக்கம்",
+    te: "అవలోకనం",
+    bn: "সংক্ষিপ্ত বিবরণ",
+    mr: "आढावा"
+  },
+  improvementPlan: {
+    en: "Soil Improvement Plan",
+    hi: "मिट्टी सुधार योजना",
+    pa: "ਮਿੱਟੀ ਸੁਧਾਰ ਯੋਜਨਾ",
+    ta: "மண் மேம்பாட்டுத் திட்டம்",
+    te: "నేల మెరుగుదల ప్రణాళిక",
+    bn: "মাটি উন্নয়ন পরিকল্পনা",
+    mr: "माती सुधारणा योजना"
+  },
+  warnings: {
+    en: "Warnings",
+    hi: "चेतावनियां",
+    pa: "ਚੇਤਾਵਨੀਆਂ",
+    ta: "எச்சரிக்கைகள்",
+    te: "హెచ్చరికలు",
+    bn: "সতর্কবার্তা",
+    mr: "इशारे"
+  },
+  nextSteps: {
+    en: "Next Steps",
+    hi: "अगले कदम",
+    pa: "ਅਗਲੇ ਕਦਮ",
+    ta: "அடுத்த படிகள்",
+    te: "తదుపరి దశలు",
+    bn: "পরবর্তী পদক্ষেপ",
+    mr: "पुढील पावले"
+  },
+  newFeatures: {
+    en: "New Features",
+    hi: "नई सुविधाएं",
+    pa: "ਨਵੀਆਂ ਵਿਸ਼ੇਸ਼ਤਾਵਾਂ",
+    ta: "புதிய அம்சங்கள்",
+    te: "కొత్త ఫీచర్లు",
+    bn: "নতুন বৈশিষ্ট্য",
+    mr: "नवीन वैशिष्ट्ये"
+  },
+  languageGroupIndia: {
+    en: "India",
+    hi: "भारत",
+    pa: "ਭਾਰਤ",
+    ta: "இந்தியா",
+    te: "భారతదేశం",
+    bn: "ভারত",
+    mr: "भारत"
+  },
+  languageGroupNortheast: {
+    en: "Northeast India",
+    hi: "पूर्वोत्तर भारत",
+    pa: "ਉੱਤਰ-ਪੂਰਬੀ ਭਾਰਤ",
+    ta: "வட-east இந்தியா",
+    te: "ఈశాన్య భారతదేశం",
+    bn: "উত্তর-পূর্ব ভারত",
+    mr: "ईशान्य भारत"
   },
   knowMore: {
     en: "Know More",
