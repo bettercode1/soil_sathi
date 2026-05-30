@@ -18,6 +18,9 @@ export interface SensorCompany {
   logoInitials: string;
   supportedSensorCount: number;
   sensors: CompanySensor[];
+  region?: "national" | "northeast";
+  state?: string;
+  partnerType?: string;
 }
 
 export interface CompanySensor {

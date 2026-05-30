@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { sensorIntegrationTranslations as si } from "@/constants/sensorIntegrationTranslations";
+import { getPartnerTypeLabel, getStateLabel } from "@/utils/useLocalizedSensorIntegration";
 import { translateSensorType } from "@/utils/sensorLanguageHelpers";
 import type { SensorCompany, CompanySensor } from "@/types/sensor-integration";
 import { getSensorIcon, pageVariants } from "./shared";
@@ -35,7 +36,19 @@ export const SensorListing = ({ company, onBack, onConnect }: SensorListingProps
             </div>
             <div>
               <h2 className="text-xl md:text-2xl font-bold text-slate-800">{company.name}</h2>
-              <p className="text-sm text-slate-500">
+              <div className="flex flex-wrap items-center gap-2 mt-1">
+                {company.state && (
+                  <Badge variant="outline" className="text-[10px] bg-teal-50 text-teal-700 border-teal-200">
+                    {getStateLabel(company.state, t)}
+                  </Badge>
+                )}
+                {company.partnerType && (
+                  <Badge variant="outline" className="text-[10px] bg-slate-50 text-slate-600">
+                    {getPartnerTypeLabel(company.partnerType, t)}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-slate-500 mt-1">
                 {company.sensors.length} {t(si.sensorsAvailable)} · {onlineCount} {t(si.online).toLowerCase()}
               </p>
             </div>
@@ -92,7 +105,7 @@ export const SensorListing = ({ company, onBack, onConnect }: SensorListingProps
                   <div className="space-y-1.5 text-xs">
                     <div className="flex justify-between">
                       <span className="text-slate-500">{t(si.type)}</span>
-                      <span className="font-medium text-slate-700">{translateSensorType(sensor.type, t)}</span>
+                      <span className="font-medium text-slate-700">{sensor.typeLabel || translateSensorType(sensor.type, t)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500">{t(si.range)}</span>

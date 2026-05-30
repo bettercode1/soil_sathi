@@ -106,6 +106,7 @@ export const SENSOR_COMPANIES: SensorCompany[] = [
     logoInitials: "OS",
     supportedSensorCount: olatusSensors.length,
     sensors: olatusSensors,
+    region: "national",
   },
   {
     id: "yantrabot",
@@ -116,6 +117,7 @@ export const SENSOR_COMPANIES: SensorCompany[] = [
     logoInitials: "YT",
     supportedSensorCount: yantrabotSensors.length,
     sensors: yantrabotSensors,
+    region: "national",
   },
   {
     id: "autobotix",
@@ -126,6 +128,7 @@ export const SENSOR_COMPANIES: SensorCompany[] = [
     logoInitials: "AB",
     supportedSensorCount: autobotixSensors.length,
     sensors: autobotixSensors,
+    region: "national",
   },
   {
     id: "ssmicro",
@@ -136,6 +139,7 @@ export const SENSOR_COMPANIES: SensorCompany[] = [
     logoInitials: "SS",
     supportedSensorCount: ssMicroSensors.length,
     sensors: ssMicroSensors,
+    region: "national",
   },
   {
     id: "nexgen",
@@ -146,6 +150,7 @@ export const SENSOR_COMPANIES: SensorCompany[] = [
     logoInitials: "NG",
     supportedSensorCount: nexgenSensors.length,
     sensors: nexgenSensors,
+    region: "national",
   },
 ];
 

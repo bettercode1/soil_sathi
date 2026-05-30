@@ -334,6 +334,99 @@ const rawSensorIntegrationTranslations: Record<string, L> = {
   companyDescNexgen: tr("Enterprise-grade soil analytics with full NPK and salinity monitoring.", {
     hi: "पूर्ण NPK और लवणता निगरानी के साथ एंटरप्राइज़ विश्लेषण।", bn: "সম্পূর্ণ NPK ও লবণাক্ততা পর্যবেক্ষণ।", as: "সম্পূৰ্ণ NPK আৰু লৱণতা পৰ্যবেক্ষণ।",
   }),
+
+  nationalPartnersTitle: tr("Pan-India Sensor Partners", {
+    hi: "अखिल भारतीय सेंसर партнर", mr: "संपूर्ण भारत सेंसर भागीदार", bn: "সারা ভারত সেন্সর পার্টনার", as: "সৰ্বভাৰতীয় ছেন্সৰ অংশীদাৰ",
+  }),
+  neSectionTitle: tr("Northeast India Sensor & AgriTech Partners", {
+    hi: "पूर्वोत्तर भारत सेंसर और एग्रीटेक партнर", bn: "উত্তর-পূর্ব ভারত সেন্সর ও এগ্রিটেক পার্টনার",
+    as: "উত্তৰ-পূব ভাৰত ছেন্সৰ আৰু এগ্ৰিটেক অংশীদাৰ", mni: "উত্তর-পূর্ব ভারত সেন্সর ও এগ্রিটেক পার্টনার",
+    lus: "Northeast India Sensor & AgriTech Partners", ne: "पूर्वोत्तर भारत सेन्सर र एग्रीटेक साझेदार",
+  }),
+  neSectionDesc: tr("Integrating with regional sensor manufacturers, research institutions, and government AgriTech initiatives across Northeast India.", {
+    hi: "पूर्वोत्तर भारत में क्षेत्रीय सेंसर निर्माताओं, अनुसंधान संस्थानों और सरकारी एग्रीटेक पहलों के साथ एकीकरण।",
+    as: "উত্তৰ-পূব ভাৰতৰ আঞ্চলিক ছেন্সৰ উৎপাদক, গৱেষণা প্ৰতিষ্ঠান আৰু চৰকাৰী এগ্ৰিটেক প্ৰকল্পৰ সৈতে একীকৰণ।",
+    mni: "উত্তর-পূর্ব ভারতের আঞ্চলিক সেন্সর, গবেষণা প্রতিষ্ঠান ও সরকারি এগ্রিটেকের সাথে ইন্টিগ্রেশন।",
+    lus: "Northeast India-a sensor manufacturers, research institutions le government AgriTech initiatives nen integration.",
+    ne: "पूर्वोत्तर भारतका क्षेत्रीय सेन्सर निर्माता, अनुसन्धान संस्था र सरकारी एग्रीटेक पहलसँग एकीकरण।",
+  }),
+  neRegionBadge: tr("Northeast India", { as: "উত্তৰ-পূব ভাৰত", mni: "উত্তর-পূর্ব ভারত", lus: "Northeast India", ne: "पूर्वोत्तर भारत", brx: "सायाव थांखि भारत" }),
+  neTotalPartners: tr("NE Partners", { hi: "NE партнर", as: "উত্তৰ-পূব অংশীদাৰ", ne: "NE साझेदार" }),
+  neConnectedSensors: tr("Connected Sensors", { hi: "कनेक्टेड सेंसर", as: "সংযুক্ত ছেন্সৰ", ne: "जोडिएका सेन्सर" }),
+  neActiveDevices: tr("Active Devices", { hi: "सक्रिय डिवाइस", as: "সক্ৰিয় যন্ত্ৰ", ne: "सक्रिय उपकरण" }),
+  neSoilReports: tr("Soil Reports", { hi: "मिट्टी रिपोर्ट", as: "মাটিৰ প্ৰতিবেদন", ne: "माटो प्रतिवेदन" }),
+  neStatesCovered: tr("States Covered", { hi: "राज्य कवर", as: "ৰাজ্য", ne: "राज्यहरू" }),
+  neFarmersSupported: tr("Farmers Supported", { hi: "किसान समर्थित", as: "কৃষক সহায়", ne: "किसान समर्थित" }),
+  neMapTitle: tr("Northeast India Coverage", { as: "উত্তৰ-পূব ভাৰতৰ কভাৰেজ", ne: "पूर्वोत्तर भारत कभरेज" }),
+  neMapCaption: tr("Partner distribution across 8 Northeast states", {
+    as: "৮টা উত্তৰ-পূব ৰাজ্যত অংশীদাৰ বিতৰণ", ne: "८ पूर्वोत्तर राज्यमा साझेदार वितरण",
+  }),
+  nePartnerDistribution: tr("Partner Distribution by State", { as: "ৰাজ্য অনুসৰি অংশীদাৰ", ne: "राज्य अनुसार साझेदार" }),
+  partnerType: tr("Partner Type", { hi: "पартнर प्रकार", as: "অংশীদাৰৰ প্ৰকাৰ", ne: "साझेदार प्रकार" }),
+  stateLabel: tr("State", { hi: "राज्य", as: "ৰাজ্য", ne: "राज्य" }),
+
+  stateAssam: tr("Assam", { as: "অসম", hi: "असम", bn: "আসাম", mni: "অসম", ne: "असम", brx: "असाम" }),
+  stateMeghalaya: tr("Meghalaya", { as: "মেঘালয়", hi: "मेघालय", mni: "মেঘালয়", kha: "Meghalaya", ne: "मेघालय" }),
+  stateManipur: tr("Manipur", { as: "মণিপুর", hi: "मणिपुर", mni: "মণিপুর", ne: "मणिपुर" }),
+  stateMizoram: tr("Mizoram", { as: "মিজোৰাম", hi: "मिजोरम", lus: "Mizoram", ne: "मिजोरम" }),
+  stateNagaland: tr("Nagaland", { as: "নাগালেণ্ড", hi: "नागaland", ne: "नागaland" }),
+  stateTripura: tr("Tripura", { as: "ত্ৰিপura", hi: "त्रिपुरा", bn: "ত্রিপura" }),
+  stateArunachal: tr("Arunachal Pradesh", { as: "অৰুণাচল প্ৰদেশ", hi: "अरुणाचल प्रदेश", ne: "अरुणाचल प्रदेश" }),
+  stateSikkim: tr("Sikkim", { as: "ছিকিম", hi: "सिक्किम", ne: "सिक्किम", mni: "সিকিম" }),
+
+  companyDescAau: tr("Research-based soil monitoring systems for precision agriculture and farmer advisory services.", {
+    as: "নিৱন্ত্ৰ কৃষি আৰু কৃষক পৰামৰ্শ সেৱাৰ বাবে গৱেষণা-ভিত্তিক মাটি পৰ্যবেক্ষণ ব্যৱস্থা।",
+    brx: "सटीक खेती आरो खोनसो सलाहनि थाखाय गोजान गावनाय माटि निगरानि।",
+    hi: "सटीक कृषि और किसान सलाह के लिए अनुसंधान-आधारित मिट्टी निगरानी।",
+  }),
+  companyDescIitg: tr("Advanced sensor integration and AI-driven agriculture monitoring systems.", {
+    as: "উন্নত ছেন্সৰ একীকৰণ আৰু AI-চালিত কৃষি পৰ্যবেক্ষণ ব্যৱস্থা।",
+    brx: "गोजान सेन्सर जोड़ाव आरो AI-सालाय agriculture monitoring।",
+    hi: "उन्नत सेंसर एकीकरण और AI-संचालित कृषि निगरानी।",
+  }),
+  companyDescMeghalayaAgri: tr("Supporting sustainable farming and smart agriculture initiatives.", {
+    kha: "Supporting sustainable farming and smart agriculture initiatives in Meghalaya.",
+    as: "ধাৰণক্ষম খেতি আৰু স্মাৰ্ট কৃষি প্ৰকল্পক সমৰ্থন।",
+    hi: "टिकाऊ खेती और स्मार्ट कृषि पहलों का समर्थन।",
+  }),
+  companyDescManipurAgri: tr("Focused on precision farming and digital agriculture solutions.", {
+    mni: "নির্ভুল চাষাবাদ আরো ডিজিটাল কৃষি সমাধানের উপর গুরুত্ব।",
+    as: "নিৰ্ভুল খেতি আৰু ডিজিটেল কৃষি সমাধানৰ ওপৰত গুৰুত্ব।",
+    hi: "सटीक खेती और डिजिटल कृषि समाधान पर केंद्रित।",
+  }),
+  companyDescMizoramSmart: tr("Promoting sensor-based farming and crop monitoring.", {
+    lus: "Sensor hmanga lo neih leh crop monitoring thlir dan tihpui.",
+    as: "ছেন্সৰ-ভিত্তিক খেতি আৰু শস্য পৰ্যবেক্ষণ প্ৰচাৰ।",
+    hi: "सेंसर-आधारित खेती और फसल निगरानी को बढ़ावा।",
+  }),
+  companyDescNagalandPrecision: tr("Precision agriculture and soil health monitoring solutions.", {
+    as: "নিৰ্ভুল কৃষি আৰু মাটিৰ স্বাস্থ্য পৰ্যবেক্ষণ সমাধান।",
+    hi: "सटीक कृषि और मिट्टी स्वास्थ्य निगरानी समाधान।",
+  }),
+  companyDescTripuraSmart: tr("Digital agriculture and soil analytics initiatives.", {
+    as: "ডিজিটেল কৃষি আৰু মাটি বিশ্লেষণ প্ৰকল্প।",
+    bn: "ডিজিটাল কৃষি ও মাটি বিশ্লেষণ উদ্যোগ।",
+    hi: "डिजिटल कृषि और मिट्टी विश्लेषण पहल।",
+  }),
+  companyDescArunachalAgri: tr("Agriculture technology and environmental monitoring systems.", {
+    as: "কৃষি প্ৰযুক্তি আৰু পৰিৱেশ পৰ্যবেক্ষণ ব্যৱস্থা।",
+    hi: "कृषि प्रौद्योगिकी और पर्यावरण निगरानी प्रणाली।",
+  }),
+  companyDescSikkimOrganic: tr("Organic farming and sustainable soil management solutions.", {
+    ne: "जैविक खेती र दिगो माटो व्यवस्थापन समाधान।",
+    as: "জৈৱিক খেতি আৰু ধাৰণক্ষম মাটি ব্যৱস্থাপনা সমাধান।",
+    hi: "जैविक खेती और टिकाऊ मिट्टी प्रबंधन समाधान।",
+  }),
+
+  partnerTypeResearch: tr("Agricultural Research Institution", { as: "কৃষি গৱেষণা প্ৰতিষ্ঠান", hi: "कृषि अनुसंधान संस्थान" }),
+  partnerTypeInnovation: tr("Research & Innovation Partner", { as: "গৱেষণা আৰু উদ্ভাবন অংশীদাৰ", hi: "अनुसंधान और नवाचार партнर" }),
+  partnerTypeAgriTech: tr("AgriTech Partner", { as: "এগ্ৰিটেক অংশীদাৰ", kha: "AgriTech Partner", hi: "एग्रीटेक партнर" }),
+  partnerTypeAgTech: tr("Agriculture Technology Partner", { mni: "কৃষি প্রযুক্তি অংশীদার", as: "কৃষি প্ৰযুক্তি অংশীদাৰ", hi: "कृषि प्रौद्योगिकी партнर" }),
+  partnerTypeGovProgram: tr("Government Agriculture Program", { lus: "Sorkar agriculture program", as: "চৰকাৰী কৃষি প্ৰকল্প", hi: "सरकारी कृषि कार्यक्रम" }),
+  partnerTypeAgResearch: tr("Agriculture Research Partner", { as: "কৃষি গৱেষণা অংশীদাৰ", hi: "कृषि अनुसंधान партнर" }),
+  partnerTypeAgInnovation: tr("Agriculture Innovation Partner", { as: "কৃষি উদ্ভাবন অংশীদাৰ", hi: "कृषि नवाचार партнर" }),
+  partnerTypeResearchPartner: tr("Research Partner", { as: "গৱেষণা অংশীদাৰ", hi: "अनुसंधान партнर" }),
+  partnerTypeOrganic: tr("Organic Farming Technology Partner", { ne: "जैविक खेती प्रविधि साझेदार", as: "জৈৱিক খেতি প্ৰযুক্তি অংশীদাৰ", hi: "जैविक खेती प्रौद्योगिकी партнर" }),
 };
 
 export const sensorIntegrationTranslations = expandTranslationRecord(rawSensorIntegrationTranslations);

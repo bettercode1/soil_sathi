@@ -260,6 +260,40 @@ export function getCompanyDescription(companyId: string, t: TranslateFn): string
   return "";
 }
 
+const STATE_KEY_MAP: Record<string, keyof typeof si> = {
+  Assam: "stateAssam",
+  Meghalaya: "stateMeghalaya",
+  Manipur: "stateManipur",
+  Mizoram: "stateMizoram",
+  Nagaland: "stateNagaland",
+  Tripura: "stateTripura",
+  "Arunachal Pradesh": "stateArunachal",
+  Sikkim: "stateSikkim",
+};
+
+const PARTNER_TYPE_KEY_MAP: Record<string, keyof typeof si> = {
+  "Agricultural Research Institution": "partnerTypeResearch",
+  "Research & Innovation Partner": "partnerTypeInnovation",
+  "AgriTech Partner": "partnerTypeAgriTech",
+  "Agriculture Technology Partner": "partnerTypeAgTech",
+  "Government Agriculture Program": "partnerTypeGovProgram",
+  "Agriculture Research Partner": "partnerTypeAgResearch",
+  "Agriculture Innovation Partner": "partnerTypeAgInnovation",
+  "Research Partner": "partnerTypeResearchPartner",
+  "Organic Farming Technology Partner": "partnerTypeOrganic",
+};
+
+export function getStateLabel(state: string, t: TranslateFn): string {
+  const key = STATE_KEY_MAP[state];
+  return key ? t(si[key] as TranslationSet) : state;
+}
+
+export function getPartnerTypeLabel(partnerType: string | undefined, t: TranslateFn): string {
+  if (!partnerType) return "";
+  const key = PARTNER_TYPE_KEY_MAP[partnerType];
+  return key ? t(si[key] as TranslationSet) : partnerType;
+}
+
 export function getDemoFarmerName(t: TranslateFn): string {
   return t(si.demoFarmerName);
 }
