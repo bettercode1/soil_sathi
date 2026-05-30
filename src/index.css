@@ -1,5 +1,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans+Tamil:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Sans+Gurmukhi:wght@400;500;600;700&family=Noto+Sans+Meetei+Mayek:wght@400;500;600;700&family=Noto+Sans+Bodo:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -12,6 +13,20 @@
   }
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+  .report-unicode {
+    font-family:
+      "Noto Sans",
+      "Noto Sans Devanagari",
+      "Noto Sans Bengali",
+      "Noto Sans Tamil",
+      "Noto Sans Telugu",
+      "Noto Sans Gurmukhi",
+      "Noto Sans Meetei Mayek",
+      "Noto Sans Bodo",
+      "Inter",
+      "Poppins",
+      sans-serif;
   }
 }
 

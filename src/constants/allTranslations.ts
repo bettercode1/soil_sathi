@@ -5237,3 +5237,4 @@ export const regionsTranslations: Record<string, TranslationSet> = {
 // Export sensor translations
 export { sensorTranslations } from "./sensorTranslations";
 export { sensorAnalysisTranslations } from "./sensorAnalysisTranslations";
+export { sensorIntegrationTranslations } from "./sensorIntegrationTranslations";

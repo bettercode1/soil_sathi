@@ -2990,17 +2990,6 @@ const FarmerHelpDesk = () => {
                   <h1 className="text-3xl font-semibold text-slate-900 sm:text-4xl">{t(landingCopy.heroHeading)}</h1>
                   <p className="max-w-2xl text-sm text-slate-600 sm:text-base">{t(helpDeskText.tagline)}</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2 text-xs font-medium text-emerald-700">
-                  <Badge variant="outline" className="rounded-full border-emerald-200 bg-emerald-50 px-3 py-1">
-                    {t(landingCopy.badgeMarathi)}
-                  </Badge>
-                  <Badge variant="outline" className="rounded-full border-emerald-200 bg-emerald-50 px-3 py-1">
-                    {t(landingCopy.badgeHindi)}
-                  </Badge>
-                  <Badge variant="outline" className="rounded-full border-emerald-200 bg-emerald-50 px-3 py-1">
-                    {t(landingCopy.badgeEnglish)}
-                  </Badge>
-                </div>
               </div>
 
               <div className="flex flex-col gap-4">
